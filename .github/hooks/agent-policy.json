@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "description": "Deterministic hook policy for agent safety and auditability.",
+  "logging": {
+    "path": ".github/hooks/logs/agent-audit.log",
+    "format": "jsonl"
+  },
+  "hooks": {
+    "sessionStart": [
+      {
+        "name": "session-banner",
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          ".github/hooks/scripts/session-banner.ps1"
+        ]
+      }
+    ],
+    "preToolUse": [
+      {
+        "name": "pre-tool-policy",
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          ".github/hooks/scripts/pre-tool-policy.ps1"
+        ]
+      }
+    ],
+    "postToolUse": [
+      {
+        "name": "audit-log",
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          ".github/hooks/scripts/audit-log.ps1"
+        ]
+      }
+    ]
+  }
+}

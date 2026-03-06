@@ -1,0 +1,39 @@
+{
+  "$schema": "https://example.com/schemas/mcp.schema.json",
+  "notes": {
+    "purpose": "Workspace MCP starter config for team-shareable, safe defaults.",
+    "secrets": "Do not store secrets here. Use environment variables and local machine secret stores.",
+    "team_vs_local": "Commit only safe shared entries. Keep machine-specific overrides in untracked local files."
+  },
+  "servers": {
+    "repo-knowledge": {
+      "enabled": false,
+      "description": "Repo knowledge server: search ADRs/runbooks and run grep-like queries across docs/code.",
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "./tools/mcp/repo-knowledge-server.js"
+      ],
+      "env": {
+        "REPO_ROOT": "${workspaceFolder}"
+      }
+    },
+    "local-dev": {
+      "enabled": false,
+      "description": "Local dev server: run lint/tests/build checks in a constrained allowlist.",
+      "transport": "stdio",
+      "command": "python",
+      "args": [
+        "./tools/mcp/local_dev_server.py"
+      ],
+      "env": {
+        "PROJECT_ROOT": "${workspaceFolder}",
+        "ALLOW_COMMANDS": "test,lint,build"
+      }
+    }
+  },
+  "apps": {
+    "enabled": false,
+    "notes": "MCP Apps are opt-in UI-returning tools. Start disabled until reviewed by the team."
+  }
+}

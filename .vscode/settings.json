@@ -1,0 +1,6 @@
+{
+  // Keep agent-related settings minimal and team-safe.
+  // Add additional settings only when the team agrees they improve workflow reliability.
+  // after testing, we can consider adding more settings here if they prove useful and do not cause issues for other team members.
+  // remove these comment and any unused settings before finalizing the file to keep it clean and maintainable.
+}
