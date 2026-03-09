@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "description": "Shared tool-access roles for custom agents in this starter.",
+  "roles": {
+    "analysis": {
+      "tools": ["read", "search", "execute", "todo"],
+      "intent": "Gather evidence and reduce uncertainty without editing files."
+    },
+    "planning": {
+      "tools": ["read", "search", "edit", "execute", "todo"],
+      "intent": "Create design artifacts, validate assumptions, and prepare implementation-ready plans without owning application code changes by default."
+    },
+    "review": {
+      "tools": ["read", "search", "todo"],
+      "intent": "Inspect work and report findings without making changes."
+    },
+    "implementation": {
+      "tools": ["read", "search", "edit", "execute", "todo"],
+      "intent": "Implement focused changes and validate them with the smallest relevant commands."
+    },
+    "workflow-maintenance": {
+      "tools": ["read", "search", "edit", "todo"],
+      "intent": "Update workflow assets such as agents, skills, instructions, and runbooks."
+    }
+  },
+  "agentRoleHints": {
+    "analyst": "analysis",
+    "architecture-reviewer": "review",
+    "senior-software-engineer": "implementation",
+    "code-reviewer": "review",
+    "qa": "analysis",
+    "process-improvement": "workflow-maintenance",
+    "tech-planner": "planning",
+    "tdd-vitest": "implementation"
+  }
+}

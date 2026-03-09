@@ -1,0 +1,18 @@
+{
+  "currentAgent": "qa",
+  "recommendedNextAgent": "senior-software-engineer",
+  "scopeSummary": "Return the change to engineering because QA found blocking coverage and verification gaps.",
+  "reasonForHandoff": "Engineering needs to address the failed verification conditions before the workflow can continue.",
+  "approvalRequired": true,
+  "approvalStatus": "rejected",
+  "approverIdentity": "release-manager",
+  "approvalTimestamp": "2026-03-09T11:15:00Z",
+  "transitionStatus": "cancelled",
+  "auditReference": "handoff-2026-03-09-003",
+  "inputsForNextAgent": [
+    ".github/agents/qa.agent.md",
+    "docs/runbooks/agentic-dev.md",
+    "docs/runbooks/skills.md"
+  ],
+  "decisionStatus": "blocked"
+}

@@ -1,6 +1,7 @@
 {
   "version": "1.0",
   "description": "Deterministic hook policy for agent safety and auditability.",
+  "rulesPath": ".github/hooks/policy-rules.tsv",
   "logging": {
     "path": ".github/hooks/logs/agent-audit.log",
     "format": "jsonl"

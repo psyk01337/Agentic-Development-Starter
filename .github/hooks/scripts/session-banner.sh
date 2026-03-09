@@ -16,5 +16,6 @@ printf '{"timestamp":"%s","event":"sessionStart","sessionId":"%s","user":"%s"}\n
 echo "=== Agentic Session Guardrails Enabled ==="
 echo "Session: ${SESSION_ID}"
 echo "Policy : .github/hooks/agent-policy.json"
+echo "Rules  : .github/hooks/policy-rules.tsv"
 echo "Audit  : .github/hooks/logs/agent-audit.log"
 echo "No secrets, no destructive commands, no unsafe remote execution."

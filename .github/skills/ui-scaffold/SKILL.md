@@ -1,20 +1,21 @@
 ---
 name: ui-scaffold
-description: Scaffold UI structure from a screen specification with predictable states and test/story stubs.
+description: Optional overlay skill for scaffolding a UI or interaction flow from a product or UX spec with predictable states and test or story stubs.
 ---
 # Skill: ui-scaffold
 
 ## When to Use
-Use this skill when building a new screen/component flow from product or UX specs.
+Use this skill when building a new screen, component flow, or interaction surface and the repo already has an established UI framework and component pattern.
 
 ## Trigger Examples
 - "Scaffold the account settings screen from this spec."
 - "Generate component structure and states for this feature UI."
 - "Create React UI stubs and tests for this workflow."
+- "Create Vue or Svelte component stubs for this workflow."
 
 ## Checklist
 - Parse screen spec: goals, actors, data dependencies, actions, constraints.
-- Define component tree aligned with repository naming conventions.
+- Define component or view structure aligned with repository naming conventions.
 - Model predictable UI states: loading, error, empty, success.
 - Define props and local/shared state boundaries.
 - Generate implementation stubs and basic tests or story stubs based on repo style.

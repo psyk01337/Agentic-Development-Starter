@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/approval-gated-handoff-envelope.schema.json",
+  "title": "Approval Gated Handoff Envelope",
+  "description": "Machine-readable transition metadata for the optional approval-gated orchestration overlay.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "currentAgent",
+    "recommendedNextAgent",
+    "scopeSummary",
+    "reasonForHandoff",
+    "approvalRequired",
+    "approvalStatus",
+    "transitionStatus"
+  ],
+  "properties": {
+    "currentAgent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The agent producing the current handoff."
+    },
+    "recommendedNextAgent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The next specialist recommended by the overlay transition."
+    },
+    "scopeSummary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short description of the work being handed off."
+    },
+    "reasonForHandoff": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why the next specialist is the right transition target."
+    },
+    "approvalRequired": {
+      "type": "boolean",
+      "description": "Whether the transition requires an explicit approval checkpoint."
+    },
+    "approvalStatus": {
+      "type": "string",
+      "enum": ["pending", "approved", "rejected", "not-required", "stale"],
+      "description": "Workflow metadata for the current approval state."
+    },
+    "approverIdentity": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional workflow identity for who approved the transition. Informational only unless a future enforcement layer is added."
+    },
+    "approvalTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional approval timestamp in ISO 8601 format."
+    },
+    "transitionStatus": {
+      "type": "string",
+      "enum": ["draft", "ready", "blocked", "executed", "cancelled"],
+      "description": "Current state of the proposed transition."
+    },
+    "auditReference": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional reference to an audit entry or tracking identifier."
+    },
+    "inputsForNextAgent": {
+      "type": "array",
+      "description": "Optional list of files, artifacts, or evidence the next agent should consume.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "decisionStatus": {
+      "type": "string",
+      "enum": ["ready", "needs-clarification", "blocked"],
+      "description": "Core handoff readiness status carried into the overlay envelope when needed."
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "currentAgent": "tech-planner",
+  "recommendedNextAgent": "senior-software-engineer",
+  "scopeSummary": "Implement the approved approval-gated orchestration overlay using workflow assets only.",
+  "reasonForHandoff": "The design is approved and the next lowest-risk step is implementation of manifest, runbook, ADR, and overlay assets.",
+  "approvalRequired": true,
+  "approvalStatus": "approved",
+  "approverIdentity": "repo-maintainer",
+  "approvalTimestamp": "2026-03-09T10:30:00Z",
+  "transitionStatus": "ready",
+  "auditReference": "handoff-2026-03-09-001",
+  "inputsForNextAgent": [
+    ".github/AGENTS.md",
+    "docs/runbooks/approval-gated-handoffs.md",
+    "docs/adr/0001-approval-gated-orchestration-overlay.md"
+  ],
+  "decisionStatus": "ready"
+}

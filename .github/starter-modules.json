@@ -1,0 +1,137 @@
+{
+  "version": "1.0",
+  "description": "Composable module manifest for this agentic starter.",
+  "modules": [
+    {
+      "id": "core-baseline",
+      "kind": "core",
+      "defaultEnabled": true,
+      "when": "All repositories",
+      "files": [
+        ".github/copilot-instructions.md",
+        ".github/instructions/core.instructions.md",
+        ".github/instructions/security.instructions.md"
+      ]
+    },
+    {
+      "id": "core-governance",
+      "kind": "core",
+      "defaultEnabled": true,
+      "when": "All repositories",
+      "files": [
+        ".github/starter-modules.json",
+        ".github/roles/tool-access.json",
+        ".github/scripts/check-starter-workflow.ps1",
+        ".github/scripts/check-starter-workflow.sh",
+        ".github/scripts/check-starter-skills.ps1",
+        ".github/scripts/check-starter-skills.sh",
+        "docs/adr/0000-template.md",
+        "docs/runbooks/skills.md",
+        "docs/runbooks/starter-composition.md"
+      ]
+    },
+    {
+      "id": "core-guardrails",
+      "kind": "core",
+      "defaultEnabled": true,
+      "when": "All repositories using hooks",
+      "files": [
+        ".github/hooks/agent-policy.json",
+        ".github/hooks/policy-rules.tsv",
+        ".github/hooks/scripts/session-banner.ps1",
+        ".github/hooks/scripts/pre-tool-policy.ps1",
+        ".github/hooks/scripts/audit-log.ps1",
+        ".github/hooks/scripts/session-banner.sh",
+        ".github/hooks/scripts/pre-tool-policy.sh"
+      ]
+    },
+    {
+      "id": "core-agents",
+      "kind": "core",
+      "defaultEnabled": true,
+      "when": "Repositories that want specialist agents",
+      "files": [
+        ".github/AGENTS.md",
+        ".github/agents/analyst.agent.md",
+        ".github/agents/architecture-reviewer.agent.md",
+        ".github/agents/senior-software-engineer.agent.md",
+        ".github/agents/code-reviewer.agent.md",
+        ".github/agents/qa.agent.md",
+        ".github/agents/process-improvement.agent.md",
+        ".github/agents/tech-planner.agent.md"
+      ]
+    },
+    {
+      "id": "overlay-js-ui",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories with JavaScript or TypeScript UI code",
+      "files": [
+        ".github/instructions/frontend.instructions.md",
+        ".github/skills/ui-scaffold/SKILL.md"
+      ]
+    },
+    {
+      "id": "overlay-python-sql-backend",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories with Python services or SQL assets",
+      "files": [
+        ".github/instructions/backend.instructions.md",
+        ".github/skills/api-scaffold/SKILL.md"
+      ]
+    },
+    {
+      "id": "overlay-vitest-tdd",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Vitest and strict red-green-refactor loops",
+      "files": [
+        ".github/agents/tdd-vitest.agent.md"
+      ]
+    },
+    {
+      "id": "overlay-approval-gated-orchestration",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that want approval-gated auto-handoffs while keeping guided handoffs as the core default",
+      "files": [
+        ".github/agents/orchestration-coordinator.agent.md",
+        ".github/skills/approval-gated-handoffs/SKILL.md",
+        ".github/schema/approval-gated-handoff-envelope.schema.json",
+        ".github/examples/approval-gated-handoffs/approved-tech-planner-to-senior-software-engineer.json",
+        ".github/examples/approval-gated-handoffs/pending-architecture-reviewer-to-senior-software-engineer.json",
+        ".github/examples/approval-gated-handoffs/rejected-qa-to-senior-software-engineer.json",
+        ".github/examples/approval-gated-handoffs/stale-analyst-to-tech-planner.json",
+        ".github/scripts/check-approval-gated-orchestration.ps1",
+        ".github/scripts/check-approval-gated-orchestration.sh",
+        "docs/runbooks/approval-gated-handoffs.md"
+      ]
+    },
+    {
+      "id": "workflow-skills",
+      "kind": "optional",
+      "defaultEnabled": true,
+      "when": "Repositories that want reusable playbooks",
+      "files": [
+        ".github/skills/adr-authoring/SKILL.md",
+        ".github/skills/bug-triage/SKILL.md",
+        ".github/skills/pr-review/SKILL.md",
+        ".github/skills/qa-test-plan/SKILL.md",
+        ".github/skills/security-check/SKILL.md",
+        ".github/skills/release-notes/SKILL.md"
+      ]
+    },
+    {
+      "id": "editor-templates",
+      "kind": "optional",
+      "defaultEnabled": false,
+      "when": "Repositories standardizing on VS Code Agent Mode and MCP",
+      "files": [
+        ".vscode/settings.json",
+        ".vscode/mcp.json",
+        "docs/runbooks/mcp-servers.md"
+      ]
+    }
+  ]
+}

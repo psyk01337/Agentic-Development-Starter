@@ -1,24 +1,25 @@
 ---
 name: api-scaffold
-description: Scaffold backend API slices from an endpoint spec with schemas, route handlers, tests, and docs stubs.
+description: Optional overlay skill for scaffolding backend or service slices from a contract spec with handlers, schemas, tests, and docs stubs.
 ---
 # Skill: api-scaffold
 
 ## When to Use
-Use this skill when given a new endpoint specification or when converting a requirement into backend API scaffolding.
+Use this skill when given a new service contract or endpoint specification and the current repo already has a clear backend pattern to follow.
 
 ## Trigger Examples
 - "Scaffold a FastAPI endpoint for order cancellation."
 - "Create route, schema, and tests for this API spec."
 - "Generate backend stub for this contract."
+- "Scaffold a queue consumer or RPC handler from this contract."
 
 ## Checklist
-- Parse endpoint spec: method, path, auth, request body, query params, response codes.
-- Generate route handler stub aligned to repo conventions.
-- Generate schema/model definitions for request/response.
+- Parse contract details: transport, path or topic, auth, inputs, outputs, and error cases.
+- Generate handler stub aligned to repo conventions.
+- Generate schema or model definitions for request and response shapes when applicable.
 - Add validation and structured error handling stubs.
 - Add test stubs for success, validation failure, authz failure, and server error.
-- Add minimal API docs entry (or doc stub) matching contract.
+- Add minimal docs entry or stub matching the contract style in the repo.
 
 ## Output Format (Strict)
 Produce sections in this exact order:

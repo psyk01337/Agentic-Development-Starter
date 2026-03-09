@@ -25,5 +25,6 @@ Add-Content -Path $logPath -Value $entry
 Write-Host "=== Agentic Session Guardrails Enabled ==="
 Write-Host "Session: $SessionId"
 Write-Host "Policy : .github/hooks/agent-policy.json"
+Write-Host "Rules  : .github/hooks/policy-rules.tsv"
 Write-Host "Audit  : .github/hooks/logs/agent-audit.log"
 Write-Host "No secrets, no destructive commands, no unsafe remote execution."

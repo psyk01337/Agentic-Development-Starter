@@ -7,6 +7,7 @@ Hooks enforce deterministic guardrails and create an audit trail for agent tool 
 ## Files
 
 - Policy: `.github/hooks/agent-policy.json`
+- Rules: `.github/hooks/policy-rules.tsv`
 - Session start: `.github/hooks/scripts/session-banner.ps1`
 - Pre-tool policy: `.github/hooks/scripts/pre-tool-policy.ps1`
 - Post-tool audit: `.github/hooks/scripts/audit-log.ps1`
@@ -17,6 +18,8 @@ Hooks enforce deterministic guardrails and create an audit trail for agent tool 
 1. `sessionStart`: prints banner and logs session metadata.
 2. `preToolUse`: inspects pending tool action/command and blocks dangerous patterns.
 3. `postToolUse`: appends timestamped audit records.
+
+`agent-policy.json` defines the lifecycle wiring. `policy-rules.tsv` defines the blocklist data consumed by the pre-tool policy scripts.
 
 ## Blocked Patterns (Examples)
 
@@ -31,6 +34,15 @@ Hooks enforce deterministic guardrails and create an audit trail for agent tool 
 1. Read the block reason and safer alternative printed by the hook.
 2. Replace destructive/unsafe command with explicit, reviewable steps.
 3. Re-run with minimal privileges and narrower scope.
+
+## Extending Policy
+
+1. Add or adjust a line in `.github/hooks/policy-rules.tsv`.
+2. Keep the regex narrow enough to avoid noisy false positives.
+3. Provide a specific safer alternative, not just a generic warning.
+4. Update both shell variants only when the hook mechanism changes, not when only the rule data changes.
+
+The approval-gated orchestration overlay should reuse the existing `postToolUse` audit seam for transition records. It should not add new core hook lifecycle phases.
 
 ## Audit Log Usage
 

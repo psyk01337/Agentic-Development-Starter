@@ -7,9 +7,10 @@ Model Context Protocol (MCP) lets the agent use external tools and data sources 
 ## Add a Server (Safe Starter)
 
 1. Open `.vscode/mcp.json`.
-2. Add a server entry under `servers` with `enabled: false` first.
-3. Use placeholders and environment variable references only. Do not hardcode tokens.
-4. Keep commands constrained to known safe actions.
+2. Start from the placeholder templates rather than assuming a Node or Python runtime exists.
+3. Add a server entry under `servers` with `enabled: false` first.
+4. Use placeholders and environment variable references only. Do not hardcode tokens.
+5. Keep commands constrained to known safe actions.
 
 ## Validate a Server
 
@@ -24,6 +25,12 @@ Model Context Protocol (MCP) lets the agent use external tools and data sources 
 - Commit shared defaults in `.vscode/mcp.json`.
 - Keep machine-specific secrets/overrides out of source control.
 - Document required env vars in this runbook or project README.
+
+## Template Guidance
+
+- Keep `servers` empty until the repo has chosen real MCP servers.
+- Use placeholder commands such as `<replace-with-runtime>` and `<replace-with-server-entrypoint>` in examples.
+- Do not commit sample paths that imply files or runtimes every repo should have.
 
 ## MCP App Example
 

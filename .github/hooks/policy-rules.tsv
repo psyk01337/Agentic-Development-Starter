@@ -1,0 +1,6 @@
+# pattern	reason	saferAlternative
+(^|\s)rm\s+-rf(\s|$)	Destructive recursive delete is blocked.	Use targeted file deletion with explicit paths and code review.
+(^|\s)del\s+/s\s+/q(\s|$)	Silent recursive delete is blocked.	Use Remove-Item with explicit files and -WhatIf first.
+curl\s+[^\n\r|]*\|\s*(bash|sh)	Piped remote script execution is blocked.	Download script, inspect it, then run with explicit checksum verification.
+(invoke-webrequest|irm|curl)\s+[^\n\r|;]*\|\s*(invoke-expression|iex)	Remote content execution via Invoke-Expression is blocked.	Save remote content to a file, inspect it, and run only trusted code.
+\.env[^\n\r]*(sk-[a-z0-9]{20,}|ghp_[a-z0-9]{20,}|akia[0-9a-z]{16}|-----begin [a-z ]*private key-----|token\s*=\s*[^\s]+)	Potential real secret write to .env is blocked.	Use placeholder values and inject real secrets through secure environment management.

@@ -1,30 +1,31 @@
 {
   "$schema": "https://example.com/schemas/mcp.schema.json",
   "notes": {
-    "purpose": "Workspace MCP starter config for team-shareable, safe defaults.",
+    "purpose": "Workspace MCP starter template for team-shareable, safe defaults.",
     "secrets": "Do not store secrets here. Use environment variables and local machine secret stores.",
-    "team_vs_local": "Commit only safe shared entries. Keep machine-specific overrides in untracked local files."
+    "team_vs_local": "Commit only safe shared entries. Keep machine-specific overrides in untracked local files.",
+    "composition": "Replace placeholders only after the repo has selected real MCP servers and reviewed their commands."
   },
-  "servers": {
-    "repo-knowledge": {
+  "serverTemplates": {
+    "repo-context": {
       "enabled": false,
-      "description": "Repo knowledge server: search ADRs/runbooks and run grep-like queries across docs/code.",
+      "description": "Template for a repo context MCP server that exposes read-only search or documentation queries.",
       "transport": "stdio",
-      "command": "node",
+      "command": "<replace-with-runtime>",
       "args": [
-        "./tools/mcp/repo-knowledge-server.js"
+        "<replace-with-server-entrypoint>"
       ],
       "env": {
         "REPO_ROOT": "${workspaceFolder}"
       }
     },
-    "local-dev": {
+    "local-automation": {
       "enabled": false,
-      "description": "Local dev server: run lint/tests/build checks in a constrained allowlist.",
+      "description": "Template for a local automation server with an explicit allowlist of safe commands.",
       "transport": "stdio",
-      "command": "python",
+      "command": "<replace-with-runtime>",
       "args": [
-        "./tools/mcp/local_dev_server.py"
+        "<replace-with-server-entrypoint>"
       ],
       "env": {
         "PROJECT_ROOT": "${workspaceFolder}",
@@ -32,6 +33,7 @@
       }
     }
   },
+  "servers": {},
   "apps": {
     "enabled": false,
     "notes": "MCP Apps are opt-in UI-returning tools. Start disabled until reviewed by the team."

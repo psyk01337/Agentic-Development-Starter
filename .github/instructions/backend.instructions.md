@@ -1,12 +1,15 @@
 ---
 applyTo: "**/*.{py,pyi,sql}"
 ---
-# Backend Instructions
+# Backend Overlay Instructions (Python/SQL)
+
+These rules are an optional overlay for repositories that use Python or SQL in backend paths. They are not the baseline for every repo using this starter.
 
 ## API Conventions
 - Keep endpoint contracts explicit: request schema, response schema, and error shape.
 - Validate inputs at API boundaries and fail with structured, predictable errors.
 - Return consistent status codes and avoid leaking internal exception details.
+- Adapt the transport guidance to the repo's actual interface style: HTTP, RPC, jobs, events, or CLI.
 
 ## Data and Transactions
 - Use existing DB access patterns in this repository.
@@ -22,3 +25,4 @@ applyTo: "**/*.{py,pyi,sql}"
 ## Testing
 - Add or update unit/integration tests for changed behavior.
 - Cover unhappy paths and validation failures, not only happy paths.
+- Use the repo's actual test runner and fixture style rather than assuming one.
