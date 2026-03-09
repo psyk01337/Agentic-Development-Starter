@@ -6,6 +6,8 @@ This runbook explains how to adapt the starter to a target repository without dr
 
 Keep these modules in almost every repo:
 
+- `CHANGELOG.md`
+- `DOC-CHANGELOG.md`
 - `.github/copilot-instructions.md`
 - `.github/instructions/core.instructions.md`
 - `.github/instructions/security.instructions.md`
@@ -15,7 +17,14 @@ Keep these modules in almost every repo:
 - `.github/hooks/policy-rules.tsv`
 - `docs/adr/0000-template.md`
 
-These files define the baseline delivery rules, safety posture, hook contract, and module registry.
+These files define the baseline delivery rules, safety posture, hook contract, module registry, and the default traceability logs for implementation and documentation changes.
+
+Keep the logs split on purpose:
+
+- `CHANGELOG.md` for source code, scripts, executable config, tests, and behavior-affecting changes
+- `DOC-CHANGELOG.md` for Markdown, text, ADRs, runbooks, and other documentation updates
+
+Cross-reference related entries when code and docs evolve together so discrepancies stay visible.
 
 ## 2. Add Overlays Only When The Repo Needs Them
 
@@ -86,6 +95,7 @@ Rules:
 Before treating the starter as complete for a new repo:
 
 1. Replace example doc references with the repo's real source-of-truth docs.
-2. Trim modules that do not apply.
-3. Rename or remove skills that imply patterns the repo does not use.
-4. Capture workflow decisions in ADRs when they affect multiple teams or repos.
+2. Start recording implementation updates in `CHANGELOG.md` and documentation updates in `DOC-CHANGELOG.md`.
+3. Trim modules that do not apply.
+4. Rename or remove skills that imply patterns the repo does not use.
+5. Capture workflow decisions in ADRs when they affect multiple teams or repos.

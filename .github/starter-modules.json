@@ -19,6 +19,8 @@
       "defaultEnabled": true,
       "when": "All repositories",
       "files": [
+        "CHANGELOG.md",
+        "DOC-CHANGELOG.md",
         ".github/starter-modules.json",
         ".github/roles/tool-access.json",
         ".github/scripts/check-starter-workflow.ps1",

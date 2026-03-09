@@ -16,6 +16,8 @@ Start with core modules, then opt into only the overlays that match the target r
 
 ### Core
 
+- `CHANGELOG.md`
+- `DOC-CHANGELOG.md`
 - `.github/copilot-instructions.md`
 - `.github/instructions/core.instructions.md`
 - `.github/instructions/security.instructions.md`
@@ -88,6 +90,8 @@ Use `.github/starter-modules.json` as the source of truth for what is core, what
 
 ### Team docs
 
+- `CHANGELOG.md`
+- `DOC-CHANGELOG.md`
 - `docs/adr/0000-template.md`
 - `docs/runbooks/agentic-dev.md`
 - `docs/runbooks/skills.md`
@@ -111,8 +115,9 @@ Use `.github/starter-modules.json` as the source of truth for what is core, what
 
 1. Keep the core baseline, security rules, hook policy, and ADR template.
 2. Rewrite examples so they match the target repo's actual source-of-truth docs and commands.
-3. Add only the agents and skills the team will actually use.
-4. Keep the repo checks working as you trim or extend starter modules.
+3. Keep `CHANGELOG.md` for implementation changes and `DOC-CHANGELOG.md` for documentation changes so drift is traceable.
+4. Add only the agents and skills the team will actually use.
+5. Keep the repo checks working as you trim or extend starter modules.
 
 ### For a stack-specific repo
 
@@ -190,7 +195,16 @@ For the general skill catalog, the repo-local consistency checks live in `.githu
 
 For the overall starter workflow assets, the umbrella checks live in `.github/scripts/check-starter-workflow.ps1` and `.github/scripts/check-starter-workflow.sh`.
 
-## 10. Validation Helpers
+## 10. Change Tracking
+
+Use the root changelogs to keep implementation and documentation history separate but cross-referenced:
+
+- `CHANGELOG.md`: source code, scripts, config, test, and other executable changes
+- `DOC-CHANGELOG.md`: Markdown, text, ADR, runbook, and other documentation changes
+
+When a code change affects docs, add entries to both files and cross-reference them. When a docs-only clarification has no implementation impact, record `Related code: None` in `DOC-CHANGELOG.md`.
+
+## 11. Validation Helpers
 
 Use the repo-local checks to keep the starter consistent as it evolves:
 
@@ -198,13 +212,14 @@ Use the repo-local checks to keep the starter consistent as it evolves:
 - `.github/scripts/check-starter-skills.ps1` or `.github/scripts/check-starter-skills.sh`: verify manifest-listed skill directories and `SKILL.md` files
 - `.github/scripts/check-approval-gated-orchestration.ps1` or `.github/scripts/check-approval-gated-orchestration.sh`: verify the optional orchestration overlay assets, docs, and schema references
 
-## 11. ADR Workflow
+## 12. ADR Workflow
 
 Use `docs/adr/0000-template.md` for decisions that affect architecture, workflow, security posture, or cross-repo conventions.
 
-## 12. First Improvements To Make In A New Repo
+## 13. First Improvements To Make In A New Repo
 
 1. Replace example doc references with the repo's actual source-of-truth docs.
 2. Trim unused overlay modules from `.github/starter-modules.json`.
-3. Add one project-specific skill or agent only after a repeated workflow need is proven.
-4. Run the validation helpers after any starter-level change so the manifest, docs, skills, and overlays stay aligned.
+3. Start using `CHANGELOG.md` and `DOC-CHANGELOG.md` from the first real repo adaptation so drift stays visible.
+4. Add one project-specific skill or agent only after a repeated workflow need is proven.
+5. Run the validation helpers after any starter-level change so the manifest, docs, skills, and overlays stay aligned.

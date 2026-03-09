@@ -60,6 +60,8 @@ This runbook describes the daily operating model once the starter has been compo
 1. Store current plan and constraints in session memory.
 2. Maintain a short decision log during the session.
 3. Mirror major decisions into ADRs under `docs/adr/`.
+4. When a task changes executable behavior, add or update an entry in `CHANGELOG.md`.
+5. When a task changes Markdown, text, ADRs, or runbooks, add or update an entry in `DOC-CHANGELOG.md`.
 
 ## 5) Compact Context After Milestones
 
@@ -114,6 +116,13 @@ See `docs/runbooks/skills.md` for example prompts for each skill and quick guida
 4. Keep full automatic handoffs out of core unless the repo later adds a dedicated orchestration overlay.
 
 If you do enable that overlay, keep the richer approval metadata and transition records inside the overlay contract rather than expanding the core handoff contract for every repo.
+
+## 9a) Keep Changelogs Cross-Referenced
+
+1. Use `CHANGELOG.md` for code, scripts, tests, runtime config, and other executable changes.
+2. Use `DOC-CHANGELOG.md` for Markdown, text, ADR, runbook, and onboarding changes.
+3. Cross-reference related entries when code and docs change together.
+4. Record known discrepancies explicitly instead of leaving drift implicit.
 
 ## 10) Optional: Kitty Graphics Protocol
 
