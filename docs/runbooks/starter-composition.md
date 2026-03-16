@@ -2,6 +2,9 @@
 
 This runbook explains how to adapt the starter to a target repository without dragging along stack-specific assumptions that do not apply.
 
+If the target repository already has a populated `.github` folder, follow `docs/runbooks/adopting-existing-github.md` first and treat this runbook as the composition reference after baseline merge decisions are made.
+Do not assume sample file names or paths exist in every target repository; map assets by purpose and available source-of-truth docs.
+
 ## 1. Start With Core Modules
 
 Keep these modules in almost every repo:
@@ -16,6 +19,7 @@ Keep these modules in almost every repo:
 - `.github/hooks/agent-policy.json`
 - `.github/hooks/policy-rules.tsv`
 - `docs/adr/0000-template.md`
+- `docs/runbooks/adopting-existing-github.md` for existing repos with pre-existing `.github` assets
 
 These files define the baseline delivery rules, safety posture, hook contract, module registry, and the default traceability logs for implementation and documentation changes.
 

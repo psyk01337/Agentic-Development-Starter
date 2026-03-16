@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-03-16 - Add existing-.github adoption runbook to governance manifest
+
+- Area: starter governance
+- Change type: config
+- Summary: updated the starter module manifest to include the new runbook for adopting this starter into repositories that already have a populated `.github` folder.
+- Reason: make minimal-first existing-repo migration guidance part of core governance assets and keep manifest/file checks aligned.
+- Affected files: .github/starter-modules.json
+- Related docs: DOC-CHANGELOG.md entry "2026-03-16 - Add existing-.github adoption runbook and wiring"
+- Validation: pending manual check script run
+- Discrepancies or follow-up: none
+
 ### 2026-03-09 - Initialize source code changelog
 
 - Area: repository governance

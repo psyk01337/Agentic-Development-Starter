@@ -24,6 +24,50 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-03-16 - Add existing-project rollout order to README
+
+- Area: onboarding and adaptation guidance
+- Change type: docs
+- Summary: added an explicit phased rollout order for existing repositories: minimal merge, validation, then incremental module additions.
+- Reason: make the adoption sequence explicit in the primary entrypoint doc and align with the runbook guidance.
+- Affected files: README.md
+- Related code: None
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
+### 2026-03-16 - Add required optional sample-only checklist table
+
+- Area: migration runbook
+- Change type: runbook
+- Summary: added an artifact checklist table that classifies starter assets as required, optional, or sample-only and defines what to do when each artifact is missing in a target repo.
+- Reason: make existing-repo adoption consistent even when `.github` structures differ from the sample project.
+- Affected files: docs/runbooks/adopting-existing-github.md
+- Related code: None
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
+### 2026-03-16 - Clarify sample file lists are illustrative
+
+- Area: migration runbooks
+- Change type: docs
+- Summary: clarified that sample project-doc paths are examples only and that real adoption should map by purpose instead of exact filename.
+- Reason: prevent incorrect assumptions when target repositories have different `.github` structures or missing sample-equivalent files.
+- Affected files: docs/runbooks/adopting-existing-github.md, docs/runbooks/starter-composition.md
+- Related code: None
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
+### 2026-03-16 - Add existing-.github adoption runbook and wiring
+
+- Area: starter runbooks and README
+- Change type: runbook
+- Summary: added a dedicated migration runbook for repositories that already contain `.github` assets, and linked it from the composition runbook and README adaptation sections.
+- Reason: provide concrete, low-risk merge guidance that prevents accidental overwrite of existing project-specific `.github` files.
+- Affected files: docs/runbooks/adopting-existing-github.md, docs/runbooks/starter-composition.md, README.md
+- Related code: CHANGELOG.md entry "2026-03-16 - Add existing-.github adoption runbook to governance manifest"
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
 ### 2026-03-09 - Initialize documentation changelog
 
 - Area: repository governance

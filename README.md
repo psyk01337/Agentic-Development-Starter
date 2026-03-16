@@ -109,15 +109,30 @@ Use `.github/starter-modules.json` as the source of truth for what is core, what
 5. Start work with a short plan, small diffs, and explicit risk callouts.
 6. Run the repo checks before treating workflow changes as complete.
 
+## 3.1 Existing Project Rollout Order
+
+For repositories that already have source code and existing `.github` content, use this order:
+
+1. Merge minimal baseline first (`.github/copilot-instructions.md`, core/security instructions, module manifest, changelog strategy).
+2. Validate baseline behavior with local checks and prompt smoke tests.
+3. Add important modules in small follow-up PRs:
+	- Stack overlays that match real code paths
+	- High-value agents and skills the team will use immediately
+	- Hook guardrails after policy review
+4. Keep optional orchestration overlays disabled unless there is a clear operational need.
+
+Use `docs/runbooks/adopting-existing-github.md` for the detailed checklist, including required vs optional vs sample-only artifacts.
+
 ## 4. How To Adapt This Starter
 
 ### For any repo
 
 1. Keep the core baseline, security rules, hook policy, and ADR template.
-2. Rewrite examples so they match the target repo's actual source-of-truth docs and commands.
-3. Keep `CHANGELOG.md` for implementation changes and `DOC-CHANGELOG.md` for documentation changes so drift is traceable.
-4. Add only the agents and skills the team will actually use.
-5. Keep the repo checks working as you trim or extend starter modules.
+2. If the target already has `.github` assets, follow `docs/runbooks/adopting-existing-github.md` and merge selectively rather than replacing the folder.
+3. Rewrite examples so they match the target repo's actual source-of-truth docs and commands.
+4. Keep `CHANGELOG.md` for implementation changes and `DOC-CHANGELOG.md` for documentation changes so drift is traceable.
+5. Add only the agents and skills the team will actually use.
+6. Keep the repo checks working as you trim or extend starter modules.
 
 ### For a stack-specific repo
 
@@ -183,6 +198,7 @@ Rules:
 ## 9. Runbooks
 
 - `docs/runbooks/starter-composition.md`: how to select core modules and overlays
+- `docs/runbooks/adopting-existing-github.md`: minimal-first merge flow for repos with existing `.github` content
 - `docs/runbooks/agentic-dev.md`: daily operating model
 - `docs/runbooks/skills.md`: example prompts and usage guidance for each starter skill
 - `docs/runbooks/approval-gated-handoffs.md`: optional overlay for approval-gated orchestration
