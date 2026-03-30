@@ -10,6 +10,7 @@ if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
 
 $scripts = @(
   ".github/scripts/check-starter-skills.ps1",
+  ".github/scripts/check-agent-contracts.ps1",
   ".github/scripts/check-approval-gated-orchestration.ps1"
 )
 

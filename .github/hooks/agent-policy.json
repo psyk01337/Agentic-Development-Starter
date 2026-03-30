@@ -2,6 +2,15 @@
   "version": "1.0",
   "description": "Deterministic hook policy for agent safety and auditability.",
   "rulesPath": ".github/hooks/policy-rules.tsv",
+  "rolePolicyGuidance": {
+    "source": ".github/roles/tool-access.json",
+    "executeCapableRoles": [
+      "analysis",
+      "planning",
+      "implementation"
+    ],
+    "notes": "preToolUse command-pattern blocking is most relevant for roles that can execute commands. Review and workflow-maintenance roles are still subject to hooks but normally do not invoke execute tools."
+  },
   "logging": {
     "path": ".github/hooks/logs/agent-audit.log",
     "format": "jsonl"

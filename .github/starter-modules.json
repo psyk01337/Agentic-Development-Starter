@@ -25,6 +25,8 @@
         ".github/roles/tool-access.json",
         ".github/scripts/check-starter-workflow.ps1",
         ".github/scripts/check-starter-workflow.sh",
+        ".github/scripts/check-agent-contracts.ps1",
+        ".github/scripts/check-agent-contracts.sh",
         ".github/scripts/check-starter-skills.ps1",
         ".github/scripts/check-starter-skills.sh",
         "docs/adr/0000-template.md",
@@ -75,6 +77,42 @@
       ]
     },
     {
+      "id": "overlay-react-ui",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use React and want framework-specific UI guidance",
+      "files": [
+        ".github/instructions/react.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-nextjs",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Next.js and want framework-specific UI guidance",
+      "files": [
+        ".github/instructions/nextjs.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-frontend-vitest-rtl",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Vitest with React Testing Library for frontend test coverage",
+      "files": [
+        ".github/instructions/frontend-vitest-rtl.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-frontend-e2e",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Playwright or Cypress for frontend end-to-end testing",
+      "files": [
+        ".github/instructions/frontend-e2e.instructions.md"
+      ]
+    },
+    {
       "id": "overlay-python-sql-backend",
       "kind": "overlay",
       "defaultEnabled": false,
@@ -82,6 +120,15 @@
       "files": [
         ".github/instructions/backend.instructions.md",
         ".github/skills/api-scaffold/SKILL.md"
+      ]
+    },
+    {
+      "id": "overlay-fastapi",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use FastAPI and want framework-specific backend guidance",
+      "files": [
+        ".github/instructions/fastapi.instructions.md"
       ]
     },
     {

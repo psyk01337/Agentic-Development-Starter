@@ -1,26 +1,147 @@
 {
-  "version": "1.0",
-  "description": "Shared tool-access roles for custom agents in this starter.",
+  "version": "1.1",
+  "description": "Shared tool-access roles for custom agents in this starter with per-tool and per-agent capability matrix.",
+  "toolDefinitions": {
+    "read": {
+      "description": "Read files and directories, inspect code, get context from codebase.",
+      "examples": ["read_file", "list_dir", "view_image"]
+    },
+    "search": {
+      "description": "Search codebase with grep, regex, semantic search, and file glob patterns.",
+      "examples": ["grep_search", "semantic_search", "file_search"]
+    },
+    "edit": {
+      "description": "Create and modify files and directories without restrictions; includes workflow assets and application code depending on agent role.",
+      "examples": ["create_file", "replace_string_in_file", "multi_replace_string_in_file", "create_directory"]
+    },
+    "execute": {
+      "description": "Run terminal commands, tests, validation checks, and external tools to gather evidence and verify work.",
+      "examples": ["run_in_terminal", "terminal_last_command", "terminal_selection"]
+    },
+    "todo": {
+      "description": "Create and manage task tracking to organize work, maintain visibility, and preserve session state.",
+      "examples": ["manage_todo_list"]
+    }
+  },
   "roles": {
     "analysis": {
       "tools": ["read", "search", "execute", "todo"],
-      "intent": "Gather evidence and reduce uncertainty without editing files."
+      "intent": "Gather evidence and reduce uncertainty without editing files. Inspects codebase, docs, and runs verification commands to answer technical questions with confidence."
     },
     "planning": {
       "tools": ["read", "search", "edit", "execute", "todo"],
-      "intent": "Create design artifacts, validate assumptions, and prepare implementation-ready plans without owning application code changes by default."
+      "intent": "Create design artifacts, validate assumptions, and prepare implementation-ready plans. Can edit ADRs and planning docs, but does not own application code changes by default."
     },
     "review": {
       "tools": ["read", "search", "todo"],
-      "intent": "Inspect work and report findings without making changes."
+      "intent": "Inspect work and report findings without making changes. Reviews code, architecture, and proposals against repo standards and source-of-truth docs."
     },
     "implementation": {
       "tools": ["read", "search", "edit", "execute", "todo"],
-      "intent": "Implement focused changes and validate them with the smallest relevant commands."
+      "intent": "Implement focused changes and validate them with the smallest relevant commands. Can edit application code, tests, and supporting docs; validates changes before handoff."
     },
     "workflow-maintenance": {
       "tools": ["read", "search", "edit", "todo"],
-      "intent": "Update workflow assets such as agents, skills, instructions, and runbooks."
+      "intent": "Update workflow assets such as agents, skills, instructions, and runbooks. Does not run terminal commands; scoped to repo customization files only."
+    }
+  },
+  "agentCapabilityMatrix": {
+    "analyst": {
+      "role": "analysis",
+      "scope": "Technical investigation and root-cause analysis",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": true,
+        "execute-notes": "Can run validation commands and checks to confirm findings",
+        "edit": false,
+        "todo": true
+      }
+    },
+    "architecture-reviewer": {
+      "role": "review",
+      "scope": "Contract alignment, boundary fit, and architectural risk assessment",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": false,
+        "edit": false,
+        "todo": true
+      }
+    },
+    "code-reviewer": {
+      "role": "review",
+      "scope": "Correctness, regressions, maintainability, and test coverage",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": false,
+        "edit": false,
+        "todo": true
+      }
+    },
+    "qa": {
+      "role": "analysis",
+      "scope": "Test sufficiency, user flow validation, and release-readiness",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": true,
+        "execute-notes": "Can run test and verification commands; does not edit production code",
+        "edit": false,
+        "todo": true
+      }
+    },
+    "senior-software-engineer": {
+      "role": "implementation",
+      "scope": "Primary coding, focused changes, validation, and delivery",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": true,
+        "execute-notes": "Full execution access for tests, linting, building, and validation",
+        "edit": true,
+        "edit-notes": "Can edit application code, tests, docs, and supporting files",
+        "todo": true
+      }
+    },
+    "tech-planner": {
+      "role": "planning",
+      "scope": "Technical direction, design artifacts, ADRs, and phased delivery planning",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": true,
+        "execute-notes": "Can run checks to validate assumptions and gather design evidence",
+        "edit": true,
+        "edit-notes": "Can edit design artifacts, ADRs, planning docs, and related runbooks; scoped vs application code",
+        "todo": true
+      }
+    },
+    "tdd-vitest": {
+      "role": "implementation",
+      "scope": "TDD implementation overlay for Vitest-based strict red-green-refactor loops",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": true,
+        "execute-notes": "Full execution access for Vitest and validation",
+        "edit": true,
+        "edit-notes": "Can edit application code, tests, and docs",
+        "todo": true
+      }
+    },
+    "process-improvement": {
+      "role": "workflow-maintenance",
+      "scope": "Workflow asset maintenance, instructions, skills, agents, runbooks, and guardrails",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": false,
+        "edit": true,
+        "edit-notes": "Scoped to .github/, docs/runbooks/, and other workflow assets only",
+        "todo": true
+      }
     }
   },
   "agentRoleHints": {

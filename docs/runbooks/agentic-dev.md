@@ -41,6 +41,18 @@ This runbook describes the daily operating model once the starter has been compo
 2. Require an explicit approval checkpoint before the coordinator drafts or advances the next handoff.
 3. Fall back to normal guided handoffs whenever approval is missing, rejected, or stale.
 
+## 1b) Redirect Mid-Chain When Signals Appear
+
+Normal guided chains can be redirected when an agent's output reveals a signal that a different specialist is needed. These are the most common redirects:
+
+- **Design gap or unresolved tradeoff found during implementation** → redirect to `tech-planner` before continuing.
+- **Contract boundary or module interface touched unexpectedly** → redirect to `architecture-reviewer` before continuing.
+- **Codebase contradicts source-of-truth docs** → redirect to `analyst` to investigate before next step.
+- **QA finds a behavioral gap vs. documented expected behavior** → redirect to `analyst`, not directly to `senior-software-engineer`.
+- **Scope expands mid-implementation beyond the requested slice** → stop, surface to user, get explicit scope decision before continuing.
+
+See `.github/AGENTS.md` Conditional Delegation Triggers table for the full reference. These redirects are advisory — the orchestrating user always decides.
+
 ## 2) Use Agent Plugins as Team Bundles
 
 1. Open Extensions view.
@@ -62,6 +74,35 @@ This runbook describes the daily operating model once the starter has been compo
 3. Mirror major decisions into ADRs under `docs/adr/`.
 4. When a task changes executable behavior, add or update an entry in `CHANGELOG.md`.
 5. When a task changes Markdown, text, ADRs, or runbooks, add or update an entry in `DOC-CHANGELOG.md`.
+
+### 4a) Follow the Handoff Memory Contract
+
+Each agent defines a **Handoff Memory Contract** at the top of its agent file. Before handing off to the next specialist, preserve the required fields in session memory. This ensures each subsequent agent starts with complete context rather than re-deriving it from scratch.
+
+- `analyst`: question investigated, confirmed findings, inferences, risk calls, next decision
+- `tech-planner`: problem scope, constraints, options considered, recommended plan, phased delivery plan
+- `architecture-reviewer`: change under review, relevant contracts, findings, verdict, conditions or corrections
+- `senior-software-engineer`: behavior addressed, files changed, validation performed, implementation notes, residual risks
+- `code-reviewer`: files reviewed, findings by severity, missing test coverage, verdict, next steps
+- `qa`: flow verified, coverage assessment, commands run, gaps found, QA verdict
+- `process-improvement`: workflow issue, current gap, proposed change, files updated, approval status
+- `tdd-vitest`: behavior added, failing test written first, Vitest command run, implementation notes, residual risks
+- `orchestration-coordinator`: current workflow state, proposed next agent, approval status, transition metadata, fallback decision
+
+Use the fields as a checklist — if a field has nothing meaningful to write, say so explicitly rather than omitting it.
+
+### 4b) Respect Escalation and Failure Mode Signals
+
+Each agent also defines an **Escalation and Failure Modes** section. When an agent signals `blocked`, `needs-clarification`, or an escalation to a different specialist than the default next step, treat this as a redirect, not an error to ignore.
+
+Common patterns:
+
+- `blocked` or `needs-clarification` decision status → do not advance the chain; resolve the blocker first.
+- Escalation to `analyst` mid-chain → pause the delivery chain and run investigation before continuing.
+- Escalation to `architecture-reviewer` mid-chain → run an architecture-fit check before returning to implementation.
+- Scope expansion detected → surface to user and get an explicit decision; never silently continue.
+
+Full trigger reference lives in `.github/AGENTS.md` under **Conditional Delegation Triggers**.
 
 ## 5) Compact Context After Milestones
 
@@ -123,6 +164,15 @@ If you do enable that overlay, keep the richer approval metadata and transition 
 2. Use `DOC-CHANGELOG.md` for Markdown, text, ADR, runbook, and onboarding changes.
 3. Cross-reference related entries when code and docs change together.
 4. Record known discrepancies explicitly instead of leaving drift implicit.
+
+## 9b) Validate Workflow Assets After Edits
+
+When a task edits agents, skills, instructions, hooks, or runbooks, run the starter workflow checks before closing the task.
+
+- PowerShell: `.github/scripts/check-starter-workflow.ps1`
+- Shell: `.github/scripts/check-starter-workflow.sh`
+
+Treat any missing contract sections, missing manifest entries, or overlay consistency failures as blockers until resolved.
 
 ## 10) Optional: Kitty Graphics Protocol
 

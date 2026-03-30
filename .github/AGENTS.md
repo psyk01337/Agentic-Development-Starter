@@ -13,7 +13,7 @@ This repository uses repo-native custom agents for recurring roles. The starter 
 - Prefer `pr-review` when you want the review skill's fixed output format on a current diff.
 - Prefer `code-reviewer` when you want a dedicated reviewer role inside the session, especially when the review needs to stay findings-first while considering repo conventions and nearby context.
 
-Shared role intent lives in `.github/roles/tool-access.json`. Use that file when deciding whether to add a new agent or when tightening tool boundaries across the starter.
+Shared role intent lives in `.github/roles/tool-access.json`. Use that file when deciding whether to add a new agent or when tightening tool boundaries across the starter. The file includes a `toolDefinitions` section explaining each capability and an `agentCapabilityMatrix` section with per-agent tool access details and scope notes.
 
 ## Guided Handoff Contract
 
@@ -29,6 +29,10 @@ Every agent should end its output with these fields:
 This is a guided chain, not an automatic chain. The orchestrating user or main chat decides whether to take the recommendation.
 
 If a repo enables the approval-gated orchestration overlay, that overlay extends this contract with approval and transition metadata. Those richer fields are overlay-only, not part of the core baseline.
+
+### Handoff Memory Contract
+
+Each agent file also defines a `## Handoff Memory Contract` section that specifies what fields each agent should preserve in session memory before handing off to the next specialist. Following this contract ensures subsequent agents start with complete context rather than re-deriving it from scratch. See each agent file and `docs/runbooks/agentic-dev.md` section 4 for the full field reference.
 
 ## Agent Set
 
@@ -110,6 +114,23 @@ If a repo enables the approval-gated orchestration overlay, that overlay extends
 6. Use `code-reviewer` when the work needs a findings-first review before it is considered ready.
 7. Use `qa` when you need explicit verification of test sufficiency and risky user flows.
 8. Use `process-improvement` only for workflow assets, and only with clear user approval before edits.
+
+## Conditional Delegation Triggers
+
+These are common mid-chain signals that should redirect the handoff to a different specialist than the default next step.
+
+| If you observe… | Redirect to… | Instead of… |
+| --- | --- | --- |
+| Findings reveal a design gap or unresolved tradeoff | `tech-planner` | continuing to `senior-software-engineer` |
+| Implementation touches a contract boundary or module interface | `architecture-reviewer` | continuing implementation |
+| Codebase behavior contradicts source-of-truth docs | `analyst` | continuing to next planned agent |
+| TDD loop surfaces an unexpected interface or dependency shape | `architecture-reviewer` | continuing the red-green loop |
+| Code review finds a structural or boundary issue beyond code-level fixes | `architecture-reviewer` | returning to `senior-software-engineer` |
+| QA reveals a behavioral gap vs. documented expected behavior | `analyst` | returning to `senior-software-engineer` |
+| Scope expands mid-implementation beyond the requested slice | stop + user decision | continuing implementation |
+| Two consecutive handoffs stall on missing approval (overlay mode) | user escalation | retrying the transition |
+
+These triggers are advisory signals. The orchestrating user or main chat always decides whether to follow a redirect.
 
 ## Sequencing Shortcuts
 

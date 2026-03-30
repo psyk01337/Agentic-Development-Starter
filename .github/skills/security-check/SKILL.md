@@ -17,7 +17,14 @@ Use this skill for any change touching auth, input handling, file/network access
 - Injection vectors: SQL, shell, template, path traversal, and unsafe eval patterns checked.
 - Secrets and logging: no token leakage, no sensitive payload logs, no hardcoded credentials.
 - File and network access: SSRF controls, safe path normalization, allowlist/denylist use.
-- Dependency risks: vulnerable/outdated packages and risky transitive changes considered.
+- Dependency risks:
+  - Vulnerable or outdated packages and risky transitive changes flagged.
+  - Version ranges open to auto-upgrade (`*`, `^`, `~latest`) in production manifests called out.
+  - Lockfile presence and integrity (hash pins) verified.
+  - New or unfamiliar packages checked for name-confusion/typosquatting risk and publisher identity.
+  - Security tooling itself (scanners, base images, SAST tools) treated as a supply chain target — pinned versions required.
+  - Postinstall/lifecycle scripts in new dependencies reviewed for unexpected execution.
+  - Registry sources checked — plain HTTP or `--trusted-host` usage is a blocked pattern.
 
 ## Output Format (Strict)
 If issues exist, return:

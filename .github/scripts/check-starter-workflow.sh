@@ -6,6 +6,7 @@ REPO_ROOT="${1:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 
 scripts=(
   ".github/scripts/check-starter-skills.sh"
+  ".github/scripts/check-agent-contracts.sh"
   ".github/scripts/check-approval-gated-orchestration.sh"
 )
 

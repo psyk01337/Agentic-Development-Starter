@@ -33,10 +33,17 @@ Start with core modules, then opt into only the overlays that match the target r
 ### Optional stack overlays
 
 - `.github/instructions/frontend.instructions.md`
+- `.github/instructions/react.instructions.md`
+- `.github/instructions/nextjs.instructions.md`
+- `.github/instructions/frontend-vitest-rtl.instructions.md`
+- `.github/instructions/frontend-e2e.instructions.md`
 - `.github/instructions/backend.instructions.md`
+- `.github/instructions/fastapi.instructions.md`
 - `.github/agents/tdd-vitest.agent.md`
 - `.github/skills/api-scaffold/SKILL.md`
 - `.github/skills/ui-scaffold/SKILL.md`
+
+For test-focused overlays, keep `applyTo` patterns narrow so they target test files and test directories rather than every TS/JS file.
 
 ### Optional workflow assets
 
@@ -116,9 +123,9 @@ For repositories that already have source code and existing `.github` content, u
 1. Merge minimal baseline first (`.github/copilot-instructions.md`, core/security instructions, module manifest, changelog strategy).
 2. Validate baseline behavior with local checks and prompt smoke tests.
 3. Add important modules in small follow-up PRs:
-	- Stack overlays that match real code paths
-	- High-value agents and skills the team will use immediately
-	- Hook guardrails after policy review
+   - Stack overlays that match real code paths
+   - High-value agents and skills the team will use immediately
+   - Hook guardrails after policy review
 4. Keep optional orchestration overlays disabled unless there is a clear operational need.
 
 Use `docs/runbooks/adopting-existing-github.md` for the detailed checklist, including required vs optional vs sample-only artifacts.
@@ -178,9 +185,12 @@ Hook lifecycle is defined in `.github/hooks/agent-policy.json`. Block rules live
 ### Defaults
 
 - No destructive wildcard deletes
+- No destructive git discard commands (`git reset --hard`, `git checkout --`)
 - No piped remote script execution
 - No remote content executed through `Invoke-Expression`
+- No overly permissive recursive chmod operations (`chmod -R 777`)
 - No likely real secrets written into `.env`
+- No package installs over plain HTTP or with TLS bypassed (`pip install --trusted-host`, `--index-url http://`, `npm install --registry http://`)
 
 If a command is blocked, use the safer alternative printed by the hook.
 

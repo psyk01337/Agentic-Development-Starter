@@ -40,12 +40,38 @@ Add or keep:
 - `.github/skills/ui-scaffold/SKILL.md`
 - `.github/agents/tdd-vitest.agent.md` when Vitest is the real test runner
 
+If the repo uses React, also add:
+
+- `.github/instructions/react.instructions.md`
+
+If the repo uses Next.js, also add:
+
+- `.github/instructions/nextjs.instructions.md`
+
+If the repo uses Vitest + React Testing Library for frontend tests, also add:
+
+- `.github/instructions/frontend-vitest-rtl.instructions.md`
+
+If the repo uses Playwright or Cypress for browser e2e tests, also add:
+
+- `.github/instructions/frontend-e2e.instructions.md`
+
+Keep framework-specific rules in the React or Next.js overlays and keep `.github/instructions/frontend.instructions.md` framework-agnostic.
+Keep frontend test-stack rules in test overlays so unit/component and e2e conventions can be enabled independently.
+Prefer narrow `applyTo` patterns for test overlays so they match test files and test directories instead of all source files.
+
 ### Python or SQL backend repos
 
 Add or keep:
 
 - `.github/instructions/backend.instructions.md`
 - `.github/skills/api-scaffold/SKILL.md`
+
+If the repo uses FastAPI, also add:
+
+- `.github/instructions/fastapi.instructions.md`
+
+Keep FastAPI-specific rules in the FastAPI overlay and keep `.github/instructions/backend.instructions.md` framework-agnostic.
 
 ### Other stacks
 
@@ -67,6 +93,8 @@ Use `tdd-vitest` only when strict Vitest TDD is actually part of the repo workfl
 
 Shared tool boundaries are documented in `.github/roles/tool-access.json`. Update that file before duplicating tool intent across multiple agents.
 
+The file includes a `toolDefinitions` section explaining what each capability (`read`, `search`, `edit`, `execute`, `todo`) covers, and an `agentCapabilityMatrix` section with per-agent tool access details. When adding a new agent, add it to both the `agentRoleHints` map and the `agentCapabilityMatrix` with explicit tool-access entries and scope notes.
+
 The core starter uses guided handoffs, not automatic handoffs. If a target repo later needs agent-to-agent orchestration, add it as an optional overlay with explicit approval and audit behavior.
 
 The optional approval-gated orchestration overlay is documented in `docs/runbooks/approval-gated-handoffs.md` and should remain default-disabled unless a team has an explicit reason to adopt it.
@@ -82,6 +110,8 @@ To extend policy safely:
 3. Test both PowerShell and shell behavior if your team uses both.
 
 Avoid hardcoding new policy directly into the scripts unless the hook mechanism itself is changing.
+
+Hook policy remains global at runtime, but role applicability should stay explicit in `.github/hooks/agent-policy.json` and aligned to `.github/roles/tool-access.json`.
 
 ## 5. Keep MCP Templates As Templates
 
@@ -103,3 +133,12 @@ Before treating the starter as complete for a new repo:
 3. Trim modules that do not apply.
 4. Rename or remove skills that imply patterns the repo does not use.
 5. Capture workflow decisions in ADRs when they affect multiple teams or repos.
+
+## 7. Run Workflow Quality Gates After Changes
+
+After changing agents, runbooks, hook policy, or workflow scripts, run the starter checks and resolve failures before handing off.
+
+- PowerShell: `.github/scripts/check-starter-workflow.ps1`
+- Shell: `.github/scripts/check-starter-workflow.sh`
+
+These checks include skill-manifest validation, overlay consistency checks, and agent contract checks.
