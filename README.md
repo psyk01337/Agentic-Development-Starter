@@ -27,6 +27,8 @@ Start with core modules, then opt into only the overlays that match the target r
 - `.github/scripts/check-starter-workflow.sh`
 - `.github/scripts/check-starter-skills.ps1`
 - `.github/scripts/check-starter-skills.sh`
+- `.github/scripts/check-agent-contracts.ps1`
+- `.github/scripts/check-agent-contracts.sh`
 - `.github/hooks/agent-policy.json`
 - `.github/hooks/policy-rules.tsv`
 
@@ -61,6 +63,8 @@ For test-focused overlays, keep `applyTo` patterns narrow so they target test fi
 - `.github/scripts/check-starter-workflow.sh`
 - `.github/scripts/check-starter-skills.ps1`
 - `.github/scripts/check-starter-skills.sh`
+- `.github/scripts/check-agent-contracts.ps1`
+- `.github/scripts/check-agent-contracts.sh`
 - `.github/scripts/check-approval-gated-orchestration.ps1`
 - `.github/scripts/check-approval-gated-orchestration.sh`
 - `.vscode/mcp.json`
@@ -219,6 +223,8 @@ For the orchestration overlay, the machine-readable transition contract lives in
 
 For the general skill catalog, the repo-local consistency checks live in `.github/scripts/check-starter-skills.ps1` and `.github/scripts/check-starter-skills.sh`.
 
+For agent handoff and escalation contract coverage, the repo-local checks live in `.github/scripts/check-agent-contracts.ps1` and `.github/scripts/check-agent-contracts.sh`.
+
 For the overall starter workflow assets, the umbrella checks live in `.github/scripts/check-starter-workflow.ps1` and `.github/scripts/check-starter-workflow.sh`.
 
 ## 10. Change Tracking
@@ -236,6 +242,7 @@ Use the repo-local checks to keep the starter consistent as it evolves:
 
 - `.github/scripts/check-starter-workflow.ps1` or `.github/scripts/check-starter-workflow.sh`: umbrella check for starter workflow assets
 - `.github/scripts/check-starter-skills.ps1` or `.github/scripts/check-starter-skills.sh`: verify manifest-listed skill directories and `SKILL.md` files
+- `.github/scripts/check-agent-contracts.ps1` or `.github/scripts/check-agent-contracts.sh`: verify required handoff memory and escalation/failure sections in agent files and related runbook references
 - `.github/scripts/check-approval-gated-orchestration.ps1` or `.github/scripts/check-approval-gated-orchestration.sh`: verify the optional orchestration overlay assets, docs, and schema references
 
 ## 12. ADR Workflow
