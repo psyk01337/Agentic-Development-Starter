@@ -1,0 +1,28 @@
+{
+  "enabled": false,
+  "scope": "repo",
+  "sessionStrategy": "per-repo",
+  "saveBehavior": "explicit",
+  "contextTokenCap": 8000,
+  "dialecticDepth": "conservative",
+  "sensitiveDataPolicy": {
+    "denySecrets": true,
+    "denyCustomerPrivateData": true,
+    "denyRawProductionLogs": true,
+    "denyRegulatedData": true
+  },
+  "review": {
+    "pruneAtMilestones": true,
+    "requireHumanReviewForSharedMemory": true
+  },
+  "repoTruth": [
+    ".github/copilot-instructions.md",
+    ".github/instructions/*.instructions.md",
+    ".github/AGENTS.md",
+    ".github/skills/*/SKILL.md",
+    "docs/adr/*.md",
+    "docs/runbooks/*.md",
+    "CHANGELOG.md",
+    "DOC-CHANGELOG.md"
+  ]
+}

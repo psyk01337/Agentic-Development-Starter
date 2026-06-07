@@ -31,6 +31,86 @@
         "PROJECT_ROOT": "${workspaceFolder}",
         "ALLOW_COMMANDS": "test,lint,build"
       }
+    },
+    "browser-automation": {
+      "enabled": false,
+      "description": "Template for browser automation MCP. Review before enabling because it can interact with live sites, cookies, and local browser state.",
+      "requiredPermissions": [
+        "open-browser",
+        "inspect-page",
+        "capture-screenshot"
+      ],
+      "risks": [
+        "May expose cookies or session state",
+        "May interact with external services",
+        "May capture sensitive UI data"
+      ],
+      "transport": "stdio",
+      "command": "<replace-with-runtime>",
+      "args": [
+        "<replace-with-browser-mcp-entrypoint>"
+      ]
+    },
+    "github": {
+      "enabled": false,
+      "description": "Template for GitHub MCP. Start read-only and require least-privilege tokens through environment variables.",
+      "requiredPermissions": [
+        "read-repositories",
+        "read-issues",
+        "read-pull-requests"
+      ],
+      "risks": [
+        "Can expose private repository metadata",
+        "Write scopes can mutate issues, PRs, branches, or releases",
+        "Tokens must never be committed"
+      ],
+      "transport": "stdio",
+      "command": "<replace-with-runtime>",
+      "args": [
+        "<replace-with-github-mcp-entrypoint>"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    },
+    "database": {
+      "enabled": false,
+      "description": "Template for database MCP. Use local or staging read-only credentials only after data access review.",
+      "requiredPermissions": [
+        "read-schema",
+        "read-non-sensitive-fixtures"
+      ],
+      "risks": [
+        "May expose sensitive records",
+        "Write access can corrupt data",
+        "Connection strings are secrets"
+      ],
+      "transport": "stdio",
+      "command": "<replace-with-runtime>",
+      "args": [
+        "<replace-with-database-mcp-entrypoint>"
+      ],
+      "env": {
+        "DATABASE_URL": "${env:DATABASE_URL}"
+      }
+    },
+    "file-system": {
+      "enabled": false,
+      "description": "Template for file-system MCP. Constrain roots and start read-only.",
+      "requiredPermissions": [
+        "read-workspace-files"
+      ],
+      "risks": [
+        "Over-broad roots can expose unrelated local files",
+        "Write access can modify source or secrets",
+        "Path traversal must be blocked by the server"
+      ],
+      "transport": "stdio",
+      "command": "<replace-with-runtime>",
+      "args": [
+        "<replace-with-file-system-mcp-entrypoint>",
+        "${workspaceFolder}"
+      ]
     }
   },
   "servers": {},

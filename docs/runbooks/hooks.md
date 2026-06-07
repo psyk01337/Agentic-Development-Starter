@@ -27,14 +27,32 @@ Role applicability is documented in `.github/hooks/agent-policy.json` under `rol
 
 - `rm -rf`
 - `del /s /q`
+- `Remove-Item -Recurse -Force`
 - `git reset --hard`
 - `git checkout -- <path>`
+- `git push --force` or `git push --force-with-lease`
 - `curl | bash` (or `curl|sh`/`curl|pwsh`)
+- `wget | sh`
 - Remote content piped to `Invoke-Expression`
 - `chmod -R 777`
 - Writing likely real secrets/tokens into `.env`
 - `pip install --trusted-host` or `pip install --index-url http://` (TLS bypass for package sources)
 - `npm install --registry http://` (plain HTTP npm registry)
+- Unapproved edits to core policy files when the command explicitly says the edit is unapproved
+
+## What Hooks Can Enforce
+
+- Block command strings that match deterministic unsafe patterns.
+- Require safer alternatives for common destructive or supply-chain-risky commands.
+- Create audit records for tool usage when the runtime invokes the hooks.
+- Provide consistent policy fixtures for CI and local validation.
+
+## What Hooks Cannot Enforce
+
+- They cannot understand every intent behind a command.
+- They cannot protect tools or runtimes that do not invoke the hook lifecycle.
+- They cannot replace human review for high-risk policy, MCP, credential, or deployment changes.
+- They cannot guarantee secrets are absent from every external system or terminal output.
 
 ## If a Command Is Blocked
 
@@ -48,6 +66,31 @@ Role applicability is documented in `.github/hooks/agent-policy.json` under `rol
 2. Keep the regex narrow enough to avoid noisy false positives.
 3. Provide a specific safer alternative, not just a generic warning.
 4. Update both shell variants only when the hook mechanism changes, not when only the rule data changes.
+5. Add a denied fixture and at least one safe allowed fixture to `.github/scripts/check-hook-policy.*`.
+6. Run `.github/scripts/check-hook-policy.sh` and `.github/scripts/check-hook-policy.ps1` before merging.
+
+## Policy Test Fixtures
+
+Denied fixtures cover destructive deletion, remote shell execution, hard reset, force push, secret writes to `.env`, HTTP package registries, and unapproved policy edits.
+
+Allowed fixtures cover common safe commands such as `git status --short`, `git diff --stat`, local test commands, and starter validation scripts.
+
+## Debug False Positives
+
+1. Copy the exact blocked command.
+2. Identify the matching regex in `.github/hooks/policy-rules.tsv`.
+3. Decide whether the command is actually safe or whether the safer alternative should be used.
+4. If the rule is too broad, narrow the regex and add a regression fixture.
+5. If the command is high-risk but necessary, require documented approval instead of weakening the rule globally.
+
+## Emergency Bypass
+
+Bypass should be rare and explicit:
+
+- Record who approved the bypass, why it was needed, and what command or action was allowed.
+- Prefer a one-time local bypass over changing shared policy.
+- Open follow-up workflow debt to add a safer supported path.
+- Never bypass secret-handling, credential, or production-data safeguards just to save time.
 
 ### Role-Aware Tuning Guidance
 

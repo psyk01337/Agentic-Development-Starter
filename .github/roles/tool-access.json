@@ -80,6 +80,29 @@
         "todo": true
       }
     },
+    "security-reviewer": {
+      "role": "review",
+      "scope": "Security-sensitive diffs, policies, hooks, MCP, memory, secrets, auth, file/network access, command execution, and dependency trust",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": false,
+        "edit": false,
+        "todo": true
+      }
+    },
+    "documentation-maintainer": {
+      "role": "workflow-maintenance",
+      "scope": "Documentation, README, runbooks, prompts, instructions, ADRs, changelogs, and repo truth alignment",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": false,
+        "edit": true,
+        "edit-notes": "Can edit documentation and workflow assets; does not edit application source code or tests",
+        "todo": true
+      }
+    },
     "qa": {
       "role": "analysis",
       "scope": "Test sufficiency, user flow validation, and release-readiness",
@@ -149,7 +172,9 @@
     "architecture-reviewer": "review",
     "senior-software-engineer": "implementation",
     "code-reviewer": "review",
+    "security-reviewer": "review",
     "qa": "analysis",
+    "documentation-maintainer": "workflow-maintenance",
     "process-improvement": "workflow-maintenance",
     "tech-planner": "planning",
     "tdd-vitest": "implementation"

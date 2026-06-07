@@ -1,0 +1,23 @@
+name: Starter Validation
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate starter assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Bash starter workflow checks
+        run: bash .github/scripts/check-starter-workflow.sh
+
+      - name: Run PowerShell starter workflow checks
+        shell: pwsh
+        run: .github/scripts/check-starter-workflow.ps1

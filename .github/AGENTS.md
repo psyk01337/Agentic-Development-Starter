@@ -72,11 +72,23 @@ Each agent file also defines a `## Handoff Memory Contract` section that specifi
 - Use for: findings-first review of correctness, regressions, maintainability, and missing tests.
 - Role: `review`
 
+### `security-reviewer`
+
+- File: `.github/agents/security-reviewer.agent.md`
+- Use for: findings-first review of security-sensitive code, configuration, hook policy, MCP, memory, secrets, auth, file/network access, command execution, and dependency trust.
+- Role: `review`
+
 ### `qa`
 
 - File: `.github/agents/qa.agent.md`
 - Use for: verifying that critical user flows are sufficiently tested and validated with the smallest relevant verification command.
 - Role: `analysis`
+
+### `documentation-maintainer`
+
+- File: `.github/agents/documentation-maintainer.agent.md`
+- Use for: keeping README, runbooks, prompts, instructions, ADRs, and changelogs aligned with source facts and workflow changes.
+- Role: `workflow-maintenance`
 
 ### `process-improvement`
 
@@ -100,7 +112,9 @@ Each agent file also defines a `## Handoff Memory Contract` section that specifi
 | `senior-software-engineer` | Primary implementation and delivery | Code changes, validation evidence, implementation risks | `code-reviewer` or `qa` |
 | `tdd-vitest` | Specialized TDD implementation overlay | Tests-first implementation summary, Vitest evidence | `code-reviewer` or `qa` |
 | `code-reviewer` | Findings-first code review | Severity-ordered review findings | `senior-software-engineer` or `qa` |
+| `security-reviewer` | Security-sensitive diffs, configuration, hooks, MCP, memory, secrets, auth, and unsafe automation | Security findings, control checks, residual risk | `senior-software-engineer`, `architecture-reviewer`, or user decision |
 | `qa` | Verification strategy, risky flows, evidence, release-readiness | QA evidence, gaps, verdict | `senior-software-engineer` or none |
+| `documentation-maintainer` | README, runbooks, prompts, instructions, ADRs, and changelogs | Updated repo truth, link/validation notes, doc debt | `process-improvement` or none |
 | `process-improvement` | Workflow asset maintenance | Workflow changes, process fixes, repo-level guardrails | none or user decision |
 | `orchestration-coordinator` | Optional approval-gated transitions and transition records | Transition recommendation, approval checkpoint, handoff prompt draft | next specialist or none |
 
@@ -112,8 +126,10 @@ Each agent file also defines a `## Handoff Memory Contract` section that specifi
 4. Use `senior-software-engineer` when the next step is implementation against an approved plan.
 5. Substitute `tdd-vitest` for `senior-software-engineer` when the repo uses Vitest and the change should follow a strict TDD loop.
 6. Use `code-reviewer` when the work needs a findings-first review before it is considered ready.
-7. Use `qa` when you need explicit verification of test sufficiency and risky user flows.
-8. Use `process-improvement` only for workflow assets, and only with clear user approval before edits.
+7. Use `security-reviewer` when the change touches secrets, auth, command execution, dependency trust, MCP, memory, hooks, or other security-sensitive behavior.
+8. Use `qa` when you need explicit verification of test sufficiency and risky user flows.
+9. Use `documentation-maintainer` when repo truth, README, runbooks, prompts, instructions, ADRs, or changelogs need focused maintenance.
+10. Use `process-improvement` only for workflow assets, and only with clear user approval before edits.
 
 ## Conditional Delegation Triggers
 
@@ -123,6 +139,7 @@ These are common mid-chain signals that should redirect the handoff to a differe
 | --- | --- | --- |
 | Findings reveal a design gap or unresolved tradeoff | `tech-planner` | continuing to `senior-software-engineer` |
 | Implementation touches a contract boundary or module interface | `architecture-reviewer` | continuing implementation |
+| Change touches secrets, auth, command execution, hooks, MCP, memory, or dependency trust | `security-reviewer` | ordinary code review alone |
 | Codebase behavior contradicts source-of-truth docs | `analyst` | continuing to next planned agent |
 | TDD loop surfaces an unexpected interface or dependency shape | `architecture-reviewer` | continuing the red-green loop |
 | Code review finds a structural or boundary issue beyond code-level fixes | `architecture-reviewer` | returning to `senior-software-engineer` |
@@ -154,6 +171,14 @@ These triggers are advisory signals. The orchestrating user or main chat always 
 
 - `process-improvement`
 
+### Documentation-only maintenance
+
+- `documentation-maintainer`
+
+### Security-sensitive change
+
+- `security-reviewer` -> `senior-software-engineer` for fixes or user decision for approvals
+
 ### Approval-gated overlay flow
 
 - `orchestration-coordinator` -> approved specialist handoff
@@ -166,7 +191,9 @@ These triggers are advisory signals. The orchestrating user or main chat always 
 - `senior-software-engineer` handoff: implemented change summary, validation commands run, docs or tests updated, and residual implementation risks.
 - `tdd-vitest` handoff: implemented change summary, tests added or updated, commands run, and residual implementation risks.
 - `code-reviewer` handoff: findings ordered by severity, regressions or maintainability concerns, and smallest safe fixes.
+- `security-reviewer` handoff: security findings, controls verified, missing validation, residual risk, and required approvals.
 - `qa` handoff: validation evidence, risky user flows checked, coverage gaps, and pass or fail status.
+- `documentation-maintainer` handoff: docs issue addressed, source facts used, files changed, validation performed, and residual doc debt.
 
 ## Deliberate Exclusions
 

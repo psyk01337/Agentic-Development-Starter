@@ -23,6 +23,8 @@ Keep these modules in almost every repo:
 
 These files define the baseline delivery rules, safety posture, hook contract, module registry, and the default traceability logs for implementation and documentation changes.
 
+For adoption mode selection, use `docs/runbooks/starter-adoption.md` before enabling optional modules.
+
 Keep the logs split on purpose:
 
 - `CHANGELOG.md` for source code, scripts, executable config, tests, and behavior-affecting changes
@@ -86,10 +88,20 @@ The default specialist set is:
 - `architecture-reviewer`
 - `senior-software-engineer`
 - `code-reviewer`
+- `security-reviewer`
 - `qa`
+- `documentation-maintainer`
 - `process-improvement`
 
 Use `tdd-vitest` only when strict Vitest TDD is actually part of the repo workflow.
+
+Do not add aliases that duplicate existing responsibility. For example, product analysis should normally use `analyst`, solution architecture should use `tech-planner` plus `architecture-reviewer`, and general senior implementation should use `senior-software-engineer`.
+
+## 3a. Add Prompt Files For Repeatable One-Off Tasks
+
+Prompt files under `.github/prompts/` are reusable task entry points, not always-on instructions. Use them for common workflows such as onboarding a repo, planning a small feature, reviewing a diff, creating an ADR, generating a test plan, preparing release notes, security review, migration planning, and CI debugging.
+
+Each prompt should state what context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and expected output.
 
 Shared tool boundaries are documented in `.github/roles/tool-access.json`. Update that file before duplicating tool intent across multiple agents.
 
@@ -124,6 +136,24 @@ Rules:
 3. Keep secrets out of committed config.
 4. Document env vars and local setup in the runbook.
 
+Browser automation, GitHub, database, and file-system MCP examples must include purpose, required permissions, and risks before being enabled.
+
+## 5a. Keep Memory Layered
+
+Use `docs/runbooks/memory-strategy.md` and `.github/instructions/memory.instructions.md` for the default memory model:
+
+- Session memory for current task state and handoffs.
+- Repo truth for durable decisions and standards.
+- Optional durable memory only for non-sensitive stable preferences or repeated patterns.
+
+Honcho and Hermes memory examples are overlays and must stay disabled until reviewed.
+
+## 5b. Use Runtime Overlays Only When Needed
+
+Hermes-style runtimes and Honcho-style durable memory are optional overlays. This starter remains a repo-native workflow and governance starter, not a full agent runtime.
+
+Runtime overlays should read repo truth before acting, honor hook policy, keep memory scoped, and avoid self-modifying core workflow files without approval.
+
 ## 6. Replace Starter Examples Early
 
 Before treating the starter as complete for a new repo:
@@ -142,3 +172,5 @@ After changing agents, runbooks, hook policy, or workflow scripts, run the start
 - Shell: `.github/scripts/check-starter-workflow.sh`
 
 These checks include skill-manifest validation, overlay consistency checks, and agent contract checks.
+
+CI workflows in `.github/workflows/` run the same validation on push and pull request. The eval harness in `evals/` can be used for manual or future automated agent behavior checks.

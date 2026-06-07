@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "description": "Composable module manifest for this agentic starter.",
+  "version": "1.1",
+  "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
       "id": "core-baseline",
@@ -10,36 +10,64 @@
       "files": [
         ".github/copilot-instructions.md",
         ".github/instructions/core.instructions.md",
-        ".github/instructions/security.instructions.md"
+        ".github/instructions/security.instructions.md",
+        ".github/instructions/memory.instructions.md"
       ]
     },
     {
       "id": "core-governance",
       "kind": "core",
       "defaultEnabled": true,
-      "when": "All repositories",
+      "when": "All repositories using this starter",
       "files": [
+        "README.md",
         "CHANGELOG.md",
         "DOC-CHANGELOG.md",
         ".github/starter-modules.json",
         ".github/roles/tool-access.json",
         ".github/scripts/check-starter-workflow.ps1",
         ".github/scripts/check-starter-workflow.sh",
-        ".github/scripts/check-agent-contracts.ps1",
-        ".github/scripts/check-agent-contracts.sh",
+        ".github/scripts/check-starter-manifest.ps1",
+        ".github/scripts/check-starter-manifest.sh",
         ".github/scripts/check-starter-skills.ps1",
         ".github/scripts/check-starter-skills.sh",
+        ".github/scripts/check-agent-contracts.ps1",
+        ".github/scripts/check-agent-contracts.sh",
+        ".github/scripts/check-prompt-contracts.ps1",
+        ".github/scripts/check-prompt-contracts.sh",
+        ".github/scripts/check-markdown-quality.ps1",
+        ".github/scripts/check-markdown-quality.sh",
+        ".github/scripts/check-mcp-posture.ps1",
+        ".github/scripts/check-mcp-posture.sh",
+        ".github/scripts/check-evals.ps1",
+        ".github/scripts/check-evals.sh",
         "docs/adr/0000-template.md",
-        "docs/runbooks/skills.md",
         "docs/runbooks/adopting-existing-github.md",
-        "docs/runbooks/starter-composition.md"
+        "docs/runbooks/agentic-dev.md",
+        "docs/runbooks/memory-strategy.md",
+        "docs/runbooks/skills.md",
+        "docs/runbooks/starter-adoption.md",
+        "docs/runbooks/starter-composition.md",
+        "docs/runbooks/tool-surface-matrix.md"
+      ]
+    },
+    {
+      "id": "core-ci-validation",
+      "kind": "core",
+      "defaultEnabled": true,
+      "when": "Repositories that want the starter to validate itself in CI",
+      "files": [
+        ".github/workflows/starter-validation.yml",
+        ".github/workflows/markdown-quality.yml",
+        ".github/workflows/hook-policy-tests.yml",
+        ".github/workflows/skill-contract-tests.yml"
       ]
     },
     {
       "id": "core-guardrails",
       "kind": "core",
       "defaultEnabled": true,
-      "when": "All repositories using hooks",
+      "when": "All repositories using hooks or policy fixtures",
       "files": [
         ".github/hooks/agent-policy.json",
         ".github/hooks/policy-rules.tsv",
@@ -47,7 +75,11 @@
         ".github/hooks/scripts/pre-tool-policy.ps1",
         ".github/hooks/scripts/audit-log.ps1",
         ".github/hooks/scripts/session-banner.sh",
-        ".github/hooks/scripts/pre-tool-policy.sh"
+        ".github/hooks/scripts/pre-tool-policy.sh",
+        ".github/hooks/scripts/audit-log.sh",
+        ".github/scripts/check-hook-policy.ps1",
+        ".github/scripts/check-hook-policy.sh",
+        "docs/runbooks/hooks.md"
       ]
     },
     {
@@ -61,9 +93,70 @@
         ".github/agents/architecture-reviewer.agent.md",
         ".github/agents/senior-software-engineer.agent.md",
         ".github/agents/code-reviewer.agent.md",
+        ".github/agents/security-reviewer.agent.md",
         ".github/agents/qa.agent.md",
+        ".github/agents/documentation-maintainer.agent.md",
         ".github/agents/process-improvement.agent.md",
         ".github/agents/tech-planner.agent.md"
+      ]
+    },
+    {
+      "id": "workflow-prompts",
+      "kind": "optional",
+      "defaultEnabled": true,
+      "when": "Repositories that want reusable slash-command style task prompts",
+      "files": [
+        ".github/prompts/onboard-existing-repo.prompt.md",
+        ".github/prompts/plan-small-feature.prompt.md",
+        ".github/prompts/implement-small-diff.prompt.md",
+        ".github/prompts/review-current-diff.prompt.md",
+        ".github/prompts/create-adr.prompt.md",
+        ".github/prompts/generate-test-plan.prompt.md",
+        ".github/prompts/prepare-release-notes.prompt.md",
+        ".github/prompts/migrate-to-starter.prompt.md",
+        ".github/prompts/security-review.prompt.md",
+        ".github/prompts/debug-failing-ci.prompt.md"
+      ]
+    },
+    {
+      "id": "workflow-skills",
+      "kind": "optional",
+      "defaultEnabled": true,
+      "when": "Repositories that want reusable workflow playbooks",
+      "files": [
+        ".github/skills/adr-authoring/SKILL.md",
+        ".github/skills/bug-triage/SKILL.md",
+        ".github/skills/pr-review/SKILL.md",
+        ".github/skills/qa-test-plan/SKILL.md",
+        ".github/skills/security-check/SKILL.md",
+        ".github/skills/release-notes/SKILL.md",
+        ".github/skills/session-compaction/SKILL.md",
+        ".github/skills/memory-curation/SKILL.md",
+        ".github/skills/repo-onboarding/SKILL.md",
+        ".github/skills/ci-failure-debugging/SKILL.md",
+        ".github/skills/migration-planning/SKILL.md",
+        ".github/skills/tool-surface-audit/SKILL.md"
+      ]
+    },
+    {
+      "id": "workflow-evals",
+      "kind": "optional",
+      "defaultEnabled": false,
+      "when": "Repositories that want manual or semi-automated golden-task evaluation of agent behavior",
+      "files": [
+        "evals/README.md",
+        "evals/tasks/simple-bugfix.md",
+        "evals/tasks/add-api-endpoint.md",
+        "evals/tasks/frontend-component.md",
+        "evals/tasks/security-review.md",
+        "evals/tasks/update-docs-and-changelog.md",
+        "evals/tasks/debug-failing-ci.md",
+        "evals/expected/simple-bugfix.checklist.md",
+        "evals/expected/add-api-endpoint.checklist.md",
+        "evals/expected/frontend-component.checklist.md",
+        "evals/expected/security-review.checklist.md",
+        "evals/run-evals.sh",
+        "evals/run-evals.ps1"
       ]
     },
     {
@@ -155,21 +248,32 @@
         ".github/examples/approval-gated-handoffs/stale-analyst-to-tech-planner.json",
         ".github/scripts/check-approval-gated-orchestration.ps1",
         ".github/scripts/check-approval-gated-orchestration.sh",
-        "docs/runbooks/approval-gated-handoffs.md"
+        "docs/runbooks/approval-gated-handoffs.md",
+        "docs/adr/0001-approval-gated-orchestration-overlay.md"
       ]
     },
     {
-      "id": "workflow-skills",
-      "kind": "optional",
-      "defaultEnabled": true,
-      "when": "Repositories that want reusable playbooks",
+      "id": "overlay-hermes-runtime",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use a Hermes-style stateful runtime and want it governed by repo truth",
       "files": [
-        ".github/skills/adr-authoring/SKILL.md",
-        ".github/skills/bug-triage/SKILL.md",
-        ".github/skills/pr-review/SKILL.md",
-        ".github/skills/qa-test-plan/SKILL.md",
-        ".github/skills/security-check/SKILL.md",
-        ".github/skills/release-notes/SKILL.md"
+        ".github/instructions/hermes-runtime.instructions.md",
+        ".github/examples/hermes/hermes-profile.example.md",
+        ".github/examples/memory/hermes-memory-provider.example.md",
+        "docs/runbooks/hermes-runtime.md"
+      ]
+    },
+    {
+      "id": "overlay-honcho-memory",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that explicitly opt into Honcho or another durable memory provider",
+      "files": [
+        ".github/instructions/honcho-memory.instructions.md",
+        ".github/examples/honcho/honcho.config.example.json",
+        ".github/examples/memory/honcho-policy.example.md",
+        "docs/runbooks/honcho-memory.md"
       ]
     },
     {

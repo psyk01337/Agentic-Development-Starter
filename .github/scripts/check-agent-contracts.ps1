@@ -40,7 +40,9 @@ $agentFiles = @(
   ".github/agents/architecture-reviewer.agent.md",
   ".github/agents/senior-software-engineer.agent.md",
   ".github/agents/code-reviewer.agent.md",
+  ".github/agents/security-reviewer.agent.md",
   ".github/agents/qa.agent.md",
+  ".github/agents/documentation-maintainer.agent.md",
   ".github/agents/process-improvement.agent.md",
   ".github/agents/tdd-vitest.agent.md",
   ".github/agents/orchestration-coordinator.agent.md"

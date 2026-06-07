@@ -58,6 +58,60 @@ Example prompts:
 - `Use release-notes for the merged changes in this sprint and separate user-facing notes from internal notes.`
 - `Draft release notes for this week’s changes, including upgrade notes and verification.`
 
+### `session-compaction`
+
+Use before context compaction, handoff, or long-running session reset.
+
+Example prompts:
+
+- `Use session-compaction before I compact this chat. Preserve decisions, files changed, validation, and next action.`
+- `Summarize this task for the next agent using the session-compaction skill.`
+
+### `memory-curation`
+
+Use when deciding whether a candidate memory belongs in session memory, repo truth, optional durable memory, or nowhere.
+
+Example prompts:
+
+- `Use memory-curation for this lesson learned and tell me where it should live.`
+- `Check whether this preference is safe for durable memory or should become a runbook update.`
+
+### `repo-onboarding`
+
+Use when an agent needs fast orientation to a repo's workflow assets, source-of-truth docs, and validation commands.
+
+Example prompts:
+
+- `Use repo-onboarding to orient to this repository before making changes.`
+- `Map this repo's source-of-truth docs, agents, skills, hooks, prompts, and validation commands.`
+
+### `ci-failure-debugging`
+
+Use when CI fails and the next safe action is unclear.
+
+Example prompts:
+
+- `Use ci-failure-debugging on this workflow failure and identify the smallest local fix.`
+- `Triage this failing starter validation job without disabling checks.`
+
+### `migration-planning`
+
+Use when adopting, trimming, or upgrading starter modules in an existing repository.
+
+Example prompts:
+
+- `Use migration-planning to move this repo to team mode without replacing existing .github assets.`
+- `Plan an advanced-mode rollout with prompts, hooks, evals, and memory policy kept disabled until reviewed.`
+
+### `tool-surface-audit`
+
+Use when enabling or comparing an agent platform, MCP server, runtime, hook mechanism, or memory provider.
+
+Example prompts:
+
+- `Use tool-surface-audit to compare this agent runtime against the starter tool matrix.`
+- `Audit whether enabling browser automation MCP is safe for this repo.`
+
 ## Optional Overlay Skills
 
 ### `approval-gated-handoffs`
@@ -95,6 +149,8 @@ Use the starter skill checks to confirm the manifest and skill directories stay 
 - Shell: `.github/scripts/check-starter-skills.sh`
 
 These checks verify that every skill path listed in `.github/starter-modules.json` exists and includes a `SKILL.md` file.
+
+They also verify every skill directory has a lowercase hyphenated name and `SKILL.md` frontmatter with `name` and `description`.
 
 If you want one entry point for the broader starter checks, use:
 

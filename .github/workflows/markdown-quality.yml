@@ -1,0 +1,23 @@
+name: Markdown Quality
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  markdown:
+    name: Check Markdown links and whitespace
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Bash Markdown quality check
+        run: bash .github/scripts/check-markdown-quality.sh
+
+      - name: Run PowerShell Markdown quality check
+        shell: pwsh
+        run: .github/scripts/check-markdown-quality.ps1

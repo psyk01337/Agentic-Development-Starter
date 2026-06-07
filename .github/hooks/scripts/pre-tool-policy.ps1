@@ -46,10 +46,12 @@ function Get-PolicyRules([string]$RepoRoot) {
 }
 
 $stdin = ""
-try {
-  $stdin = [Console]::In.ReadToEnd()
-} catch {
-  $stdin = ""
+if ([Console]::IsInputRedirected) {
+  try {
+    $stdin = [Console]::In.ReadToEnd()
+  } catch {
+    $stdin = ""
+  }
 }
 
 $candidate = ($ToolName + " " + $Action + " " + $Command + " " + $stdin).Trim()

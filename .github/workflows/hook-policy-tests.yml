@@ -1,0 +1,23 @@
+name: Hook Policy Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  hook-policy:
+    name: Exercise hook policy fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Bash hook policy tests
+        run: bash .github/scripts/check-hook-policy.sh
+
+      - name: Run PowerShell hook policy tests
+        shell: pwsh
+        run: .github/scripts/check-hook-policy.ps1

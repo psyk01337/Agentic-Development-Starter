@@ -15,6 +15,8 @@ function Add-CheckError([string]$Message) {
 }
 
 $manifestPath = Join-Path $RepoRoot ".github/starter-modules.json"
+$manifestSkillPaths = @{}
+
 if (-not (Test-Path $manifestPath)) {
   Add-CheckError("Missing required file: .github/starter-modules.json")
 } else {
@@ -31,6 +33,7 @@ if (-not (Test-Path $manifestPath)) {
 
   $uniqueSkillPaths = $skillPaths | Sort-Object -Unique
   foreach ($relativePath in $uniqueSkillPaths) {
+    $manifestSkillPaths[$relativePath] = $true
     $fullPath = Join-Path $RepoRoot $relativePath
     if (-not (Test-Path $fullPath)) {
       Add-CheckError("Missing manifest-listed skill file: $relativePath")
@@ -45,6 +48,60 @@ if (-not (Test-Path $manifestPath)) {
     $skillFileName = Split-Path -Path $fullPath -Leaf
     if ($skillFileName -ne "SKILL.md") {
       Add-CheckError("Unexpected skill file name for: $relativePath")
+    }
+  }
+}
+
+$skillsRoot = Join-Path $RepoRoot ".github/skills"
+if (-not (Test-Path $skillsRoot -PathType Container)) {
+  Add-CheckError("Missing required directory: .github/skills")
+} else {
+  $skillDirectories = Get-ChildItem -Path $skillsRoot -Directory | Sort-Object Name
+  foreach ($skillDirectory in $skillDirectories) {
+    $skillName = $skillDirectory.Name
+    $relativePath = ".github/skills/$skillName/SKILL.md"
+    $skillFile = Join-Path $skillDirectory.FullName "SKILL.md"
+
+    if ($skillName -notmatch "^[a-z0-9]+(-[a-z0-9]+)*$") {
+      Add-CheckError("Skill directory must be lowercase hyphenated: .github/skills/$skillName")
+    }
+
+    if (-not (Test-Path $skillFile)) {
+      Add-CheckError("Missing skill file: $relativePath")
+      continue
+    }
+
+    if ((Test-Path $manifestPath) -and (-not $manifestSkillPaths.ContainsKey($relativePath))) {
+      Add-CheckError("Skill file is not referenced in starter-modules.json: $relativePath")
+    }
+
+    $lines = Get-Content -Path $skillFile
+    if ($lines.Count -eq 0 -or $lines[0] -ne "---") {
+      Add-CheckError("Skill file must start with YAML frontmatter: $relativePath")
+      continue
+    }
+
+    $frontmatter = @{}
+    for ($index = 1; $index -lt $lines.Count; $index++) {
+      if ($lines[$index] -eq "---") {
+        break
+      }
+
+      if ($lines[$index] -match "^([^:]+):\s*(.+)$") {
+        $frontmatter[$Matches[1]] = $Matches[2]
+      }
+    }
+
+    if (-not $frontmatter.ContainsKey("name")) {
+      Add-CheckError("Skill frontmatter is missing name: $relativePath")
+    } elseif ($frontmatter["name"] -notmatch "^[a-z0-9]+(-[a-z0-9]+)*$") {
+      Add-CheckError("Skill frontmatter name must be lowercase hyphenated: $relativePath")
+    } elseif ($frontmatter["name"] -ne $skillName) {
+      Add-CheckError("Skill frontmatter name must match directory name: $relativePath")
+    }
+
+    if (-not $frontmatter.ContainsKey("description") -or [string]::IsNullOrWhiteSpace($frontmatter["description"])) {
+      Add-CheckError("Skill frontmatter is missing description: $relativePath")
     }
   }
 }

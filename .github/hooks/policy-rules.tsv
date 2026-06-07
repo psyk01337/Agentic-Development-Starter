@@ -1,11 +1,15 @@
 # pattern	reason	saferAlternative
 (^|\s)rm\s+-rf(\s|$)	Destructive recursive delete is blocked.	Use targeted file deletion with explicit paths and code review.
 (^|\s)del\s+/s\s+/q(\s|$)	Silent recursive delete is blocked.	Use Remove-Item with explicit files and -WhatIf first.
+(^|\s)remove-item\s+[^\n\r]*(--?recurse|-r)\s+[^\n\r]*(--?force|-f)	Forced recursive removal is blocked.	Use Remove-Item on explicit reviewed paths, preferably with -WhatIf first.
 (^|\s)git\s+reset\s+--hard(\s|$)	Hard reset discards local changes and is blocked.	Use targeted file edits or explicit non-destructive git status and diff workflows.
 (^|\s)git\s+checkout\s+--(\s|$)	Checkout discard operation is blocked.	Use focused edits and review diffs instead of destructive checkout restore.
+(^|\s)git\s+push[^\n\r]*(--force-with-lease|--force|-f)(\s|$)	Force push is blocked by default.	Use a normal push or get documented approval before rewriting remote history.
 curl\s+[^\n\r|]*\|\s*(bash|sh|pwsh|powershell)	Piped remote script execution is blocked.	Download script, inspect it, then run with explicit checksum verification.
+wget\s+[^\n\r|]*\|\s*(bash|sh|pwsh|powershell)	Piped remote script execution is blocked.	Download script, inspect it, then run with explicit checksum verification.
 (wget|invoke-webrequest|irm|curl)\s+[^\n\r|;]*\|\s*(invoke-expression|iex)	Remote content execution via Invoke-Expression is blocked.	Save remote content to a file, inspect it, and run only trusted code.
 chmod\s+-R\s+777(\s|$)	Overly permissive recursive chmod is blocked.	Apply minimum required permissions to specific paths.
 pip\s+install[^\n\r]*(--trusted-host|--index-url\s+http://|--extra-index-url\s+http://)	Installing Python packages over plain HTTP or with TLS bypassed is blocked.	Use HTTPS package sources only; remove --trusted-host and http:// index-url overrides.
 npm\s+(install|i|ci)[^\n\r]*--registry\s+http://	Installing npm packages from a plain HTTP registry is blocked.	Use HTTPS registry URLs only (--registry https://).
-\.env[^\n\r]*(sk-[a-z0-9]{20,}|ghp_[a-z0-9]{20,}|akia[0-9a-z]{16}|-----begin [a-z ]*private key-----|token\s*=\s*[^\s]+)	Potential real secret write to .env is blocked.	Use placeholder values and inject real secrets through secure environment management.
+(\.env[^\n\r]*(sk-[a-z0-9]{20,}|ghp_[a-z0-9]{20,}|akia[0-9a-z]{16}|-----begin [a-z ]*private key-----|token\s*=\s*[^\s]+)|(sk-[a-z0-9]{20,}|ghp_[a-z0-9]{20,}|akia[0-9a-z]{16}|token\s*=\s*[^\s]+)[^\n\r]*(>|>>|out-file|set-content|add-content)[^\n\r]*\.env)	Potential real secret write to .env is blocked.	Use placeholder values and inject real secrets through secure environment management.
+(edit|modify|write)[^\n\r]*\.github[\\/](hooks[\\/](agent-policy\.json|policy-rules\.tsv)|copilot-instructions\.md)[^\n\r]*(without approval|no approval|unapproved)	Unapproved edits to core policy files are blocked.	Get explicit approval and record the policy reason before changing core workflow guardrails.

@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-06-06 - Document pre-push starter release status
+
+- Area: release notes, repository governance, workflow asset status
+- Change type: docs, release-notes
+- Summary: documented the current pre-push state of the upgraded starter, including the validation readiness caveat and the known local `actions/checkout@v4` resolver diagnostics.
+- Reason: preserve a clear release-status note before pushing the new version.
+- Affected files: CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-06-06 - Record pre-push starter release status"
+- Review status: reviewed
+- Discrepancies or follow-up: final Bash and PowerShell starter validation passed after LF normalization; no documentation follow-up remains.
+
+### 2026-06-06 - Upgrade starter workflow documentation and overlays
+
+- Area: README, prompts, skills, agents, runbooks, memory strategy, runtime overlays, eval docs
+- Change type: docs, runbook, onboarding, policy, reference
+- Summary: added reusable prompt files, new workflow skills, security and documentation agents, memory strategy instructions and runbook, optional Hermes and Honcho overlays, tool-surface matrix, starter adoption guide, eval task/checklist docs, expanded MCP and hook runbooks, and rewrote the README around the 2026 repo-native workflow/governance positioning.
+- Reason: evolve the starter from a VS Code/Copilot-oriented baseline into a production-grade cross-agent workflow starter while keeping optional runtime and memory integrations disabled by default.
+- Affected files: README.md, .github/prompts/*.prompt.md, .github/skills/*/SKILL.md, .github/agents/*.agent.md, .github/instructions/*memory*.md, .github/instructions/hermes-runtime.instructions.md, docs/runbooks/*.md, .github/examples/**/*.md, evals/**/*.md
+- Related code: CHANGELOG.md entry "2026-06-06 - Add production-grade starter validation and CI"
+- Review status: reviewed
+- Discrepancies or follow-up: local workflow diagnostics could not resolve `actions/checkout@v4`, which appears to be an external-action resolver limitation rather than a YAML syntax issue
+
 ### 2026-03-16 - Add existing-project rollout order to README
 
 - Area: onboarding and adaptation guidance

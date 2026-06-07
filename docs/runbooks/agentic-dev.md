@@ -75,6 +75,8 @@ See `.github/AGENTS.md` Conditional Delegation Triggers table for the full refer
 4. When a task changes executable behavior, add or update an entry in `CHANGELOG.md`.
 5. When a task changes Markdown, text, ADRs, or runbooks, add or update an entry in `DOC-CHANGELOG.md`.
 
+Use `docs/runbooks/memory-strategy.md` for the full three-layer memory model. Session memory is for current task state only; durable project facts belong in repo truth.
+
 ### 4a) Follow the Handoff Memory Contract
 
 Each agent defines a **Handoff Memory Contract** at the top of its agent file. Before handing off to the next specialist, preserve the required fields in session memory. This ensures each subsequent agent starts with complete context rather than re-deriving it from scratch.
@@ -135,6 +137,12 @@ Use chat commands to generate repo assets quickly:
 
 Then move finalized outputs into `.github/*` for team sharing.
 
+## 8b) Use Prompt Files For Repeatable One-Off Tasks
+
+Use `.github/prompts/*.prompt.md` for reusable slash-command style workflows such as repo onboarding, small-feature planning, implementation, diff review, ADR drafting, test planning, release notes, migration planning, security review, and CI debugging.
+
+Prompt files should be task-specific. They should not become broad always-on rules; promote durable standards into instructions, skills, agents, or runbooks instead.
+
 ## 8a) Use Skills For Repeatable Work
 
 Reach for skills when the work is bounded and format-sensitive:
@@ -157,6 +165,8 @@ See `docs/runbooks/skills.md` for example prompts for each skill and quick guida
 4. Keep full automatic handoffs out of core unless the repo later adds a dedicated orchestration overlay.
 
 If you do enable that overlay, keep the richer approval metadata and transition records inside the overlay contract rather than expanding the core handoff contract for every repo.
+
+Use `docs/runbooks/starter-adoption.md` to choose minimal, team, advanced, or enterprise mode before enabling optional modules.
 
 ## 9a) Keep Changelogs Cross-Referenced
 
@@ -183,3 +193,12 @@ Use terminal image rendering only when visual diffs or screenshot-heavy debuggin
 - Prefer command palette and keyboard shortcuts for core actions.
 - Ensure browser verification includes keyboard navigation checks.
 - Keep runbooks and prompts concise for faster screen-reader navigation.
+
+## 12) Evaluate Agent Behavior
+
+Use the checklist-driven harness under `evals/` when changing workflow assets or comparing agent platforms.
+
+1. Select a golden task from `evals/tasks/`.
+2. Run the task in a fresh agent session.
+3. Score behavior with the matching checklist under `evals/expected/`.
+4. Convert repeated failures into updates to instructions, prompts, skills, agents, hooks, or runbooks.

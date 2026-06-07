@@ -1,258 +1,253 @@
-# Agentic Development Starter (VS Code, Feb 2026 Workflow)
-
-This repository is a modular starter for repo-shared agent workflows. It is designed to be composed, not copied wholesale around one language, framework, or test runner.
-
-The starter is split into:
-
-- Core rules that apply in any repository
-- Optional overlays for specific stacks or workflows
-- Reusable agents and skills
-- Hook-based guardrails and audit logging
-- MCP and editor templates that stay disabled until reviewed
-
-## 1. Composition Model
-
-Start with core modules, then opt into only the overlays that match the target repo.
-
-### Core
-
-- `CHANGELOG.md`
-- `DOC-CHANGELOG.md`
-- `.github/copilot-instructions.md`
-- `.github/instructions/core.instructions.md`
-- `.github/instructions/security.instructions.md`
-- `.github/starter-modules.json`
-- `.github/roles/tool-access.json`
-- `.github/scripts/check-starter-workflow.ps1`
-- `.github/scripts/check-starter-workflow.sh`
-- `.github/scripts/check-starter-skills.ps1`
-- `.github/scripts/check-starter-skills.sh`
-- `.github/scripts/check-agent-contracts.ps1`
-- `.github/scripts/check-agent-contracts.sh`
-- `.github/hooks/agent-policy.json`
-- `.github/hooks/policy-rules.tsv`
-
-### Optional stack overlays
-
-- `.github/instructions/frontend.instructions.md`
-- `.github/instructions/react.instructions.md`
-- `.github/instructions/nextjs.instructions.md`
-- `.github/instructions/frontend-vitest-rtl.instructions.md`
-- `.github/instructions/frontend-e2e.instructions.md`
-- `.github/instructions/backend.instructions.md`
-- `.github/instructions/fastapi.instructions.md`
-- `.github/agents/tdd-vitest.agent.md`
-- `.github/skills/api-scaffold/SKILL.md`
-- `.github/skills/ui-scaffold/SKILL.md`
-
-For test-focused overlays, keep `applyTo` patterns narrow so they target test files and test directories rather than every TS/JS file.
-
-### Optional workflow assets
-
-- `.github/agents/*.agent.md`
-- `.github/skills/pr-review/SKILL.md`
-- `.github/skills/adr-authoring/SKILL.md`
-- `.github/skills/bug-triage/SKILL.md`
-- `.github/skills/qa-test-plan/SKILL.md`
-- `.github/skills/security-check/SKILL.md`
-- `.github/skills/release-notes/SKILL.md`
-- `.github/skills/approval-gated-handoffs/SKILL.md`
-- `.github/schema/approval-gated-handoff-envelope.schema.json`
-- `.github/examples/approval-gated-handoffs/*.json`
-- `.github/scripts/check-starter-workflow.ps1`
-- `.github/scripts/check-starter-workflow.sh`
-- `.github/scripts/check-starter-skills.ps1`
-- `.github/scripts/check-starter-skills.sh`
-- `.github/scripts/check-agent-contracts.ps1`
-- `.github/scripts/check-agent-contracts.sh`
-- `.github/scripts/check-approval-gated-orchestration.ps1`
-- `.github/scripts/check-approval-gated-orchestration.sh`
-- `.vscode/mcp.json`
-- `.vscode/settings.json`
-
-Use `.github/starter-modules.json` as the source of truth for what is core, what is optional, and when each module is meant to be enabled.
-
-## 2. Repository Layout
-
-### Core customization
-
-- `.github/copilot-instructions.md`
-- `.github/instructions/*.instructions.md`
-- `.github/roles/tool-access.json`
-- `.github/starter-modules.json`
+# Agentic Development Starter
 
-### Agents and skills
+Agentic Development Starter is a repo-native workflow, safety, and governance starter for AI-assisted software development. It standardizes instructions, prompts, agents, skills, hooks, MCP templates, memory policy, handoffs, validation, and evaluation so teams can ship changes with consistent guardrails and auditability.
 
-- `.github/AGENTS.md`
-- `.github/agents/*.agent.md`
-- `.github/skills/*/SKILL.md`
+The starter is lightweight and composable. It is not a full agent runtime.
 
-### Guardrails
+## Use This When
 
-- `.github/hooks/agent-policy.json`
-- `.github/hooks/policy-rules.tsv`
-- `.github/hooks/scripts/*.ps1`
-- `.github/hooks/scripts/*.sh`
+- A team wants shared AI coding rules in the repository instead of hidden local preferences.
+- Multiple agents or editors need the same safety posture and handoff format.
+- You want prompts, skills, custom agents, hooks, CI checks, and runbooks to evolve together.
+- You need starter governance that works across GitHub Copilot, VS Code agent mode, Copilot cloud agent, Claude Code, Codex, Cursor, OpenCode, and Hermes-style runtimes.
 
-### Editor and MCP templates
-
-- `.vscode/mcp.json`
-- `.vscode/settings.json`
+## Do Not Use This When
 
-### Team docs
+- You need a stateful runtime, scheduler, tool broker, or autonomous execution platform.
+- You want to enable shell automation, MCP servers, browser automation, database access, or durable memory without review.
+- You want a framework-specific app template instead of repo workflow governance.
+- You cannot keep repo files as the source of truth.
 
-- `CHANGELOG.md`
-- `DOC-CHANGELOG.md`
-- `docs/adr/0000-template.md`
-- `docs/runbooks/agentic-dev.md`
-- `docs/runbooks/skills.md`
-- `docs/runbooks/starter-composition.md`
-- `docs/runbooks/approval-gated-handoffs.md`
-- `docs/runbooks/hooks.md`
-- `docs/runbooks/mcp-servers.md`
+## What This Is Not
 
-## 3. Quick Start
+This repository is not Hermes Agent. Hermes is a stateful runtime. This starter is the repo-level operating system for safe AI-assisted development: instructions, policies, prompts, skills, agents, handoffs, validation, and documentation. Hermes and Honcho are supported through optional overlays, not required by default.
 
-1. Open the repo in VS Code and confirm the baseline customizations load.
-2. Read `docs/runbooks/starter-composition.md` to decide which modules are core for your target repo and which are overlays.
-3. Review `.github/starter-modules.json` and remove or ignore modules that do not apply to the current stack.
-4. Keep MCP servers disabled in `.vscode/mcp.json` until reviewed.
-5. Start work with a short plan, small diffs, and explicit risk callouts.
-6. Run the repo checks before treating workflow changes as complete.
+## Quick Start
 
-## 3.1 Existing Project Rollout Order
+1. Read `.github/copilot-instructions.md`.
+2. Choose an adoption mode in `docs/runbooks/starter-adoption.md`.
+3. Review `.github/starter-modules.json` to see core, optional, and overlay assets.
+4. Keep MCP, durable memory, and high-risk automation disabled until reviewed.
+5. Run starter validation before merging workflow changes.
 
-For repositories that already have source code and existing `.github` content, use this order:
+Validation commands:
 
-1. Merge minimal baseline first (`.github/copilot-instructions.md`, core/security instructions, module manifest, changelog strategy).
-2. Validate baseline behavior with local checks and prompt smoke tests.
-3. Add important modules in small follow-up PRs:
-   - Stack overlays that match real code paths
-   - High-value agents and skills the team will use immediately
-   - Hook guardrails after policy review
-4. Keep optional orchestration overlays disabled unless there is a clear operational need.
+```bash
+bash .github/scripts/check-starter-workflow.sh
+```
 
-Use `docs/runbooks/adopting-existing-github.md` for the detailed checklist, including required vs optional vs sample-only artifacts.
+```powershell
+.github/scripts/check-starter-workflow.ps1
+```
 
-## 4. How To Adapt This Starter
+## Adoption Modes
 
-### For any repo
+### Minimal Install
 
-1. Keep the core baseline, security rules, hook policy, and ADR template.
-2. If the target already has `.github` assets, follow `docs/runbooks/adopting-existing-github.md` and merge selectively rather than replacing the folder.
-3. Rewrite examples so they match the target repo's actual source-of-truth docs and commands.
-4. Keep `CHANGELOG.md` for implementation changes and `DOC-CHANGELOG.md` for documentation changes so drift is traceable.
-5. Add only the agents and skills the team will actually use.
-6. Keep the repo checks working as you trim or extend starter modules.
+Use for a small repo or first rollout:
 
-### For a stack-specific repo
+- Core Copilot instructions.
+- Core and security overlays.
+- Memory strategy baseline.
+- Module manifest.
+- Basic validation scripts.
+- Changelogs.
 
-1. Enable the matching overlay instructions.
-2. Keep specialized skills only when the repo conventions support them.
-3. Prefer the `senior-software-engineer` agent first; add test-runner-specific agents only when they create real leverage.
+### Team Mode
 
-### For a team-specific workflow
+Use when multiple contributors or agents need shared workflows:
 
-1. Extend `.github/roles/tool-access.json` rather than duplicating tool lists in multiple places.
-2. Extend `.github/hooks/policy-rules.tsv` rather than hardcoding policy into scripts.
-3. Record workflow decisions in ADRs when they affect multiple repos.
+- Agents.
+- Skills.
+- Prompt files.
+- Hook policy.
+- CI validation.
+- Starter runbooks.
 
-## 5. Recommended Operating Pattern
+### Advanced Mode
 
-1. Use one main chat as orchestrator.
-2. Pull in a specialist agent only when the task clearly matches that role.
-3. Use guided handoffs: each agent recommends the next agent, but the orchestrator approves the transition.
-4. Use skills for repeatable playbooks such as ADR writing, bug triage, QA planning, review, release notes, security checks, or scaffolding.
-5. Keep implementation and policy changes separate when possible.
-6. Mirror durable workflow decisions into `docs/adr/`.
+Use when the team needs stronger governance:
 
-## 6. Skill Catalog
+- Approval-gated handoff overlay.
+- MCP templates after review.
+- Eval harness.
+- Tool-surface matrix.
+- Memory policy and optional examples.
 
-The starter currently ships these reusable skills:
+### Enterprise Mode
 
-- Core workflow: `adr-authoring`, `bug-triage`, `qa-test-plan`, `pr-review`, `security-check`, `release-notes`
-- Optional orchestration overlay: `approval-gated-handoffs`
-- Stack overlays: `api-scaffold`, `ui-scaffold`
+Use when organization-level governance matters:
 
-See `docs/runbooks/skills.md` for example prompts for each one.
+- Org instruction overlays.
+- Private shared skills.
+- Centralized policy review.
+- Security and audit requirements.
+- Periodic evals across supported agents.
 
-## 7. Hooks and Guardrails
+## Folder Structure
 
-Hook lifecycle is defined in `.github/hooks/agent-policy.json`. Block rules live in `.github/hooks/policy-rules.tsv`.
+- `.github/copilot-instructions.md`: always-on repo baseline.
+- `.github/instructions/`: core, stack, memory, and optional runtime overlays.
+- `.github/prompts/`: reusable slash-command style task prompts.
+- `.github/agents/`: specialist agent definitions.
+- `.github/skills/`: reusable multi-step workflow playbooks.
+- `.github/hooks/`: deterministic policy rules and hook scripts.
+- `.github/scripts/`: starter validation scripts.
+- `.github/workflows/`: CI checks for starter consistency.
+- `.github/examples/`: disabled examples for overlays and integrations.
+- `.vscode/mcp.json`: disabled MCP template catalog.
+- `docs/adr/`: durable architecture and workflow decisions.
+- `docs/runbooks/`: operational guidance.
+- `evals/`: checklist-driven golden-task harness.
+- `CHANGELOG.md`: executable and behavior-affecting changes.
+- `DOC-CHANGELOG.md`: documentation and workflow text changes.
 
-### Lifecycle
+## Core Vs Optional Modules
 
-- `sessionStart`: prints the banner and writes a session log entry
-- `preToolUse`: blocks risky commands and unsafe secret writes
-- `postToolUse`: writes an audit record
+`.github/starter-modules.json` is the module source of truth.
 
-### Defaults
+Core modules cover baseline instructions, security, memory strategy, governance, agents, guardrails, validation, and CI.
 
-- No destructive wildcard deletes
-- No destructive git discard commands (`git reset --hard`, `git checkout --`)
-- No piped remote script execution
-- No remote content executed through `Invoke-Expression`
-- No overly permissive recursive chmod operations (`chmod -R 777`)
-- No likely real secrets written into `.env`
-- No package installs over plain HTTP or with TLS bypassed (`pip install --trusted-host`, `--index-url http://`, `npm install --registry http://`)
+Optional modules cover prompt workflows, skills, evals, editor templates, and MCP templates.
 
-If a command is blocked, use the safer alternative printed by the hook.
+Overlay modules cover stack-specific guidance, Vitest TDD, approval-gated orchestration, Hermes runtime integration, and Honcho durable memory integration.
 
-## 8. MCP and Editor Templates
+## Prompts
 
-`.vscode/mcp.json` is now a template, not an assumption about your runtime. Replace placeholder commands and paths only after the repo has chosen its actual MCP servers.
+Prompt files are repeatable one-off tasks, not always-on rules. They live under `.github/prompts/` and include:
 
-Rules:
+- Existing repo onboarding.
+- Small feature planning.
+- Small diff implementation.
+- Current diff review.
+- ADR creation.
+- Test plan generation.
+- Release note preparation.
+- Starter migration planning.
+- Security review.
+- CI failure debugging.
 
-1. Keep every entry disabled by default.
-2. Use environment variables for secrets.
-3. Prefer read-only validation first.
-4. Document required env vars and local setup in `docs/runbooks/mcp-servers.md`.
+Each prompt states what context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and expected output.
 
-## 9. Runbooks
+## Skills
 
-- `docs/runbooks/starter-composition.md`: how to select core modules and overlays
-- `docs/runbooks/adopting-existing-github.md`: minimal-first merge flow for repos with existing `.github` content
-- `docs/runbooks/agentic-dev.md`: daily operating model
-- `docs/runbooks/skills.md`: example prompts and usage guidance for each starter skill
-- `docs/runbooks/approval-gated-handoffs.md`: optional overlay for approval-gated orchestration
-- `docs/runbooks/hooks.md`: hook lifecycle, rules, and extension points
-- `docs/runbooks/mcp-servers.md`: MCP template guidance and rollout safety
+Skills are bounded multi-step playbooks. Use them when the workflow is repeatable and format-sensitive.
 
-For the orchestration overlay, the machine-readable transition contract lives in `.github/schema/approval-gated-handoff-envelope.schema.json`, and the repo-local consistency checks live in `.github/scripts/check-approval-gated-orchestration.ps1` and `.github/scripts/check-approval-gated-orchestration.sh`.
+Included workflow skills cover ADR authoring, bug triage, PR review, QA test plans, security checks, release notes, session compaction, memory curation, repo onboarding, CI failure debugging, migration planning, and tool-surface audits.
 
-For the general skill catalog, the repo-local consistency checks live in `.github/scripts/check-starter-skills.ps1` and `.github/scripts/check-starter-skills.sh`.
+Stack overlays include API and UI scaffold skills. Approval-gated handoffs are an optional overlay skill.
 
-For agent handoff and escalation contract coverage, the repo-local checks live in `.github/scripts/check-agent-contracts.ps1` and `.github/scripts/check-agent-contracts.sh`.
+## Agents
 
-For the overall starter workflow assets, the umbrella checks live in `.github/scripts/check-starter-workflow.ps1` and `.github/scripts/check-starter-workflow.sh`.
+The starter uses guided handoffs, not hidden automatic chains.
 
-## 10. Change Tracking
+Core agents include analyst, tech planner, architecture reviewer, senior software engineer, code reviewer, security reviewer, QA, documentation maintainer, and process improvement. Vitest TDD and orchestration coordinator are overlays.
 
-Use the root changelogs to keep implementation and documentation history separate but cross-referenced:
+Each agent defines handoff memory, escalation behavior, required inputs, constraints, approach, and output format.
 
-- `CHANGELOG.md`: source code, scripts, config, test, and other executable changes
-- `DOC-CHANGELOG.md`: Markdown, text, ADR, runbook, and other documentation changes
+## Hooks And Guardrails
 
-When a code change affects docs, add entries to both files and cross-reference them. When a docs-only clarification has no implementation impact, record `Related code: None` in `DOC-CHANGELOG.md`.
+Hook policy lives in `.github/hooks/policy-rules.tsv` and is consumed by Bash and PowerShell pre-tool policy scripts.
 
-## 11. Validation Helpers
+Default blocks include destructive deletion, hard reset, checkout discard, force push, remote shell execution, `Invoke-Expression` from network content, recursive `chmod 777`, secret-like writes to `.env`, HTTP package registries, and explicitly unapproved core policy edits.
 
-Use the repo-local checks to keep the starter consistent as it evolves:
+Hook policy tests live in `.github/scripts/check-hook-policy.*` and run in CI.
 
-- `.github/scripts/check-starter-workflow.ps1` or `.github/scripts/check-starter-workflow.sh`: umbrella check for starter workflow assets
-- `.github/scripts/check-starter-skills.ps1` or `.github/scripts/check-starter-skills.sh`: verify manifest-listed skill directories and `SKILL.md` files
-- `.github/scripts/check-agent-contracts.ps1` or `.github/scripts/check-agent-contracts.sh`: verify required handoff memory and escalation/failure sections in agent files and related runbook references
-- `.github/scripts/check-approval-gated-orchestration.ps1` or `.github/scripts/check-approval-gated-orchestration.sh`: verify the optional orchestration overlay assets, docs, and schema references
+## MCP Safety
 
-## 12. ADR Workflow
+`.vscode/mcp.json` is a template catalog. All servers and apps remain disabled by default.
 
-Use `docs/adr/0000-template.md` for decisions that affect architecture, workflow, security posture, or cross-repo conventions.
+Templates include repo context, local automation, browser automation, GitHub, database, and file-system MCP shapes. Each high-risk template documents purpose, required permissions, and risks.
 
-## 13. First Improvements To Make In A New Repo
+Before enabling any MCP server, use the approval checklist in `docs/runbooks/mcp-servers.md`.
 
-1. Replace example doc references with the repo's actual source-of-truth docs.
-2. Trim unused overlay modules from `.github/starter-modules.json`.
-3. Start using `CHANGELOG.md` and `DOC-CHANGELOG.md` from the first real repo adaptation so drift stays visible.
-4. Add one project-specific skill or agent only after a repeated workflow need is proven.
-5. Run the validation helpers after any starter-level change so the manifest, docs, skills, and overlays stay aligned.
+## Memory Strategy
+
+Memory uses three layers:
+
+1. Session and handoff memory for current task state.
+2. Repo truth for durable decisions, standards, contracts, runbooks, and changelogs.
+3. Optional durable memory for stable non-sensitive preferences and repeated patterns.
+
+Never store secrets, credentials, customer private data, production logs, or regulated data in agent memory.
+
+Use `docs/runbooks/memory-strategy.md` and `.github/instructions/memory.instructions.md` as the default memory policy.
+
+## Hermes And Honcho Integration
+
+Hermes is supported as an optional runtime overlay. It should read repo truth, honor hook policies, preserve handoff contracts, and avoid self-modifying core workflow files without approval.
+
+Honcho is supported as an optional durable memory overlay. It must stay scoped, explicit, reviewable, and subordinate to repo truth.
+
+Both overlays are disabled by default and documented in `docs/runbooks/hermes-runtime.md` and `docs/runbooks/honcho-memory.md`.
+
+## Evaluation Harness
+
+`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, security review, docs/changelog updates, and CI debugging.
+
+Structure checks:
+
+```bash
+bash evals/run-evals.sh
+```
+
+```powershell
+evals/run-evals.ps1
+```
+
+## Recommended Workflow Examples
+
+Simple fix:
+
+1. Use `implement-small-diff.prompt.md` or `senior-software-engineer`.
+2. Run focused validation.
+3. Use `review-current-diff.prompt.md` or `code-reviewer`.
+
+Security-sensitive change:
+
+1. Use `security-review.prompt.md` or `security-reviewer`.
+2. Fix findings with `senior-software-engineer`.
+3. Re-run hook, policy, and focused tests.
+
+Workflow improvement:
+
+1. Use `process-improvement` with explicit approval.
+2. Update instructions, prompts, skills, agents, runbooks, or validators.
+3. Update changelogs.
+4. Run starter validation.
+
+Existing repo adoption:
+
+1. Use `onboard-existing-repo.prompt.md`.
+2. Choose an adoption mode.
+3. Merge minimal baseline first.
+4. Add team or advanced modules in small follow-up changes.
+
+## Validation Commands
+
+- Umbrella checks: `.github/scripts/check-starter-workflow.sh` and `.github/scripts/check-starter-workflow.ps1`.
+- Manifest checks: `.github/scripts/check-starter-manifest.*`.
+- Skill checks: `.github/scripts/check-starter-skills.*`.
+- Agent checks: `.github/scripts/check-agent-contracts.*`.
+- Prompt checks: `.github/scripts/check-prompt-contracts.*`.
+- Hook policy checks: `.github/scripts/check-hook-policy.*`.
+- MCP posture checks: `.github/scripts/check-mcp-posture.*`.
+- Markdown checks: `.github/scripts/check-markdown-quality.*`.
+- Eval harness checks: `.github/scripts/check-evals.*` or `evals/run-evals.*`.
+
+## Security Defaults
+
+- No secrets in repo files, examples, logs, prompts, or memory.
+- No MCP servers enabled by default.
+- No durable memory providers enabled by default.
+- No dangerous shell automation enabled by default.
+- Hook policy blocks common destructive and supply-chain-risky commands.
+- CI validates starter contracts on push and pull request.
+
+## Roadmap
+
+- Add machine-readable eval scoring metadata.
+- Add fixture repositories for controlled golden tasks.
+- Add optional platform adapters for non-VS Code agents.
+- Expand policy fixtures as real false positives and bypass cases are discovered.
+- Add deeper schema validation for prompt and agent metadata when platform contracts stabilize.

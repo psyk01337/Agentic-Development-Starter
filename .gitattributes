@@ -1,0 +1,5 @@
+# Keep repository text files LF across Windows, WSL, Git Bash, and Linux CI.
+* text=auto eol=lf
+
+# Shell scripts must stay LF for Linux, WSL, and Git Bash execution.
+*.sh text eol=lf
