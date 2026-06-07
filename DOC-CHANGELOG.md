@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-06-07 - Expand README starter composition details
+
+- Area: README composition and adoption guidance
+- Change type: docs, reference
+- Summary: added a README section that explains how the starter is split across core rules, optional overlays, reusable agents and skills, hook guardrails, disabled MCP/editor templates, validation assets, and traceability docs.
+- Reason: make the starter's structure easier to understand before teams choose an adoption mode or enable optional workflow surfaces.
+- Affected files: README.md, DOC-CHANGELOG.md
+- Related code: None
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
 ### 2026-06-06 - Document pre-push starter release status
 
 - Area: release notes, repository governance, workflow asset status

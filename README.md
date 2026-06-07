@@ -1,8 +1,22 @@
-# Agentic Development Starter
+# Agentic Development Starter (VS Code, June 2026 Workflow)
 
 Agentic Development Starter is a repo-native workflow, safety, and governance starter for AI-assisted software development. It standardizes instructions, prompts, agents, skills, hooks, MCP templates, memory policy, handoffs, validation, and evaluation so teams can ship changes with consistent guardrails and auditability.
 
 The starter is lightweight and composable. It is not a full agent runtime.
+
+## How It Is Organized
+
+The starter is split into:
+
+- Core rules that apply in any repository.
+- Optional overlays for specific stacks, runtimes, or workflows.
+- Reusable agents and skills for planning, implementation, review, security, QA, documentation, release notes, migration, and process improvement.
+- Hook-based guardrails and audit logging for destructive commands, risky package sources, secret-like writes, and unapproved policy edits.
+- MCP and editor templates that stay disabled until reviewed.
+- Validation and CI scripts that check manifests, prompts, skills, agents, hook policy, MCP posture, Markdown quality, and eval harness structure.
+- Runbooks, ADRs, and changelogs that keep adoption decisions, workflow changes, and validation evidence traceable.
+
+The core path is intentionally small: start with repo instructions, security defaults, memory policy, module manifest, changelogs, and validation. Add prompts, agents, skills, hooks, MCP templates, evals, and runtime overlays only when a repository needs that extra workflow surface and can review the risk.
 
 ## Use This When
 
