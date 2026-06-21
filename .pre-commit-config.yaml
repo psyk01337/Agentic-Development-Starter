@@ -1,0 +1,30 @@
+repos:
+  - repo: local
+    hooks:
+      - id: validate-starter
+        name: Validate starter workflow
+        entry: bash .github/scripts/check-starter-workflow.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+      
+      - id: check-markdown
+        name: Check Markdown quality
+        entry: bash .github/scripts/check-markdown-quality.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+      
+      - id: check-hooks
+        name: Check hook policy
+        entry: bash .github/scripts/check-hook-policy.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+      
+      - id: check-skills
+        name: Check skill contracts
+        entry: bash .github/scripts/check-starter-skills.sh
+        language: system
+        pass_filenames: false
+        always_run: true

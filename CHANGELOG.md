@@ -24,6 +24,28 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-06-20 - Complete high-priority documentation
+
+- Area: documentation, migration, examples, architecture
+- Change type: docs, enhancement
+- Summary: created MIGRATION.md with comprehensive v1.0 to v1.1 migration guide; created .github/examples/README.md documenting example usage patterns; created docs/runbooks/module-manifest-versioning.md explaining module manifest versioning strategy; created docs/ARCHITECTURE.md with Mermaid diagrams showing module relationships, validation workflows, and security layers.
+- Reason: complete remaining high-priority documentation items to improve onboarding, migration, and understanding of the starter's architecture.
+- Affected files: MIGRATION.md, .github/examples/README.md, docs/runbooks/module-manifest-versioning.md, docs/ARCHITECTURE.md
+- Related docs: DOC-CHANGELOG.md entry "2026-06-20 - Complete high-priority documentation"
+- Validation: bash .github/scripts/check-markdown-quality.sh passed
+- Discrepancies or follow-up: none
+
+### 2026-06-20 - Implement high-priority efficiency improvements
+
+- Area: CI/CD, developer experience, validation
+- Change type: feature, enhancement
+- Summary: consolidated 4 separate GitHub Actions workflows into single validation.yml with parallel jobs; added VS Code tasks configuration for quick validation; added pre-commit hooks configuration; added Makefile with common validation targets; added validation timing to check-starter-workflow.sh; created QUICKSTART.md and TROUBLESHOOTING.md guides; added table of contents to README; created runbooks index.
+- Reason: improve developer experience and reduce CI/CD overhead by consolidating workflows and providing quick access to common validation tasks.
+- Affected files: .github/workflows/validation.yml, .vscode/tasks.json, .pre-commit-config.yaml, Makefile, QUICKSTART.md, TROUBLESHOOTING.md, README.md, docs/runbooks/INDEX.md, .github/scripts/check-starter-workflow.sh
+- Related docs: DOC-CHANGELOG.md entry "2026-06-20 - Add developer experience documentation"
+- Validation: bash .github/scripts/check-starter-workflow.sh passed; .github/scripts/check-starter-workflow.ps1 passed
+- Discrepancies or follow-up: old workflow files (starter-validation.yml, markdown-quality.yml, hook-policy-tests.yml, skill-contract-tests.yml) need manual deletion
+
 ### 2026-06-07 - Enforce LF line endings for starter assets
 
 - Area: Git normalization, starter scripts, and release hygiene

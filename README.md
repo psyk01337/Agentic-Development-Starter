@@ -4,6 +4,29 @@ Agentic Development Starter is a repo-native workflow, safety, and governance st
 
 The starter is lightweight and composable. It is not a full agent runtime.
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [How It Is Organized](#how-it-is-organized)
+- [Use This When](#use-this-when)
+- [Do Not Use This When](#do-not-use-this-when)
+- [What This Is Not](#what-this-is-not)
+- [Adoption Modes](#adoption-modes)
+- [Folder Structure](#folder-structure)
+- [Core Vs Optional Modules](#core-vs-optional-modules)
+- [Prompts](#prompts)
+- [Skills](#skills)
+- [Agents](#agents)
+- [Hooks And Guardrails](#hooks-and-guardrails)
+- [MCP Safety](#mcp-safety)
+- [Memory Strategy](#memory-strategy)
+- [Hermes And Honcho Integration](#hermes-and-honcho-integration)
+- [Evaluation Harness](#evaluation-harness)
+- [Recommended Workflow Examples](#recommended-workflow-examples)
+- [Validation Commands](#validation-commands)
+- [Security Defaults](#security-defaults)
+- [Roadmap](#roadmap)
+
 ## How It Is Organized
 
 The starter is split into:

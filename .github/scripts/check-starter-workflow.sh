@@ -16,6 +16,9 @@ scripts=(
   ".github/scripts/check-evals.sh"
 )
 
+total_start=$(date +%s)
+total_time=0
+
 for relative_path in "${scripts[@]}"; do
   full_path="${REPO_ROOT}/${relative_path}"
   if [[ ! -f "${full_path}" ]]; then
@@ -23,7 +26,19 @@ for relative_path in "${scripts[@]}"; do
     exit 1
   fi
 
+  script_start=$(date +%s)
   bash "${full_path}" "${REPO_ROOT}"
+  script_end=$(date +%s)
+  script_time=$((script_end - script_start))
+  total_time=$((total_time + script_time))
+  
+  script_name=$(basename "${relative_path}")
+  echo "  ✓ ${script_name} (${script_time}s)"
 done
 
+total_end=$(date +%s)
+total_elapsed=$((total_end - total_start))
+
+echo ""
 echo "Starter workflow checks passed."
+echo "Total time: ${total_elapsed}s"

@@ -1,0 +1,78 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Validate All (Bash)",
+      "type": "shell",
+      "command": "bash .github/scripts/check-starter-workflow.sh",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Validate All (PowerShell)",
+      "type": "shell",
+      "command": ".github/scripts/check-starter-workflow.ps1",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Markdown Quality",
+      "type": "shell",
+      "command": "bash .github/scripts/check-markdown-quality.sh",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Hook Policy",
+      "type": "shell",
+      "command": "bash .github/scripts/check-hook-policy.sh",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Skill Contracts",
+      "type": "shell",
+      "command": "bash .github/scripts/check-starter-skills.sh",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Agent Contracts",
+      "type": "shell",
+      "command": "bash .github/scripts/check-agent-contracts.sh",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Prompt Contracts",
+      "type": "shell",
+      "command": "bash .github/scripts/check-prompt-contracts.sh",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check MCP Posture",
+      "type": "shell",
+      "command": "bash .github/scripts/check-mcp-posture.sh",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Evals",
+      "type": "shell",
+      "command": "bash evals/run-evals.sh",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Validate All (Parallel)",
+      "type": "shell",
+      "command": "bash -c 'bash .github/scripts/check-starter-workflow.sh & bash .github/scripts/check-markdown-quality.sh & bash .github/scripts/check-hook-policy.sh & bash .github/scripts/check-starter-skills.sh & wait'",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

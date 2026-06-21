@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-06-20 - Complete high-priority documentation
+
+- Area: migration, examples, architecture, module versioning
+- Change type: docs, reference
+- Summary: created MIGRATION.md with comprehensive v1.0 to v1.1 migration guide; created .github/examples/README.md documenting example usage patterns; created docs/runbooks/module-manifest-versioning.md explaining module manifest versioning strategy; created docs/ARCHITECTURE.md with Mermaid diagrams showing module relationships, validation workflows, and security layers.
+- Reason: complete remaining high-priority documentation items to improve onboarding, migration, and understanding of the starter's architecture.
+- Affected files: MIGRATION.md, .github/examples/README.md, docs/runbooks/module-manifest-versioning.md, docs/ARCHITECTURE.md
+- Related code: CHANGELOG.md entry "2026-06-20 - Complete high-priority documentation"
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
+### 2026-06-20 - Add developer experience documentation
+
+- Area: onboarding, troubleshooting, navigation
+- Change type: docs, reference
+- Summary: created QUICKSTART.md with 5-minute setup guide; created TROUBLESHOOTING.md with common issues and solutions; added table of contents to README.md; created docs/runbooks/INDEX.md to organize runbooks by use case.
+- Reason: improve onboarding experience and make it easier for users to find relevant documentation and resolve common issues.
+- Affected files: QUICKSTART.md, TROUBLESHOOTING.md, README.md, docs/runbooks/INDEX.md
+- Related code: CHANGELOG.md entry "2026-06-20 - Implement high-priority efficiency improvements"
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
 ### 2026-06-07 - Expand README starter composition details
 
 - Area: README composition and adoption guidance

@@ -4,3 +4,5 @@ Thumbs.db
 
 # for Local only files
 .forlocal/
+checklist.md
+MIGRATION.md
