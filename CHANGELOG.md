@@ -24,9 +24,18 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-06-20 - Complete high-priority documentation
+### 2026-07-17 - Add McKinsey problem-structuring skill, prompt, and evals
 
-- Area: documentation, migration, examples, architecture
+- Area: starter workflow, skills, prompts, eval harness
+- Change type: feature
+- Summary: created the `problem-structuring` skill adapting McKinsey's 7-step problem-solving method (MECE decomposition, hypothesis-driven analysis, issue prioritization, Pyramid Principle synthesis, SCQA communication) for technical contexts; created the `structure-technical-problem` prompt for direct invocation; added eval task and expected checklist for problem-structuring behavior; updated eval runner scripts to include the new task and checklist; enhanced `analyst` and `tech-planner` agent definitions to reference the new frameworks; registered new skill, prompt, and eval assets in `starter-modules.json`.
+- Reason: add structured problem-decomposition discipline to bridge the `analyst` → `tech-planner` chain for complex or ambiguous technical problems.
+- Affected files: .github/skills/problem-structuring/SKILL.md, .github/prompts/structure-technical-problem.prompt.md, .github/agents/analyst.agent.md, .github/agents/tech-planner.agent.md, .github/starter-modules.json, evals/tasks/problem-structuring.md, evals/expected/problem-structuring.checklist.md, evals/run-evals.sh, evals/run-evals.ps1
+- Related docs: DOC-CHANGELOG.md entry "2026-07-17 - Add problem-structuring skill, prompt, and agent enhancements"
+- Validation: pending
+- Discrepancies or follow-up: none
+
+### 2026-06-20 - Complete high-priority documentation
 - Change type: docs, enhancement
 - Summary: created MIGRATION.md with comprehensive v1.0 to v1.1 migration guide; created .github/examples/README.md documenting example usage patterns; created docs/runbooks/module-manifest-versioning.md explaining module manifest versioning strategy; created docs/ARCHITECTURE.md with Mermaid diagrams showing module relationships, validation workflows, and security layers.
 - Reason: complete remaining high-priority documentation items to improve onboarding, migration, and understanding of the starter's architecture.

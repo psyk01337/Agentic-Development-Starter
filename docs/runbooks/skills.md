@@ -112,6 +112,16 @@ Example prompts:
 - `Use tool-surface-audit to compare this agent runtime against the starter tool matrix.`
 - `Audit whether enabling browser automation MCP is safe for this repo.`
 
+### `problem-structuring`
+
+Use when a technical problem is too complex or ambiguous for straightforward discovery and needs structured decomposition before the analyst or tech-planner chain begins. Applies MECE issue trees, hypothesis-driven analysis, impact × feasibility prioritization, Pyramid Principle synthesis, and SCQA communication.
+
+Example prompts:
+
+- `Use problem-structuring to decompose this performance degradation across three services before we investigate.`
+- `Structure this feature request into a MECE issue tree with hypotheses and an analysis plan.`
+- `Apply the Pyramid Principle to synthesize these findings into a headline recommendation with supporting arguments.`
+
 ## Optional Overlay Skills
 
 ### `approval-gated-handoffs`

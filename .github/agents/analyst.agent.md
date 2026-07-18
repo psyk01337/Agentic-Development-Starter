@@ -31,6 +31,7 @@ Assume upstream context:
 - Check `.github/copilot-instructions.md` first for the project source-of-truth docs.
 - Use the repo's source-of-truth docs such as `docs/prd.md`, `docs/architecture.md`, and `docs/api.md` when the question touches scope, module shape, or contracts.
 - Use the existing codebase and the smallest relevant command or search needed to confirm behavior.
+- For complex or ambiguous problems, consider invoking the `problem-structuring` skill (`.github/skills/problem-structuring/SKILL.md`) to decompose the problem with MECE issue trees and hypothesis-driven analysis before gathering evidence.
 
 ## Escalation and Failure Modes
 
@@ -42,8 +43,9 @@ Assume upstream context:
 - **Do not treat inferences as confirmed findings** — if certainty cannot be reached, say so explicitly and list the evidence gap.
 
 ## Approach
+1. If the problem is complex or multi-faceted, form an initial hypothesis before gathering evidence: *"I believe X is the cause/likely answer because Y."* Use the `problem-structuring` skill when the problem would benefit from MECE decomposition into an issue tree before investigation begins.
 2. Gather evidence from the relevant docs, files, and runtime checks.
-3. Separate confirmed findings from inferences and remaining unknowns.
+3. Separate confirmed findings from inferences and remaining unknowns. Test each hypothesis against evidence and mark it confirmed, refuted, or inconclusive.
 4. Call out risks, missing telemetry, or weak assumptions when they block certainty.
 5. End with the smallest next decision or follow-up the user should take.
 

@@ -18,10 +18,12 @@ required_files=(
   "tasks/security-review.md"
   "tasks/update-docs-and-changelog.md"
   "tasks/debug-failing-ci.md"
+  "tasks/problem-structuring.md"
   "expected/simple-bugfix.checklist.md"
   "expected/add-api-endpoint.checklist.md"
   "expected/frontend-component.checklist.md"
   "expected/security-review.checklist.md"
+  "expected/problem-structuring.checklist.md"
 )
 
 for relative_path in "${required_files[@]}"; do

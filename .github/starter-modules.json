@@ -115,7 +115,8 @@
         ".github/prompts/prepare-release-notes.prompt.md",
         ".github/prompts/migrate-to-starter.prompt.md",
         ".github/prompts/security-review.prompt.md",
-        ".github/prompts/debug-failing-ci.prompt.md"
+        ".github/prompts/debug-failing-ci.prompt.md",
+        ".github/prompts/structure-technical-problem.prompt.md"
       ]
     },
     {
@@ -135,7 +136,8 @@
         ".github/skills/repo-onboarding/SKILL.md",
         ".github/skills/ci-failure-debugging/SKILL.md",
         ".github/skills/migration-planning/SKILL.md",
-        ".github/skills/tool-surface-audit/SKILL.md"
+        ".github/skills/tool-surface-audit/SKILL.md",
+        ".github/skills/problem-structuring/SKILL.md"
       ]
     },
     {
@@ -151,10 +153,12 @@
         "evals/tasks/security-review.md",
         "evals/tasks/update-docs-and-changelog.md",
         "evals/tasks/debug-failing-ci.md",
+        "evals/tasks/problem-structuring.md",
         "evals/expected/simple-bugfix.checklist.md",
         "evals/expected/add-api-endpoint.checklist.md",
         "evals/expected/frontend-component.checklist.md",
         "evals/expected/security-review.checklist.md",
+        "evals/expected/problem-structuring.checklist.md",
         "evals/run-evals.sh",
         "evals/run-evals.ps1"
       ]

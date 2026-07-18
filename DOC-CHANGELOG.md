@@ -24,9 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
-### 2026-06-20 - Complete high-priority documentation
+### 2026-07-17 - Add problem-structuring skill, prompt, and agent enhancements
 
-- Area: migration, examples, architecture, module versioning
+- Area: skills, prompts, agents, runbooks, eval harness
+- Change type: docs, runbook, reference
+- Summary: added `problem-structuring` skill documentation adapting McKinsey's 7-step problem-solving method for software engineering; added `structure-technical-problem` prompt with structured deliverables; added eval task and expected checklist for problem-structuring behavior; updated `analyst` agent to reference the skill and hypothesis-driven investigation; updated `tech-planner` agent to reference MECE decomposition, Pyramid Principle synthesis, and SCQA communication; updated `docs/runbooks/skills.md` with example prompts for the new skill; registered new assets in `starter-modules.json` under workflow-skills, workflow-prompts, and workflow-evals.
+- Reason: improve the repo's problem-solving workflow by incorporating McKinsey-style structured decomposition and synthesis into the agent chain.
+- Affected files: .github/skills/problem-structuring/SKILL.md, .github/prompts/structure-technical-problem.prompt.md, .github/agents/analyst.agent.md, .github/agents/tech-planner.agent.md, docs/runbooks/skills.md, evals/tasks/problem-structuring.md, evals/expected/problem-structuring.checklist.md, .github/starter-modules.json
+- Related code: CHANGELOG.md entry "2026-07-17 - Add McKinsey problem-structuring skill, prompt, and evals"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-06-20 - Complete high-priority documentation
 - Change type: docs, reference
 - Summary: created MIGRATION.md with comprehensive v1.0 to v1.1 migration guide; created .github/examples/README.md documenting example usage patterns; created docs/runbooks/module-manifest-versioning.md explaining module manifest versioning strategy; created docs/ARCHITECTURE.md with Mermaid diagrams showing module relationships, validation workflows, and security layers.
 - Reason: complete remaining high-priority documentation items to improve onboarding, migration, and understanding of the starter's architecture.

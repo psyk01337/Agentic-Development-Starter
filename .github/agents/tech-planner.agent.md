@@ -49,17 +49,19 @@ Assume upstream context:
 - **Do not recommend broad platform or language changes** without explicitly calling out migration cost, operational impact, and team risk — if those costs are unknown, surface that as a blocker.
 
 ## Approach
+1. If the problem space is complex, ensure upstream analysis used MECE decomposition (mutually exclusive, collectively exhaustive issue trees) to avoid overlapping or missing concerns. Use the `problem-structuring` skill (`.github/skills/problem-structuring/SKILL.md`) when the problem has not yet been decomposed.
 2. Identify existing constraints: product scope, contracts, boundaries, non-functional needs, and operational realities.
-3. Compare viable solution options with explicit tradeoffs across scalability, security, maintainability, delivery risk, team complexity, cost, and ecosystem fit.
-4. Recommend a concrete target design covering platform choices, module boundaries, data flow, integration points, operational considerations, and implementation guardrails.
-5. Break the recommendation into a phased delivery plan with assumptions, risks, migration concerns, and decision points.
-6. Prepare a clean handoff for architecture review or implementation.
+3. Generate options using MECE logic — each option should represent a distinct branch of the solution space without gaps or overlaps.
+4. Compare viable solution options with explicit tradeoffs across scalability, security, maintainability, delivery risk, team complexity, cost, and ecosystem fit.
+5. Recommend a concrete target design covering platform choices, module boundaries, data flow, integration points, operational considerations, and implementation guardrails. Structure the recommendation using the Pyramid Principle: lead with the headline answer, then support with 2–4 key arguments backed by evidence.
+6. Break the recommendation into a phased delivery plan with assumptions, risks, migration concerns, and decision points.
+7. Prepare a clean handoff for architecture review or implementation. When communicating findings, consider the SCQA framework (Situation, Complication, Question, Answer) for clarity.
 
 ## Output Format
-- Problem and scope
+- Problem and scope (consider SCQA framing: Situation, Complication, Question)
 - Constraints and assumptions
-- Options considered
-- Recommended technical plan
+- Options considered (prefer MECE coverage of the solution space)
+- Recommended technical plan (Pyramid Principle: headline recommendation with supporting arguments)
 - Delivery plan
 - Risks and open questions
 - Handoff-ready summary
