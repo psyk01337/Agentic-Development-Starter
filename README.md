@@ -163,6 +163,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 - Starter migration planning.
 - Security review.
 - CI failure debugging.
+- Problem structuring.
 
 Each prompt states what context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and expected output.
 
@@ -170,7 +171,7 @@ Each prompt states what context to inspect first, deliverables, safety boundarie
 
 Skills are bounded multi-step playbooks. Use them when the workflow is repeatable and format-sensitive.
 
-Included workflow skills cover ADR authoring, bug triage, PR review, QA test plans, security checks, release notes, session compaction, memory curation, repo onboarding, CI failure debugging, migration planning, and tool-surface audits.
+Included workflow skills cover ADR authoring, bug triage, PR review, QA test plans, security checks, release notes, session compaction, memory curation, repo onboarding, CI failure debugging, migration planning, tool-surface audits, and problem structuring.
 
 Stack overlays include API and UI scaffold skills. Approval-gated handoffs are an optional overlay skill.
 
@@ -220,7 +221,7 @@ Both overlays are disabled by default and documented in `docs/runbooks/hermes-ru
 
 ## Evaluation Harness
 
-`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, security review, docs/changelog updates, and CI debugging.
+`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, security review, docs/changelog updates, CI debugging, and problem structuring.
 
 Structure checks:
 
@@ -245,6 +246,12 @@ Security-sensitive change:
 1. Use `security-review.prompt.md` or `security-reviewer`.
 2. Fix findings with `senior-software-engineer`.
 3. Re-run hook, policy, and focused tests.
+
+Unstructured problem:
+
+1. Use `structure-technical-problem.prompt.md` or the `problem-structuring` skill.
+2. Hand off to `analyst` for evidence gathering.
+3. Hand off to `tech-planner` for design and phased planning.
 
 Workflow improvement:
 
