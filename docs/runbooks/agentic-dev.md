@@ -25,11 +25,12 @@ This runbook describes the daily operating model once the starter has been compo
 
 ### Unclear problem or risky change
 
-1. Start with `analyst`.
-2. Hand off to `tech-planner` when design or tradeoff work is needed.
-3. Hand off to `architecture-reviewer` when the change touches contracts, boundaries, or platform shape.
-4. Hand off to `senior-software-engineer` for implementation.
-5. Hand off to `code-reviewer` and `qa` before calling the work done.
+1. Invoke `problem-structuring` skill when the problem spans multiple systems, teams, or has no obvious root cause — before analysis begins.
+2. Start with `analyst`.
+3. Hand off to `tech-planner` when design or tradeoff work is needed.
+4. Hand off to `architecture-reviewer` when the change touches contracts, boundaries, or platform shape.
+5. Hand off to `senior-software-engineer` for implementation.
+6. Hand off to `code-reviewer` and `qa` before calling the work done.
 
 ### Workflow asset change
 

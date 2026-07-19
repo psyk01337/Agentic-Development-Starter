@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-07-18 - Enrich problem-structuring skill with McKinsey Mind book insights
+
+- Area: starter workflow, skills, evals
+- Change type: enhancement
+- Summary: enriched the `problem-structuring` skill with concepts from *The McKinsey Mind* (Rasiel & Friga): added Core Principles section (fact-based hypothesis-driven discipline, intuition-data balance with classification, one-day answer, key drivers); strengthened Step 1 (Frame the Problem) with initial hypothesis formation and business need identification; added key-driver focus to Steps 2-3; renamed Step 4 to "Design the Analysis" with confirm/refute framing, dependencies, and fallbacks; split Step 5 into "Gather the Data" and "Interpret the Results" with evidence classification and "so what?" test; expanded Step 7 (Synthesize and Communicate) with buy-in guidance and explicit decision ask; updated eval checklist and task to match enriched output format; updated the `structure-technical-problem` prompt with new deliverables and safety boundaries.
+- Reason: incorporate deeper problem-solving rigor from the McKinsey Mind framework — initial hypothesis before decomposition, intuition-data balance, key-driver focus, distinct design-gather-interpret phases, and buy-in considerations.
+- Affected files: .github/skills/problem-structuring/SKILL.md, .github/prompts/structure-technical-problem.prompt.md, evals/tasks/problem-structuring.md, evals/expected/problem-structuring.checklist.md
+- Related docs: DOC-CHANGELOG.md entry "2026-07-18 - Document problem-structuring enrichment from McKinsey Mind"
+- Validation: pending
+- Discrepancies or follow-up: none
+
 ### 2026-07-17 - Add McKinsey problem-structuring skill, prompt, and evals
 
 - Area: starter workflow, skills, prompts, eval harness

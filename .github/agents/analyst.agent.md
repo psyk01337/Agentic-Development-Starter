@@ -43,7 +43,7 @@ Assume upstream context:
 - **Do not treat inferences as confirmed findings** — if certainty cannot be reached, say so explicitly and list the evidence gap.
 
 ## Approach
-1. If the problem is complex or multi-faceted, form an initial hypothesis before gathering evidence: *"I believe X is the cause/likely answer because Y."* Use the `problem-structuring` skill when the problem would benefit from MECE decomposition into an issue tree before investigation begins.
+1. If the problem spans multiple systems, teams, or has no obvious root cause, invoke the `problem-structuring` skill (`.github/skills/problem-structuring/SKILL.md`) to produce a MECE issue tree with hypotheses before gathering evidence. For simpler investigations, form an initial hypothesis directly: *"I believe X is the cause/likely answer because Y."*
 2. Gather evidence from the relevant docs, files, and runtime checks.
 3. Separate confirmed findings from inferences and remaining unknowns. Test each hypothesis against evidence and mark it confirmed, refuted, or inconclusive.
 4. Call out risks, missing telemetry, or weak assumptions when they block certainty.

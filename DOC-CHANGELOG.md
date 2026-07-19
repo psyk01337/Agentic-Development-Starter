@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-07-18 - Document problem-structuring enrichment from McKinsey Mind
+
+- Area: skills, prompts, evals
+- Change type: docs, runbook, reference
+- Summary: enriched the `problem-structuring` skill documentation with concepts from *The McKinsey Mind* (Rasiel & Friga): added Core Principles covering fact-based hypothesis-driven discipline, intuition-data balance with three-tier evidence classification (data-backed, intuition-backed, assumption), one-day answer discipline, and key-driver focus; reframed Step 1 around initial hypothesis formation at the framing stage (before decomposition); added key-driver identification throughout structuring and prioritization; renamed and deepened Step 4 into analysis design with confirm/refute framing; split evidence gathering and interpretation into distinct phases with the "so what?" test; expanded communication guidance to include audience-specific buy-in and explicit decision asks; updated the eval checklist (from 7 sections to 10, from 39 to 61 criteria) and eval task to match the enriched method; updated the `structure-technical-problem` prompt with new deliverables, safety boundaries, and output sections.
+- Reason: incorporate deeper problem-solving discipline from the McKinsey Mind framework to improve the skill's rigor without adding complexity.
+- Affected files: .github/skills/problem-structuring/SKILL.md, .github/prompts/structure-technical-problem.prompt.md, evals/tasks/problem-structuring.md, evals/expected/problem-structuring.checklist.md
+- Related code: CHANGELOG.md entry "2026-07-18 - Enrich problem-structuring skill with McKinsey Mind book insights"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
 ### 2026-07-17 - Add problem-structuring skill, prompt, and agent enhancements
 
 - Area: skills, prompts, agents, runbooks, eval harness

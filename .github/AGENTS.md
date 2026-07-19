@@ -145,6 +145,7 @@ These are common mid-chain signals that should redirect the handoff to a differe
 | Code review finds a structural or boundary issue beyond code-level fixes | `architecture-reviewer` | returning to `senior-software-engineer` |
 | QA reveals a behavioral gap vs. documented expected behavior | `analyst` | returning to `senior-software-engineer` |
 | Scope expands mid-implementation beyond the requested slice | stop + user decision | continuing implementation |
+| Problem spans multiple systems or teams with unclear root cause | invoke `problem-structuring` skill before `analyst` | starting `analyst` without structure |
 | Two consecutive handoffs stall on missing approval (overlay mode) | user escalation | retrying the transition |
 
 These triggers are advisory signals. The orchestrating user or main chat always decides whether to follow a redirect.

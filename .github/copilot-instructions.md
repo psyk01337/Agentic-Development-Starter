@@ -27,3 +27,4 @@ Use `.github/starter-modules.json` to understand which instructions, skills, age
 - When asked to explain: be direct, brief, and reference concrete files/lines.
 - Call out assumptions quickly when context is missing.
 - Prefer generic instructions, roles, and runbooks first; use optional stack overlays only when they improve accuracy.
+- For complex problems spanning multiple systems or teams with no obvious root cause, invoke the `problem-structuring` skill (`.github/skills/problem-structuring/SKILL.md`) to decompose the problem with MECE issue trees and hypothesis-driven analysis before starting discovery or implementation.
