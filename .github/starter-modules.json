@@ -116,7 +116,8 @@
         ".github/prompts/migrate-to-starter.prompt.md",
         ".github/prompts/security-review.prompt.md",
         ".github/prompts/debug-failing-ci.prompt.md",
-        ".github/prompts/structure-technical-problem.prompt.md"
+        ".github/prompts/structure-technical-problem.prompt.md",
+        ".github/prompts/initialize-new-project.prompt.md"
       ]
     },
     {

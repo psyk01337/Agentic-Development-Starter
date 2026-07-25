@@ -20,6 +20,8 @@ git clone https://github.com/psyk01337/Agentic-Development-Starter.git
 cp -r Agentic-Development-Starter/.github /path/to/your/project/
 ```
 
+**Alternative for brand-new projects:** Clone the starter directly and rename it as your project root — then add your app code in an `app/` directory alongside the workflow assets. After your first commit, use the `initialize-new-project` prompt to adapt all documentation to your project's name, tech stack, and goals. See `docs/runbooks/starter-adoption.md` §0 for the full clone-as-template path.
+
 ### 2. Review the configuration
 
 Open `.github/copilot-instructions.md` and review the baseline instructions. These apply to all repositories using this starter.

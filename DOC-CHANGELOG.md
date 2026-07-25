@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-07-25 - Document clone-as-template adoption path and initialize-new-project prompt
+
+- Area: runbooks, onboarding, quickstart, prompts
+- Change type: docs, onboarding, reference
+- Summary: added a "Clone-As-Template (New Project Quickstart)" section to `starter-adoption.md` documenting the clone→rename→add-app-code adoption path, including a first-prompt step that describes how to use the new `initialize-new-project` prompt to adapt all documentation to a specific project; added `app/` directory convention for separating application code from workflow assets; created `.github/prompts/initialize-new-project.prompt.md` — a reusable prompt that rewrites README, resets changelogs, enables/disables stack overlays, and preserves workflow governance assets; registered the new prompt in `starter-modules.json`; updated `QUICKSTART.md` alternative-path note to mention the initialization prompt.
+- Reason: the starter only documented copying `.github/` into existing repos; users who clone the starter as a template need both the clone steps and a guided way to adapt all documentation to their specific project name, tech stack, and goals.
+- Affected files: docs/runbooks/starter-adoption.md, QUICKSTART.md, .github/prompts/initialize-new-project.prompt.md, .github/starter-modules.json
+- Related code: CHANGELOG.md entry "2026-07-25 - Document clone-as-template adoption path and initialize-new-project prompt"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
 ### 2026-07-18 - Document problem-structuring enrichment from McKinsey Mind
 
 - Area: skills, prompts, evals
