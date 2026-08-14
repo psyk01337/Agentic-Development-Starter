@@ -18,6 +18,7 @@ They are additive to the general frontend and React overlays and should only be 
 
 ## Server and Client Components
 - Use Server Components by default where the repo pattern supports it; opt into Client Components only when interaction requires it.
+- When using shadcn/ui, add components via the library's CLI (`npx shadcn@latest add`) and use its blocks, examples, and component recipes as a starting point — do not rebuild common UI patterns from scratch.
 - Keep browser-only APIs out of server execution paths.
 - Keep serialization boundaries explicit when passing data to client components.
 

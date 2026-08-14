@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-08-08 - Document LTS-first and documentation-driven dependency rules
+
+- Area: instructions, core, security, backend, frontend
+- Change type: docs, policy
+- Summary: added "Dependencies and Documentation" section to `core.instructions.md` establishing baseline rules for LTS releases, official documentation consultation, citation of references, and verification against current docs; added LTS preference, CVE/advisory checking, and security-docs consultation to `security.instructions.md` supply chain rules; expanded `backend.instructions.md` Dependency and Runtime Hygiene with LTS Python/library guidance, documentation-first rules, and advisory checking; added new "Dependencies" section to `frontend.instructions.md` covering LTS Node.js, official docs consultation, citation of references, and breaking-change/advisory awareness.
+- Reason: ensure agents consistently prefer latest stable LTS versions, consult and cite official documentation (not memory or AI-generated examples), and check for security advisories and deprecations before using any dependency — applied at core, security, backend, and frontend layers.
+- Affected files: .github/instructions/core.instructions.md, .github/instructions/security.instructions.md, .github/instructions/backend.instructions.md, .github/instructions/frontend.instructions.md
+- Related code: CHANGELOG.md entry "2026-08-08 - Add LTS-first and documentation-driven dependency rules across instructions"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-08-08 - Document instruction file improvements
+
+- Area: instructions, security, frontend, memory
+- Change type: docs, policy
+- Summary: added intro paragraph to `security.instructions.md` stating its role as the always-applied OWASP-aligned baseline; added "Error Handling" section to `frontend.instructions.md` with guidance on error boundaries, console hygiene, and not exposing internals; split `frontend.instructions.md` "Quality" into separate "Testing" and "Accessibility" sections matching the React overlay's structural pattern; added cross-reference from `core.instructions.md` Safety to `security.instructions.md`; added cross-reference from `honcho-memory.instructions.md` to `memory.instructions.md` for the three-layer model.
+- Reason: audit across all 12 instruction files identified missing content (security intro, frontend error handling), structural inconsistency (frontend Quality mixing concerns), and missing cross-references that reduce agent navigability of the layered instruction model.
+- Affected files: .github/instructions/security.instructions.md, .github/instructions/frontend.instructions.md, .github/instructions/core.instructions.md, .github/instructions/honcho-memory.instructions.md
+- Related code: CHANGELOG.md entry "2026-08-08 - Improve instruction file coverage and cross-references"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
 ### 2026-07-25 - Document clone-as-template adoption path and initialize-new-project prompt
 
 - Area: runbooks, onboarding, quickstart, prompts

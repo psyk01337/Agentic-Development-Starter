@@ -39,7 +39,10 @@ If the repository uses FastAPI, layer the dedicated FastAPI overlay on top of th
 - Parameterize SQL queries; never build SQL from untrusted string interpolation.
 
 ## Dependency and Runtime Hygiene
+- Prefer the latest stable LTS Python release (e.g., 3.12, 3.13) and LTS versions of critical libraries (Django, SQLAlchemy, Celery, etc.).
 - Prefer the repository's dependency management pattern and pin versions where the repo expects lock or constraints files.
+- Consult each dependency's official documentation for correct usage patterns, configuration, and version-specific behavior before implementation. Cite documentation references when the pattern is non-obvious.
+- Check for security advisories, deprecation warnings, and breaking-change notices before adding or upgrading any Python package.
 - Keep third-party additions minimal and justified.
 - Avoid global mutable state for request-sensitive or concurrency-sensitive logic.
 - Prefer context managers for file handles, network clients, and DB sessions.

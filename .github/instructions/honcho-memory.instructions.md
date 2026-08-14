@@ -8,6 +8,7 @@ Use these rules only when a repository explicitly opts into Honcho or another du
 ## Memory Boundaries
 
 - Repo files remain authoritative for decisions, policies, contracts, runbooks, and changelogs.
+- Follow the three-layer memory model in `.github/instructions/memory.instructions.md`: session memory for task state, repo truth for durable facts, optional durable memory for stable non-sensitive preferences.
 - Default to project or repo scoped memory, not global memory.
 - Keep save behavior explicit and reviewable.
 - Use conservative context caps and pruning rules.

@@ -7,7 +7,8 @@ These rules are an optional overlay for repositories that use React.
 They are additive to the general frontend overlay and should only be enabled where React is the established framework.
 
 ## Component Boundaries
-- Keep components focused and composable; extract hooks for reusable stateful logic.
+- When using shadcn/ui or similar component primitives, use the library's blocks, examples, and component recipes as a starting point — install via the library's CLI or copy from its documented examples rather than writing equivalent functionality from scratch.
+- Keep components focused, composable, and modular; extract hooks for reusable stateful logic. Prefer many small single-responsibility components over one large compound component.
 - Prefer explicit props over implicit cross-component coupling.
 - Keep presentational and data-orchestration responsibilities separated where practical.
 

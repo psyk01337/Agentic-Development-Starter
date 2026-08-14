@@ -3,6 +3,8 @@ applyTo: "**/*"
 ---
 # Security Instructions
 
+These rules are the always-applied security baseline for every repository using this starter. They cover OWASP-aligned input validation, access control, cryptography, supply chain, secrets handling, file/network boundaries, and command safety. Stack-specific overlays may add further constraints but must not weaken these defaults.
+
 ## Baseline Checks (OWASP-aligned)
 - Validate, normalize, and constrain all untrusted input at boundaries.
 - Enforce authorization on protected actions and resources; do not rely on authentication alone.
@@ -37,6 +39,9 @@ applyTo: "**/*"
 - Do not disable TLS/certificate verification except in explicitly documented local-only setups; treat any TLS bypass as a red flag requiring a security review note.
 - Use environment variables and documented setup for registry credentials; never hardcode package source credentials in config files or CI scripts.
 - When evaluating auto-update tooling (Dependabot, Renovate, etc.), restrict auto-merge to patch-only updates and require human review for minor and major bumps, especially for security-sensitive or execution-layer packages — auto-updating supply chain attacks are an active and growing threat vector.
+- Prefer the latest stable LTS (Long Term Support) release for runtime platforms (Node.js, Python, Java, .NET, etc.) and critical framework dependencies. LTS releases receive security backports longer and reduce exposure to unpatched vulnerabilities.
+- Check for security advisories, CVE announcements, and deprecation notices before adding or upgrading any dependency. A dependency that is unmaintained or has open critical CVEs should be rejected regardless of its popularity.
+- Consult the official documentation of each dependency for its security configuration, known attack surfaces, and recommended hardening practices.
 
 ## Secrets and Logging
 - Never commit secrets, API keys, tokens, or private certificates.
