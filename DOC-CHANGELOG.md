@@ -24,6 +24,72 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-08-18 - Fix markdown quality failures in docs and examples
+
+- Area: docs, examples, runbooks
+- Change type: docs, fix
+- Summary: fixed broken relative links in `.github/examples/README.md` (8 links corrected to `../../docs/runbooks/...`) and `docs/runbooks/INDEX.md` (6 links corrected to `../../...`); removed trailing whitespace in `docs/ARCHITECTURE.md` (inside Mermaid fences), `docs/runbooks/module-manifest-versioning.md`, and `TROUBLESHOOTING.md`.
+- Reason: `bash .github/scripts/check-starter-workflow.sh` failed at the Markdown quality check with broken-link and trailing-whitespace errors.
+- Affected files: .github/examples/README.md, docs/runbooks/INDEX.md, docs/ARCHITECTURE.md, docs/runbooks/module-manifest-versioning.md, TROUBLESHOOTING.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Document Laravel component eval golden task
+
+- Area: evals
+- Change type: docs, reference
+- Summary: added `evals/tasks/laravel-component.md` and `evals/expected/laravel-component.checklist.md` covering a Livewire component change that must honor the PHP, Laravel, Livewire, Alpine, and database instruction overlays and consult official docs for installed versions; updated the README eval task list.
+- Reason: close the eval coverage gap for the newly added PHP/Laravel stack overlays.
+- Affected files: evals/tasks/laravel-component.md, evals/expected/laravel-component.checklist.md, README.md
+- Related code: CHANGELOG.md entry "2026-08-18 - Add Laravel component eval golden task and checklist"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Refresh overlay catalog references in README and migration guide
+
+- Area: README, migration guide
+- Change type: docs, reference
+- Summary: updated the README overlay summary to mention PHP/Laravel ecosystem and database overlays; expanded the migration guide's "Add Stack-Specific Instructions" step with PHP/Laravel ecosystem and database instruction overlays.
+- Reason: keep the starter's overlay catalog references current after adding PHP, Laravel, Filament, Livewire, Inertia, Alpine, Valkey, SQLite, PostgreSQL, and MariaDB overlays.
+- Affected files: README.md, MIGRATION.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Document ui-scaffold skill alignment
+
+- Area: skills, runbooks
+- Change type: docs, reference
+- Summary: updated `ui-scaffold` skill guidance to read active UI instruction overlays and official documentation before scaffolding; added Livewire, Inertia, Alpine, and Filament trigger examples and overlay/doc-compliance checklist items; added matching example prompts to `docs/runbooks/skills.md`.
+- Reason: keep the ui-scaffold skill consistent with the PHP/Laravel UI stack overlays and the doc-first rules.
+- Affected files: .github/skills/ui-scaffold/SKILL.md, docs/runbooks/skills.md
+- Related code: CHANGELOG.md entry "2026-08-18 - Align ui-scaffold skill with stack instruction overlays"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Document database instruction overlays
+
+- Area: instructions, runbooks, architecture docs
+- Change type: docs, policy, reference
+- Summary: added instruction overlays for SQLite, PostgreSQL, and MariaDB, each scoped by `applyTo` with official documentation references and latest-stable/doc-first version rules; added a "Relational database repos" section to `starter-composition.md`, a database overlays row to the `adopting-existing-github.md` artifact checklist, and overlay modules to the `ARCHITECTURE.md` module dependency graph.
+- Reason: database-specific guidance was missing from the optional overlay catalog.
+- Affected files: .github/instructions/sqlite.instructions.md, .github/instructions/postgresql.instructions.md, .github/instructions/mariadb.instructions.md, docs/runbooks/starter-composition.md, docs/runbooks/adopting-existing-github.md, docs/ARCHITECTURE.md
+- Related code: CHANGELOG.md entry "2026-08-18 - Add database instruction overlays for SQLite, PostgreSQL, and MariaDB"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Document PHP ecosystem instruction overlays
+
+- Area: instructions, runbooks, architecture docs
+- Change type: docs, policy, reference
+- Summary: replaced the mislabeled Laravel overlay (a Python/SQL backend copy) with Laravel-specific guidance; added six new instruction overlays for PHP 8+, Filament 5+, Livewire 4+, Inertia.js, Alpine.js, and Valkey, each scoped by `applyTo` and pointing to official documentation with latest-stable/doc-first version rules; added a "PHP / Laravel repos" section to `starter-composition.md`, PHP/Laravel rows to the `adopting-existing-github.md` artifact checklist, and new overlay modules to the `ARCHITECTURE.md` module dependency graph.
+- Reason: the PHP/Laravel ecosystem had no instruction coverage and the existing `laravel.instructions.md` contained unrelated Python/SQL content that was never registered in the module manifest.
+- Affected files: .github/instructions/laravel.instructions.md, .github/instructions/php.instructions.md, .github/instructions/filament.instructions.md, .github/instructions/livewire.instructions.md, .github/instructions/inertia.instructions.md, .github/instructions/alpine.instructions.md, .github/instructions/valkey.instructions.md, docs/runbooks/starter-composition.md, docs/runbooks/adopting-existing-github.md, docs/ARCHITECTURE.md
+- Related code: CHANGELOG.md entry "2026-08-18 - Add PHP ecosystem instruction overlays and fix the Laravel overlay"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
 ### 2026-08-08 - Document LTS-first and documentation-driven dependency rules
 
 - Area: instructions, core, security, backend, frontend

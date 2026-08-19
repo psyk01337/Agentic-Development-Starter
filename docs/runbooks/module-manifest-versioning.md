@@ -300,7 +300,7 @@ Before adding a file to a module, consider:
 
 **Problem**: Manifest lists a file that doesn't exist
 
-**Solution**: 
+**Solution**:
 - Check the file path for typos
 - Ensure the file exists in the repository
 - Use forward slashes in paths

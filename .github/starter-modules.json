@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.4",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -57,9 +57,7 @@
       "defaultEnabled": true,
       "when": "Repositories that want the starter to validate itself in CI",
       "files": [
-        ".github/workflows/starter-validation.yml",
-        ".github/workflows/markdown-quality.yml",
-        ".github/workflows/hook-policy-tests.yml",
+        ".github/workflows/validation.yml",
         ".github/workflows/skill-contract-tests.yml"
       ]
     },
@@ -155,11 +153,13 @@
         "evals/tasks/update-docs-and-changelog.md",
         "evals/tasks/debug-failing-ci.md",
         "evals/tasks/problem-structuring.md",
+        "evals/tasks/laravel-component.md",
         "evals/expected/simple-bugfix.checklist.md",
         "evals/expected/add-api-endpoint.checklist.md",
         "evals/expected/frontend-component.checklist.md",
         "evals/expected/security-review.checklist.md",
         "evals/expected/problem-structuring.checklist.md",
+        "evals/expected/laravel-component.checklist.md",
         "evals/run-evals.sh",
         "evals/run-evals.ps1"
       ]
@@ -227,6 +227,96 @@
       "when": "Repositories that use FastAPI and want framework-specific backend guidance",
       "files": [
         ".github/instructions/fastapi.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-php",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories with PHP 8+ code",
+      "files": [
+        ".github/instructions/php.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-laravel",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Laravel and want framework-specific backend guidance",
+      "files": [
+        ".github/instructions/laravel.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-filament",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Filament 5+ admin panels",
+      "files": [
+        ".github/instructions/filament.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-livewire",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Livewire 4+ for server-driven UI",
+      "files": [
+        ".github/instructions/livewire.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-inertia",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Inertia.js for server-driven SPA pages",
+      "files": [
+        ".github/instructions/inertia.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-alpine",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Alpine.js for lightweight client interactivity",
+      "files": [
+        ".github/instructions/alpine.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-valkey",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use Valkey for cache, queues, sessions, or data storage",
+      "files": [
+        ".github/instructions/valkey.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-sqlite",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use SQLite as a database",
+      "files": [
+        ".github/instructions/sqlite.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-postgresql",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use PostgreSQL as a database",
+      "files": [
+        ".github/instructions/postgresql.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-mariadb",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that use MariaDB as a database",
+      "files": [
+        ".github/instructions/mariadb.instructions.md"
       ]
     },
     {

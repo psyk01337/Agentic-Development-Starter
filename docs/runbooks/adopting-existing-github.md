@@ -38,6 +38,9 @@ Use this table during discovery so you can map by purpose even when target file 
 | Documentation changelog | Required | `DOC-CHANGELOG.md` | Track runbook/doc/policy updates separately from code | Create or map existing equivalent and document naming decision |
 | Frontend overlay | Optional | `.github/instructions/frontend.instructions.md` | UI/JS/TS conventions for repos that need them | Skip until repo has matching frontend code |
 | Backend overlay | Optional | `.github/instructions/backend.instructions.md` | Python/SQL backend conventions for repos that need them | Skip until repo has matching backend assets |
+| PHP overlay | Optional | `.github/instructions/php.instructions.md` | PHP 8+ language conventions for repos with PHP code | Skip until repo has matching PHP assets |
+| Laravel ecosystem overlays | Optional | `.github/instructions/laravel.instructions.md` plus stack overlays (Filament, Livewire, Inertia, Alpine, Valkey) | Framework- and ecosystem-specific guidance for Laravel repos | Add only the overlays matching the repo's actual stack |
+| Database overlays | Optional | `.github/instructions/sqlite.instructions.md`, `.github/instructions/postgresql.instructions.md`, `.github/instructions/mariadb.instructions.md` | Database-specific conventions for SQLite, PostgreSQL, or MariaDB | Add only the overlays matching the repo's actual databases |
 | Specialist agents | Optional | `.github/agents/*.agent.md` | Role-specific workflows beyond baseline implementation | Add in follow-up PRs only when active team usage is expected |
 | Skills catalog | Optional | `.github/skills/*/SKILL.md` | Reusable playbooks for repeated workflows | Add incrementally based on repeated needs |
 | Hook policy and scripts | Optional | `.github/hooks/*` | Command guardrails and audit hooks | Defer until policy owners review impact |

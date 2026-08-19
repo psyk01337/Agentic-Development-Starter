@@ -42,7 +42,7 @@ git commit -m "Normalize line endings"
 
 **Problem**: Workflows don't trigger on push or pull request
 
-**Solution**: 
+**Solution**:
 1. Ensure workflows are in `.github/workflows/` directory
 2. Check that the workflow file has valid YAML syntax
 3. Verify the `on:` triggers are configured correctly

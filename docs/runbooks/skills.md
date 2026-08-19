@@ -150,6 +150,8 @@ Example prompts:
 
 - `Use ui-scaffold for an account settings screen with profile edit, password update, and loading/error/empty/success states.`
 - `Use ui-scaffold to draft the component structure and state model for this onboarding workflow.`
+- `Use ui-scaffold to draft a Livewire component and Blade view stubs for this settings form, honoring the repo's Livewire overlay.`
+- `Use ui-scaffold to outline a Filament resource and form schema for this admin screen.`
 
 ## Consistency Check
 

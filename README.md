@@ -147,7 +147,7 @@ Core modules cover baseline instructions, security, memory strategy, governance,
 
 Optional modules cover prompt workflows, skills, evals, editor templates, and MCP templates.
 
-Overlay modules cover stack-specific guidance, Vitest TDD, approval-gated orchestration, Hermes runtime integration, and Honcho durable memory integration.
+Overlay modules cover stack-specific guidance (frontend, backend, PHP/Laravel ecosystem, and database overlays), Vitest TDD, approval-gated orchestration, Hermes runtime integration, and Honcho durable memory integration.
 
 ## Prompts
 
@@ -221,7 +221,7 @@ Both overlays are disabled by default and documented in `docs/runbooks/hermes-ru
 
 ## Evaluation Harness
 
-`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, security review, docs/changelog updates, CI debugging, and problem structuring.
+`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, Laravel components, security review, docs/changelog updates, CI debugging, and problem structuring.
 
 Structure checks:
 

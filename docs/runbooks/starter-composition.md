@@ -75,6 +75,52 @@ If the repo uses FastAPI, also add:
 
 Keep FastAPI-specific rules in the FastAPI overlay and keep `.github/instructions/backend.instructions.md` framework-agnostic.
 
+### PHP / Laravel repos
+
+Add or keep:
+
+- `.github/instructions/php.instructions.md`
+- `.github/instructions/laravel.instructions.md`
+
+If the repo uses Filament admin panels, also add:
+
+- `.github/instructions/filament.instructions.md`
+
+If the repo uses Livewire, also add:
+
+- `.github/instructions/livewire.instructions.md`
+
+If the repo uses Inertia.js for server-driven SPA pages, also add:
+
+- `.github/instructions/inertia.instructions.md`
+
+If the repo uses Alpine.js for lightweight client interactivity, also add:
+
+- `.github/instructions/alpine.instructions.md`
+
+If the repo uses Valkey for cache, queues, sessions, or data storage, also add:
+
+- `.github/instructions/valkey.instructions.md`
+
+Keep framework-specific rules in the Laravel overlay and keep `.github/instructions/php.instructions.md` framework-agnostic.
+Keep Filament, Livewire, Inertia, Alpine, and Valkey rules in their own overlays so each stack can be enabled independently.
+
+### Relational database repos
+
+If the repo uses SQLite, also add:
+
+- `.github/instructions/sqlite.instructions.md`
+
+If the repo uses PostgreSQL, also add:
+
+- `.github/instructions/postgresql.instructions.md`
+
+If the repo uses MariaDB, also add:
+
+- `.github/instructions/mariadb.instructions.md`
+
+Keep database-specific rules in their own overlays so each database can be enabled independently, and keep them additive to the general backend overlay.
+
 ### Other stacks
 
 Use the core modules first, then add new overlays only after the repo has stable conventions worth encoding.

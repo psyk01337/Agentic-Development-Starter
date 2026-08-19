@@ -24,6 +24,61 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-08-18 - Fix stale CI workflow registrations in the module manifest
+
+- Area: starter governance, manifest, CI
+- Change type: fix, config
+- Summary: corrected `core-ci-validation` in `.github/starter-modules.json` to reference the workflow files that actually exist — `.github/workflows/validation.yml` and `.github/workflows/skill-contract-tests.yml` — replacing three stale entries (`starter-validation.yml`, `markdown-quality.yml`, `hook-policy-tests.yml`) left over from the workflow consolidation; manifest version 1.3 to 1.4.
+- Reason: `bash .github/scripts/check-starter-workflow.sh` failed with "Manifest-listed file does not exist" for the three workflow files that no longer exist.
+- Affected files: .github/starter-modules.json
+- Related docs: None
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Add Laravel component eval golden task and checklist
+
+- Area: starter workflow, evals, manifest
+- Change type: enhancement
+- Summary: added `evals/tasks/laravel-component.md` and `evals/expected/laravel-component.checklist.md` to exercise the PHP/Laravel stack overlays (Livewire component change honoring the PHP, Laravel, Livewire, Alpine, and database overlays); registered both files in `evals/run-evals.sh`, `evals/run-evals.ps1`, `.github/scripts/check-evals.sh`, `.github/scripts/check-evals.ps1`, and the `workflow-evals` module in `.github/starter-modules.json`; updated the README eval task list.
+- Reason: the eval harness had no golden task covering the newly added PHP/Laravel stack overlays.
+- Affected files: evals/tasks/laravel-component.md, evals/expected/laravel-component.checklist.md, evals/run-evals.sh, evals/run-evals.ps1, .github/scripts/check-evals.sh, .github/scripts/check-evals.ps1, .github/starter-modules.json
+- Related docs: DOC-CHANGELOG.md entry "2026-08-18 - Document Laravel component eval golden task"
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Align ui-scaffold skill with stack instruction overlays
+
+- Area: starter workflow, skills, runbooks
+- Change type: enhancement
+- Summary: updated `.github/skills/ui-scaffold/SKILL.md` to direct agents to read the repo's active UI-related instruction overlays (frontend, React, Next.js, Livewire, Inertia, Alpine, Filament) and consult official documentation for the installed versions before scaffolding; added Livewire, Inertia, Alpine, and Filament trigger examples plus two checklist items for overlay and documentation compliance; added matching example prompts to the `ui-scaffold` section of `docs/runbooks/skills.md`.
+- Reason: the skill only covered React/Vue/Svelte component patterns and never referenced the stack instruction overlays added for Livewire, Inertia, Alpine, and Filament.
+- Affected files: .github/skills/ui-scaffold/SKILL.md
+- Related docs: DOC-CHANGELOG.md entry "2026-08-18 - Document ui-scaffold skill alignment"
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Add database instruction overlays for SQLite, PostgreSQL, and MariaDB
+
+- Area: starter instructions, manifest, runbooks, architecture docs
+- Change type: enhancement
+- Summary: added three new optional overlays — `sqlite.instructions.md`, `postgresql.instructions.md`, and `mariadb.instructions.md` — each with its own `applyTo` scope, official documentation references, and latest-stable/doc-first version rules; registered them as `overlay-sqlite`, `overlay-postgresql`, and `overlay-mariadb` in `.github/starter-modules.json` (version 1.2 to 1.3); added a "Relational database repos" section to `starter-composition.md`, a database overlays row to the `adopting-existing-github.md` artifact checklist, and new overlay nodes to the `ARCHITECTURE.md` module dependency graph.
+- Reason: the starter had stack overlays for languages and frameworks but no database-specific instruction coverage.
+- Affected files: .github/instructions/sqlite.instructions.md, .github/instructions/postgresql.instructions.md, .github/instructions/mariadb.instructions.md, .github/starter-modules.json
+- Related docs: DOC-CHANGELOG.md entry "2026-08-18 - Document database instruction overlays"
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
+- Discrepancies or follow-up: none
+
+### 2026-08-18 - Add PHP ecosystem instruction overlays and fix the Laravel overlay
+
+- Area: starter instructions, manifest, runbooks, architecture docs
+- Change type: enhancement, fix
+- Summary: replaced `.github/instructions/laravel.instructions.md` (previously an unregistered copy of the Python/SQL backend overlay) with real Laravel guidance; added six new overlays — `php.instructions.md` (PHP 8+ general), `filament.instructions.md` (Filament 5+), `livewire.instructions.md` (Livewire 4+), `inertia.instructions.md`, `alpine.instructions.md`, and `valkey.instructions.md` — each with its own `applyTo` scope, official documentation references, and latest-stable/doc-first version rules; registered all seven as overlay modules in `.github/starter-modules.json` (version 1.1 to 1.2); added a PHP/Laravel composition section to `starter-composition.md`, PHP/Laravel rows to the `adopting-existing-github.md` artifact checklist, and new overlay nodes to the `ARCHITECTURE.md` module dependency graph.
+- Reason: the Laravel overlay existed but contained Python/SQL content and was not registered in the module manifest; the PHP, Laravel, Filament, Livewire, Valkey, Inertia, and Alpine stacks had no instruction coverage.
+- Affected files: .github/instructions/laravel.instructions.md, .github/instructions/php.instructions.md, .github/instructions/filament.instructions.md, .github/instructions/livewire.instructions.md, .github/instructions/inertia.instructions.md, .github/instructions/alpine.instructions.md, .github/instructions/valkey.instructions.md, .github/starter-modules.json
+- Related docs: DOC-CHANGELOG.md entry "2026-08-18 - Document PHP ecosystem instruction overlays"
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
+- Discrepancies or follow-up: none
+
 ### 2026-08-08 - Add LTS-first and documentation-driven dependency rules across instructions
 
 - Area: starter instructions, core, security, backend, frontend
@@ -32,7 +87,7 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 - Reason: establish a cross-cutting rule that agents must always prefer latest stable LTS versions, consult official documentation (not memory or outdated sources), cite references, and check for advisories before using any dependency — applied consistently across core, security, backend, and frontend layers.
 - Affected files: .github/instructions/core.instructions.md, .github/instructions/security.instructions.md, .github/instructions/backend.instructions.md, .github/instructions/frontend.instructions.md
 - Related docs: DOC-CHANGELOG.md entry "2026-08-08 - Document LTS-first and documentation-driven dependency rules"
-- Validation: pending
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
 - Discrepancies or follow-up: none
 
 ### 2026-08-08 - Improve instruction file coverage and cross-references
@@ -43,7 +98,7 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 - Reason: audit of all 12 instruction files found gaps: no intro on security instructions, no error handling guidance for frontend, mixed concerns in frontend Quality section, and missing cross-references that would help agents navigate the layered instruction model.
 - Affected files: .github/instructions/security.instructions.md, .github/instructions/frontend.instructions.md, .github/instructions/core.instructions.md, .github/instructions/honcho-memory.instructions.md
 - Related docs: DOC-CHANGELOG.md entry "2026-08-08 - Document instruction file improvements"
-- Validation: pending
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
 - Discrepancies or follow-up: none
 
 ### 2026-07-25 - Document clone-as-template adoption path and initialize-new-project prompt
@@ -54,7 +109,7 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 - Reason: users reported that cloning the starter directly and renaming it is their preferred workflow, but this path was undocumented; after cloning, users need a guided way to adapt all documentation to their specific project.
 - Affected files: docs/runbooks/starter-adoption.md, QUICKSTART.md, .github/prompts/initialize-new-project.prompt.md, .github/starter-modules.json
 - Related docs: DOC-CHANGELOG.md entry "2026-07-25 - Document clone-as-template adoption path and initialize-new-project prompt"
-- Validation: pending
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
 - Discrepancies or follow-up: none
 
 ### 2026-07-18 - Enrich problem-structuring skill with McKinsey Mind book insights
@@ -65,7 +120,7 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 - Reason: incorporate deeper problem-solving rigor from the McKinsey Mind framework — initial hypothesis before decomposition, intuition-data balance, key-driver focus, distinct design-gather-interpret phases, and buy-in considerations.
 - Affected files: .github/skills/problem-structuring/SKILL.md, .github/prompts/structure-technical-problem.prompt.md, evals/tasks/problem-structuring.md, evals/expected/problem-structuring.checklist.md
 - Related docs: DOC-CHANGELOG.md entry "2026-07-18 - Document problem-structuring enrichment from McKinsey Mind"
-- Validation: pending
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
 - Discrepancies or follow-up: none
 
 ### 2026-07-17 - Add McKinsey problem-structuring skill, prompt, and evals
@@ -76,7 +131,7 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 - Reason: add structured problem-decomposition discipline to bridge the `analyst` → `tech-planner` chain for complex or ambiguous technical problems.
 - Affected files: .github/skills/problem-structuring/SKILL.md, .github/prompts/structure-technical-problem.prompt.md, .github/agents/analyst.agent.md, .github/agents/tech-planner.agent.md, .github/starter-modules.json, evals/tasks/problem-structuring.md, evals/expected/problem-structuring.checklist.md, evals/run-evals.sh, evals/run-evals.ps1
 - Related docs: DOC-CHANGELOG.md entry "2026-07-17 - Add problem-structuring skill, prompt, and agent enhancements"
-- Validation: pending
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
 - Discrepancies or follow-up: none
 
 ### 2026-06-20 - Complete high-priority documentation
@@ -151,7 +206,7 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 - Reason: make minimal-first existing-repo migration guidance part of core governance assets and keep manifest/file checks aligned.
 - Affected files: .github/starter-modules.json
 - Related docs: DOC-CHANGELOG.md entry "2026-03-16 - Add existing-.github adoption runbook and wiring"
-- Validation: pending manual check script run
+- Validation: bash .github/scripts/check-starter-workflow.sh passed
 - Discrepancies or follow-up: none
 
 ### 2026-03-09 - Initialize source code changelog

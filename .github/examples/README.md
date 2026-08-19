@@ -50,9 +50,9 @@ All examples are **disabled by default**. Before enabling any overlay:
 
 1. Read the example files to understand the configuration
 2. Review the associated runbook:
-   - [Approval-Gated Handoffs](../docs/runbooks/approval-gated-handoffs.md)
-   - [Hermes Runtime](../docs/runbooks/hermes-runtime.md)
-   - [Honcho Memory](../docs/runbooks/honcho-memory.md)
+   - [Approval-Gated Handoffs](../../docs/runbooks/approval-gated-handoffs.md)
+   - [Hermes Runtime](../../docs/runbooks/hermes-runtime.md)
+   - [Honcho Memory](../../docs/runbooks/honcho-memory.md)
 3. Assess the security implications
 4. Enable only what you need
 
@@ -185,8 +185,8 @@ To contribute new examples:
 
 ## Related Documentation
 
-- [Starter Adoption](../docs/runbooks/starter-adoption.md)
-- [Starter Composition](../docs/runbooks/starter-composition.md)
-- [Skills](../docs/runbooks/skills.md)
-- [Hooks](../docs/runbooks/hooks.md)
-- [MCP Servers](../docs/runbooks/mcp-servers.md)
+- [Starter Adoption](../../docs/runbooks/starter-adoption.md)
+- [Starter Composition](../../docs/runbooks/starter-composition.md)
+- [Skills](../../docs/runbooks/skills.md)
+- [Hooks](../../docs/runbooks/hooks.md)
+- [MCP Servers](../../docs/runbooks/mcp-servers.md)

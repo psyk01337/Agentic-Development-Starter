@@ -12,37 +12,37 @@ graph TB
         C[.github/instructions/security.instructions.md]
         D[.github/instructions/memory.instructions.md]
     end
-    
+
     subgraph "Governance Layer"
         E[.github/starter-modules.json]
         F[.github/roles/tool-access.json]
         G[CHANGELOG.md]
         H[DOC-CHANGELOG.md]
     end
-    
+
     subgraph "Validation Layer"
         I[.github/scripts/check-*.sh]
         J[.github/scripts/check-*.ps1]
         K[.github/workflows/validation.yml]
     end
-    
+
     subgraph "Workflow Assets"
         L[.github/prompts/]
         M[.github/skills/]
         N[.github/agents/]
     end
-    
+
     subgraph "Guardrails"
         O[.github/hooks/]
         P[.github/roles/]
     end
-    
+
     subgraph "Optional Overlays"
         Q[Hermes Runtime]
         R[Honcho Memory]
         S[Stack-Specific Instructions]
     end
-    
+
     A --> E
     B --> E
     C --> E
@@ -72,13 +72,13 @@ graph LR
         CD[core-guardrails]
         CE[core-agents]
     end
-    
+
     subgraph "Optional Modules"
         WP[workflow-prompts]
         WS[workflow-skills]
         WE[workflow-evals]
     end
-    
+
     subgraph "Overlay Modules"
         OJS[overlay-js-ui]
         ORU[overlay-react-ui]
@@ -87,12 +87,22 @@ graph LR
         OFE[overlay-frontend-e2e]
         OPS[overlay-python-sql-backend]
         OFA[overlay-fastapi]
+        OPH[overlay-php]
+        OLV[overlay-laravel]
+        OFI[overlay-filament]
+        OLW[overlay-livewire]
+        OIN[overlay-inertia]
+        OAL[overlay-alpine]
+        OVK[overlay-valkey]
+        OSQ[overlay-sqlite]
+        OPG[overlay-postgresql]
+        OMA[overlay-mariadb]
         OVT[overlay-vitest-tdd]
         OAG[overlay-approval-gated-orchestration]
         OHR[overlay-hermes-runtime]
         OHM[overlay-honcho-memory]
     end
-    
+
     CB --> CG
     CG --> CC
     CG --> CD
@@ -108,6 +118,16 @@ graph LR
     OFE --> OJS
     OPS --> CG
     OFA --> OPS
+    OPH --> CG
+    OLV --> OPH
+    OFI --> OLV
+    OLW --> OLV
+    OIN --> OLV
+    OAL --> OLV
+    OVK --> OLV
+    OSQ --> CG
+    OPG --> CG
+    OMA --> CG
     OVT --> CE
     OAG --> CE
     OHR --> CD
@@ -122,12 +142,12 @@ sequenceDiagram
     participant Git as Git Repository
     participant CI as GitHub Actions
     participant Val as Validation Scripts
-    
+
     Dev->>Git: Push changes
     Git->>CI: Trigger workflow
     CI->>CI: Checkout code
     CI->>Val: Run check-starter-workflow.sh
-    
+
     par Parallel Validation
         Val->>Val: check-starter-manifest.sh
         Val->>Val: check-starter-skills.sh
@@ -139,7 +159,7 @@ sequenceDiagram
         Val->>Val: check-markdown-quality.sh
         Val->>Val: check-evals.sh
     end
-    
+
     Val-->>CI: Validation results
     CI-->>Git: Status check
     Git-->>Dev: Pass/Fail notification
@@ -153,37 +173,37 @@ graph TB
         A[User Request]
         B[Context Gathering]
     end
-    
+
     subgraph "Planning Phase"
         C[Tech Planner Agent]
         D[Architecture Reviewer Agent]
         E[ADR Creation]
     end
-    
+
     subgraph "Implementation Phase"
         F[Senior Software Engineer Agent]
         G[Code Implementation]
         H[Unit Tests]
     end
-    
+
     subgraph "Review Phase"
         I[Code Reviewer Agent]
         J[Security Reviewer Agent]
         K[QA Agent]
     end
-    
+
     subgraph "Documentation Phase"
         L[Documentation Maintainer Agent]
         M[Update Docs]
         N[Update Changelogs]
     end
-    
+
     subgraph "Validation Phase"
         O[Run Validation]
         P[Fix Issues]
         Q[Final Review]
     end
-    
+
     A --> B
     B --> C
     C --> D
@@ -213,7 +233,7 @@ graph TB
         B[Active Context]
         C[Temporary Notes]
     end
-    
+
     subgraph "Layer 2: Repo Truth"
         D[Instructions]
         E[Decisions]
@@ -222,18 +242,18 @@ graph TB
         H[Runbooks]
         I[Changelogs]
     end
-    
+
     subgraph "Layer 3: Durable Memory (Optional)"
         J[User Preferences]
         K[Team Patterns]
         L[Repeated Workflows]
     end
-    
+
     subgraph "Memory Providers"
         M[Hermes Runtime]
         N[Honcho]
     end
-    
+
     A --> D
     B --> E
     C --> F
@@ -242,7 +262,7 @@ graph TB
     F --> L
     M -.-> Layer 3
     N -.-> Layer 3
-    
+
     style Layer 1 fill:#e1f5ff
     style Layer 2 fill:#fff4e1
     style Layer 3 fill:#e8f5e9
@@ -259,7 +279,7 @@ graph LR
     D --> F[Log to Audit]
     E --> G[Execute Action]
     G --> F
-    
+
     subgraph "Policy Rules"
         H[Destructive Commands]
         I[Secret Writes]
@@ -267,7 +287,7 @@ graph LR
         K[Network Requests]
         L[Policy Edits]
     end
-    
+
     C -.-> H
     C -.-> I
     C -.-> J
@@ -287,7 +307,7 @@ graph LR
         E[Basic Validation]
         F[Changelogs]
     end
-    
+
     subgraph "Team Mode"
         G[Agents]
         H[Skills]
@@ -296,7 +316,7 @@ graph LR
         K[CI Validation]
         L[Runbooks]
     end
-    
+
     subgraph "Advanced Mode"
         M[Approval-Gated Handoffs]
         N[MCP Templates]
@@ -304,7 +324,7 @@ graph LR
         P[Tool-Surface Matrix]
         Q[Memory Policy Examples]
     end
-    
+
     subgraph "Enterprise Mode"
         R[Org Instruction Overlays]
         S[Private Shared Skills]
@@ -312,7 +332,7 @@ graph LR
         U[Security & Audit Requirements]
         V[Periodic Evals]
     end
-    
+
     A --> G
     B --> H
     C --> I
@@ -336,12 +356,12 @@ graph LR
 ```mermaid
 graph TB
     Root[Repository Root]
-    
+
     Root --> GH[.github/]
     Root --> Docs[docs/]
     Root --> Evals[evals/]
     Root --> VSCode[.vscode/]
-    
+
     GH --> Copilot[copilot-instructions.md]
     GH --> Instructions[instructions/]
     GH --> Prompts[prompts/]
@@ -352,22 +372,22 @@ graph TB
     GH --> Workflows[workflows/]
     GH --> Examples[examples/]
     GH --> Manifest[starter-modules.json]
-    
+
     Instructions --> Core[core.instructions.md]
     Instructions --> Security[security.instructions.md]
     Instructions --> Memory[memory.instructions.md]
     Instructions --> Stack[Stack-specific overlays]
-    
+
     Hooks --> Policy[policy-rules.tsv]
     Hooks --> HookScripts[scripts/]
-    
+
     Docs --> ADR[adr/]
     Docs --> Runbooks[runbooks/]
-    
+
     Evals --> Tasks[tasks/]
     Evals --> Expected[expected/]
     Evals --> Runner[run-evals.sh]
-    
+
     VSCode --> MCP[mcp.json]
     VSCode --> Tasks[tasks.json]
 ```
@@ -378,25 +398,25 @@ graph TB
 graph LR
     A[Push to Repository] --> B{Trigger Workflow}
     B --> C[validation.yml]
-    
+
     C --> D[validate job]
     C --> E[markdown job]
     C --> F[hooks job]
     C --> G[skills job]
-    
+
     D --> H[check-starter-workflow.sh]
     E --> I[check-markdown-quality.sh]
     F --> J[check-hook-policy.sh]
     G --> K[check-starter-skills.sh]
-    
+
     H --> L{All Checks Pass?}
     I --> L
     J --> L
     K --> L
-    
+
     L -->|Yes| M[Success]
     L -->|No| N[Failure]
-    
+
     M --> O[Allow Merge]
     N --> P[Block Merge]
 ```
@@ -410,32 +430,32 @@ graph TB
         B[Input Sanitization]
         C[Authorization]
     end
-    
+
     subgraph "Layer 2: Hook Guardrails"
         D[Pre-Tool Policy]
         E[Destructive Command Blocking]
         F[Secret Detection]
         G[Path Validation]
     end
-    
+
     subgraph "Layer 3: MCP Safety"
         H[Disabled by Default]
         I[Review Required]
         J[Permission Scoping]
     end
-    
+
     subgraph "Layer 4: Memory Safety"
         K[No Secrets in Memory]
         L[Scoped Memory]
         M[Reviewable Storage]
     end
-    
+
     subgraph "Layer 5: Supply Chain"
         N[Version Pinning]
         O[Lockfiles]
         P[Dependency Audits]
     end
-    
+
     A --> D
     B --> E
     C --> F

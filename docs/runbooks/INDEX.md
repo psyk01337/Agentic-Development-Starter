@@ -48,9 +48,9 @@ This index organizes all runbooks by use case to help you find the right guidanc
 
 ## Related Documentation
 
-- [README](../README.md) - Overview and quick start
-- [QUICKSTART](../QUICKSTART.md) - 5-minute setup guide
-- [TROUBLESHOOTING](../TROUBLESHOOTING.md) - Common issues and solutions
-- [Prompts](../.github/prompts/) - Reusable task prompts
-- [Agents](../.github/agents/) - Specialist agent definitions
-- [Skills](../.github/skills/) - Workflow playbooks
+- [README](../../README.md) - Overview and quick start
+- [QUICKSTART](../../QUICKSTART.md) - 5-minute setup guide
+- [TROUBLESHOOTING](../../TROUBLESHOOTING.md) - Common issues and solutions
+- [Prompts](../../.github/prompts/) - Reusable task prompts
+- [Agents](../../.github/agents/) - Specialist agent definitions
+- [Skills](../../.github/skills/) - Workflow playbooks

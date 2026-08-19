@@ -19,11 +19,13 @@ required_files=(
   "tasks/update-docs-and-changelog.md"
   "tasks/debug-failing-ci.md"
   "tasks/problem-structuring.md"
+  "tasks/laravel-component.md"
   "expected/simple-bugfix.checklist.md"
   "expected/add-api-endpoint.checklist.md"
   "expected/frontend-component.checklist.md"
   "expected/security-review.checklist.md"
   "expected/problem-structuring.checklist.md"
+  "expected/laravel-component.checklist.md"
 )
 
 for relative_path in "${required_files[@]}"; do
