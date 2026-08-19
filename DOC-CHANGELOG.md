@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-08-19 - Refresh README title for August 2026
+
+- Area: README
+- Change type: docs
+- Summary: updated the README heading from "(VS Code, June 2026 Workflow)" to "(VS Code, August 2026 Workflow)" so the public-facing title reflects the current month.
+- Reason: the title still said June 2026.
+- Affected files: README.md
+- Related code: None
+- Review status: reviewed
+- Discrepancies or follow-up: none
+
 ### 2026-08-18 - Fix markdown quality failures in docs and examples
 
 - Area: docs, examples, runbooks

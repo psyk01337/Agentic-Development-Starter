@@ -1,4 +1,4 @@
-# Agentic Development Starter (VS Code, June 2026 Workflow)
+# Agentic Development Starter (VS Code, August 2026 Workflow)
 
 Agentic Development Starter is a repo-native workflow, safety, and governance starter for AI-assisted software development. It standardizes instructions, prompts, agents, skills, hooks, MCP templates, memory policy, handoffs, validation, and evaluation so teams can ship changes with consistent guardrails and auditability.
 
