@@ -28,17 +28,41 @@ If the repository uses React or Next.js, layer the dedicated framework overlays 
 - Keep view state local when possible; elevate only when multiple components truly need shared control.
 - Keep data-fetching logic separated from presentation-heavy components where practical.
 - Use explicit state transition handling instead of ad-hoc boolean combinations.
+- Derive values instead of storing duplicates — prefer computed state over state that must be kept in sync manually.
+- Avoid stale closures in async callbacks; use functional updates or refs per the framework's established pattern.
 
 ## Performance and UX
 - Prevent avoidable re-renders and expensive synchronous work during user interactions.
 - Use progressive rendering patterns for large lists or expensive views where the repo pattern supports it.
 - Avoid layout shifts for loading states; reserve space where possible.
+- Code-split lazy-loaded routes or heavy components where the repo toolchain supports it.
+- Measure before optimizing — profile the actual interaction first, then fix the confirmed bottleneck.
 
 ## Error Handling
 - Surface errors predictably: use error boundaries, toast notifications, or inline error states per the repo's established pattern.
 - Avoid silent failures — every caught error should result in a user-visible fallback or a structured log.
 - Keep `console.error` reserved for actionable diagnostics; strip debug logging before production builds where the repo's toolchain supports it.
 - Never expose stack traces, raw error objects, or internal details in user-facing error states.
+
+## Data Fetching and Async
+- Cancel or ignore in-flight requests when the originating view unmounts or the route changes; guard against race conditions and state updates after unmount.
+- Model `loading`, `error`, `empty`, and `success` states explicitly for every data-backed view.
+- Prefer cached, revalidated data (stale-while-revalidate) over refetching everything on each mount.
+- Retry with exponential backoff only for transient, idempotent failures; never blindly re-run non-idempotent mutations.
+- Validate and normalize API responses at the data boundary rather than deep inside components.
+
+## Forms
+- Prefer controlled form state with explicit validation; validate at the boundary before submission and show errors inline.
+- Associate error messages with inputs using `aria-describedby` so screen readers announce them.
+- Preserve user input when submission fails; never clear fields as a side effect of an error.
+- Disable submission while in flight only when the interaction is not re-submittable; otherwise deduplicate requests instead.
+
+## Security
+- Never render untrusted strings as HTML (`innerHTML`, `dangerouslySetInnerHTML`, `v-html`); use safe templating, text nodes, or a reviewed sanitizer.
+- Treat every URL built from user input as a sanitization boundary; validate schemes and origins before navigation or embedding.
+- Keep secrets and credentials out of client code; use build-time environment variables only for non-secret configuration.
+- Prefer secure, documented token storage patterns (e.g., HttpOnly cookies) over `localStorage` when the repo architecture supports it.
+- Keep third-party scripts and iframes minimal and reviewed; note their impact on CSP and referrer policy.
 
 ## Testing
 - Add or update tests/stories when behavior changes.
@@ -49,3 +73,5 @@ If the repository uses React or Next.js, layer the dedicated framework overlays 
 - Preserve semantic markup, labels, keyboard focus flow, and ARIA states.
 - Ensure interactive controls have accessible names and clear focus indicators.
 - Test keyboard navigation for any changed interaction paths.
+- Manage focus after route or view changes and trap/restore focus in modals.
+- Announce dynamic content changes with `aria-live` regions where the repo pattern supports it.

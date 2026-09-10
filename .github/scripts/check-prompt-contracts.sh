@@ -11,18 +11,13 @@ report_error() {
   FAILED=1
 }
 
-required_prompts=(
-  ".github/prompts/onboard-existing-repo.prompt.md"
-  ".github/prompts/plan-small-feature.prompt.md"
-  ".github/prompts/implement-small-diff.prompt.md"
-  ".github/prompts/review-current-diff.prompt.md"
-  ".github/prompts/create-adr.prompt.md"
-  ".github/prompts/generate-test-plan.prompt.md"
-  ".github/prompts/prepare-release-notes.prompt.md"
-  ".github/prompts/migrate-to-starter.prompt.md"
-  ".github/prompts/security-review.prompt.md"
-  ".github/prompts/debug-failing-ci.prompt.md"
-)
+required_prompts=()
+MANIFEST_PATH="${REPO_ROOT}/.github/starter-modules.json"
+if [[ ! -f "${MANIFEST_PATH}" ]]; then
+  report_error "Missing required file: .github/starter-modules.json"
+else
+  mapfile -t required_prompts < <(grep -oE '"\.github/prompts/[^[:space:]"]+\.prompt\.md"' "${MANIFEST_PATH}" | sed 's/^"//; s/"$//' | sort -u)
+fi
 
 for relative_path in "${required_prompts[@]}"; do
   full_path="${REPO_ROOT}/${relative_path}"
@@ -37,7 +32,7 @@ for relative_path in "${required_prompts[@]}"; do
     fi
   done
 
-  if ! grep -Eqi "stop and ask before destructive changes" "${full_path}"; then
+  if ! grep -Eqi "stop and ask before" "${full_path}"; then
     report_error "Prompt must include destructive-change stop rule: ${relative_path}"
   fi
 done

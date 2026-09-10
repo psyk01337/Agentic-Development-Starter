@@ -23,8 +23,8 @@ Use this path when starting a brand-new project from scratch. Instead of copying
 3. **Clean up starter-specific artifacts** you don't need:
    - `MIGRATION.md` — migration guide for v1.0→v1.1 upgrades; safe to remove for new projects.
    - `checklist.md` — local-only checklist (already gitignored); safe to remove.
-   - `CHANGELOG.md` and `DOC-CHANGELOG.md` — reset to empty logs for your project, or keep the templates and clear the entries.
-   - `README.md` — replace the starter README with your project's README.
+   - `CHANGELOG.md` and `DOC-CHANGELOG.md` — clear all starter entries (the starter's development history is not yours); keep only the header and entry template, then add your project's first entry.
+   - `README.md` — replace the starter README entirely with your project's README; no starter-specific content should remain.
 
 4. **Add your application code** alongside the workflow assets:
    ```bash

@@ -24,6 +24,83 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-09-04 - Clarify changelog clearing during project initialization
+
+- Area: prompts, runbooks
+- Change type: docs, policy, reference
+- Summary: strengthened the `initialize-new-project` prompt so it explicitly removes ALL starter entries from `CHANGELOG.md` and `DOC-CHANGELOG.md` when initializing a new project, keeps only the header and entry template, and adds a single template-compliant initial entry per log; strengthened the README deliverable so all starter content is cleared and replaced with a fresh project README; added a matching safety boundary and a note that starter history must never remain; aligned the starter-adoption runbook cleanup step with the same wording.
+- Reason: the starter's own development history must not leak into downstream projects; `CHANGELOG.md` belongs to code changes made for the initialized project only.
+- Affected files: .github/prompts/initialize-new-project.prompt.md, docs/runbooks/starter-adoption.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Document runtime overlay scoping
+
+- Area: instructions, runbooks
+- Change type: docs, policy, reference
+- Summary: documented that the Hermes and Honcho instruction overlays attach in VS Code only when marker files exist (`.hermes/` and `honcho.*` or `.honcho/` respectively), and noted the pinned instruction-file setting in `.vscode/settings.json`; added matching activation notes to the Hermes and Honcho runbooks.
+- Reason: the optional runtime overlays previously used `**/*` and injected rules into every prompt, conflicting with their default-disabled module status.
+- Affected files: .github/instructions/hermes-runtime.instructions.md, .github/instructions/honcho-memory.instructions.md, docs/runbooks/hermes-runtime.md, docs/runbooks/honcho-memory.md
+- Related code: CHANGELOG.md entry "2026-09-04 - Scope runtime overlays and pin Copilot instruction setting"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Document frontend and backend technique guidance
+
+- Area: instructions, frontend, backend
+- Change type: docs, policy, reference
+- Summary: documented new technique sections in the frontend overlay (data fetching and async, forms, security) and the backend overlay (concurrency and I/O, security) plus expanded API, data, error-handling, and testing guidance; these are framework-agnostic rules that the React/Next.js and FastAPI overlays layer on top of.
+- Reason: give agents concrete, actionable best-practice rules for the two most common coding surfaces.
+- Affected files: .github/instructions/frontend.instructions.md, .github/instructions/backend.instructions.md
+- Related code: CHANGELOG.md entry "2026-09-04 - Add technique guidance to frontend and backend overlays"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Document guardrail, instruction, and prompt hardening
+
+- Area: instructions, runbooks, prompts, architecture docs
+- Change type: docs, policy, reference
+- Summary: added a CI/CD workflow instruction overlay covering action pinning, least-privilege permissions, and secret hygiene; documented new blocked hook patterns, fixture coverage, and the scoped case-sensitivity rule for hook patterns in the hooks runbook; added CI overlay composition guidance in the starter composition runbook, a CI overlay row in the adopting-existing-github artifact checklist, and overlay nodes in the ARCHITECTURE module dependency graph (including the previously missing `overlay-static-prototype` node); added validation-evidence and regression-test rules to core Delivery; documented the new `fix-bug` and `add-policy-rule` prompts in the README.
+- Reason: close instruction, prompt, and guardrail coverage gaps for a coding-first workflow and keep docs aligned with the new rules and assets.
+- Affected files: .github/instructions/core.instructions.md, docs/runbooks/hooks.md, docs/runbooks/starter-composition.md, docs/runbooks/adopting-existing-github.md, docs/ARCHITECTURE.md, README.md
+- Related code: CHANGELOG.md entry "2026-09-04 - Harden hooks, prompt contracts, and add CI workflow overlay"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Add Bootstrap CSS usage rules to static prototype overlay
+
+- Area: instructions, runbooks
+- Change type: reference
+- Summary: added a Bootstrap CSS Usage section to the static-prototype overlay (utility-first styling, custom CSS boundary, variable-based theming, breakpoints, forms, JS components, and icons) and extended the runbook with a pinned Bootstrap Icons CDN line and a :root variable override example.
+- Reason: the overlay governed layout discipline but not custom CSS, theming, or component usage.
+- Affected files: .github/instructions/static-prototype.instructions.md, docs/runbooks/static-prototypes.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Add visual quality guard rails to static prototype overlay
+
+- Area: instructions, runbooks
+- Change type: reference
+- Summary: added a Visual Quality and Layout Discipline section to the static-prototype overlay (Bootstrap spacing, layout, alignment, type, color, and component rules plus a pre-finish visual lint) and a matching visual check list to the static prototypes runbook.
+- Reason: prototypes were coming back functionally correct but visually inconsistent; the overlay lacked layout discipline rules.
+- Affected files: .github/instructions/static-prototype.instructions.md, docs/runbooks/static-prototypes.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Add static prototype overlay and runbook
+
+- Area: instructions, runbooks
+- Change type: reference
+- Summary: added an opt-in `static-prototype` instruction overlay for throwaway HTML + Bootstrap + HTMX presentation prototypes, registered `overlay-static-prototype` in `starter-modules.json`, added `docs/runbooks/static-prototypes.md` with pinned-CDN, mock-interactivity, and Netlify deployment guidance, and linked it from the runbook index and composition runbook.
+- Reason: no existing overlay covered plain-HTML prototyping or static hosting; agents defaulted to build-heavy production patterns for presentation-only mockups.
+- Affected files: .github/instructions/static-prototype.instructions.md, .github/starter-modules.json, docs/runbooks/static-prototypes.md, docs/runbooks/INDEX.md, docs/runbooks/starter-composition.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
 ### 2026-08-19 - Refresh README title for August 2026
 
 - Area: README

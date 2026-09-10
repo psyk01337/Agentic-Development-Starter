@@ -147,7 +147,7 @@ Core modules cover baseline instructions, security, memory strategy, governance,
 
 Optional modules cover prompt workflows, skills, evals, editor templates, and MCP templates.
 
-Overlay modules cover stack-specific guidance (frontend, backend, PHP/Laravel ecosystem, and database overlays), Vitest TDD, approval-gated orchestration, Hermes runtime integration, and Honcho durable memory integration.
+Overlay modules cover stack-specific guidance (frontend, backend, PHP/Laravel ecosystem, database, and CI workflow overlays), Vitest TDD, approval-gated orchestration, Hermes runtime integration, and Honcho durable memory integration.
 
 ## Prompts
 
@@ -156,6 +156,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 - Existing repo onboarding.
 - Small feature planning.
 - Small diff implementation.
+- Bug fixing with hypothesis and regression test.
 - Current diff review.
 - ADR creation.
 - Test plan generation.
@@ -164,6 +165,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 - Security review.
 - CI failure debugging.
 - Problem structuring.
+- Hook policy rule updates.
 
 Each prompt states what context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and expected output.
 

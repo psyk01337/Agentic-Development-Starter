@@ -1,5 +1,5 @@
 {
-  "version": "1.4",
+  "version": "1.5",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -115,7 +115,9 @@
         ".github/prompts/security-review.prompt.md",
         ".github/prompts/debug-failing-ci.prompt.md",
         ".github/prompts/structure-technical-problem.prompt.md",
-        ".github/prompts/initialize-new-project.prompt.md"
+        ".github/prompts/initialize-new-project.prompt.md",
+        ".github/prompts/fix-bug.prompt.md",
+        ".github/prompts/add-policy-rule.prompt.md"
       ]
     },
     {
@@ -369,6 +371,25 @@
         ".github/examples/honcho/honcho.config.example.json",
         ".github/examples/memory/honcho-policy.example.md",
         "docs/runbooks/honcho-memory.md"
+      ]
+    },
+    {
+      "id": "overlay-static-prototype",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that build throwaway static presentation prototypes with plain HTML, Bootstrap, HTMX, and vanilla JS",
+      "files": [
+        ".github/instructions/static-prototype.instructions.md",
+        "docs/runbooks/static-prototypes.md"
+      ]
+    },
+    {
+      "id": "overlay-ci",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that edit GitHub Actions workflows and want supply-chain, permission, and secret hygiene rules",
+      "files": [
+        ".github/instructions/ci.instructions.md"
       ]
     },
     {

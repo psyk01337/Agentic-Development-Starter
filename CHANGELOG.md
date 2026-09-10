@@ -24,6 +24,39 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-09-04 - Scope runtime overlays and pin Copilot instruction setting
+
+- Area: starter instructions, editor config
+- Change type: fix, config
+- Summary: changed `hermes-runtime.instructions.md` `applyTo` from `**/*` to `.hermes/**` and `honcho-memory.instructions.md` `applyTo` from `**/*` to `{honcho.*,.honcho/**}` so the optional runtime overlays are no longer force-injected into every Copilot prompt in adopting repositories; added `github.copilot.chat.codeGeneration.useInstructionFiles: true` to `.vscode/settings.json` so repo instruction files apply deterministically across contributors instead of depending on personal settings.
+- Reason: the runtime overlays are marked default-disabled in the manifest but their `**/*` scope attached them to every file, contradicting the modular design and diluting prompt context; the setting pin removes silent per-user drift that can disable repo instructions.
+- Affected files: .github/instructions/hermes-runtime.instructions.md, .github/instructions/honcho-memory.instructions.md, .vscode/settings.json
+- Related docs: DOC-CHANGELOG.md entry "2026-09-04 - Document runtime overlay scoping"
+- Validation: static review only; run `bash .github/scripts/check-starter-workflow.sh` and `.github/scripts/check-starter-workflow.ps1` before merging.
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Add technique guidance to frontend and backend overlays
+
+- Area: starter instructions, frontend, backend
+- Change type: enhancement
+- Summary: expanded `.github/instructions/frontend.instructions.md` with new Data Fetching and Async (cancellation, stale-while-revalidate, bounded retries), Forms (boundary validation, accessible errors, input preservation), and Security (no untrusted HTML, URL sanitization, token storage) sections plus derived-state, code-splitting, and focus-management guidance; expanded `.github/instructions/backend.instructions.md` with new Concurrency and I/O and Security sections plus idempotency, pagination, structured error codes, N+1 avoidance, index discipline, migration reversibility, centralized error handling, and integration-test guidance.
+- Reason: raise agent output quality on coding tasks with concrete best-practice technique rules in the two most-used stack overlays.
+- Affected files: .github/instructions/frontend.instructions.md, .github/instructions/backend.instructions.md
+- Related docs: DOC-CHANGELOG.md entry "2026-09-04 - Document frontend and backend technique guidance"
+- Validation: static review only; run `bash .github/scripts/check-starter-workflow.sh` and `.github/scripts/check-starter-workflow.ps1` before merging.
+- Discrepancies or follow-up: none
+
+### 2026-09-04 - Harden hooks, prompt contracts, and add CI workflow overlay
+
+- Area: starter guardrails, prompts, instructions, manifest
+- Change type: feature, security, fix
+- Summary: expanded `.github/hooks/policy-rules.tsv` with destructive git commands (`git clean -f`, `git checkout .`, `git restore .`, `git stash drop/clear`, `git branch -D`), Windows `rmdir /s /q`, Docker teardown/prune commands, staging of likely secret files, and broader credential-name writes to `.env`; added matching denied and allowed fixtures to `check-hook-policy.sh` and `check-hook-policy.ps1`; the `git branch -D` rule uses a scoped case-sensitive `(?-i:-D)` group and the PowerShell matcher no longer lowercases input so the safe `git branch -d` stays allowed; fixed prompt-contract drift by deriving the required prompt list from `starter-modules.json` (all 14 prompts are now validated) and widening the stop-rule check to accept any "stop and ask before" clause; added `fix-bug` and `add-policy-rule` prompts; added a new `overlay-ci` module with `.github/instructions/ci.instructions.md`; bumped manifest version 1.4 to 1.5.
+- Reason: close guardrail blind spots for common coding-day hazards and fix validator drift that left two prompts unvalidated.
+- Affected files: .github/hooks/policy-rules.tsv, .github/hooks/scripts/pre-tool-policy.ps1, .github/scripts/check-hook-policy.sh, .github/scripts/check-hook-policy.ps1, .github/scripts/check-prompt-contracts.sh, .github/scripts/check-prompt-contracts.ps1, .github/prompts/fix-bug.prompt.md, .github/prompts/add-policy-rule.prompt.md, .github/instructions/ci.instructions.md, .github/starter-modules.json
+- Related docs: DOC-CHANGELOG.md entry "2026-09-04 - Document guardrail, instruction, and prompt hardening"
+- Validation: `bash .github/scripts/check-prompt-contracts.sh` passed; `bash .github/scripts/check-starter-workflow.sh` passed manifest, skills, agent-contracts, and approval-gated checks before stopping at the hook policy fixture; the `git branch -D` rule was corrected to the scoped `(?-i:-D)` pattern and `bash .github/scripts/check-hook-policy.sh` now passes — re-run both umbrella scripts (`check-starter-workflow.sh` and `.ps1`) before merging.
+- Discrepancies or follow-up: `docs/ARCHITECTURE.md` was missing the `overlay-static-prototype` node; added it as part of this change.
+
 ### 2026-08-18 - Fix stale CI workflow registrations in the module manifest
 
 - Area: starter governance, manifest, CI

@@ -55,13 +55,12 @@ if ([Console]::IsInputRedirected) {
 }
 
 $candidate = ($ToolName + " " + $Action + " " + $Command + " " + $stdin).Trim()
-$candidateLower = $candidate.ToLowerInvariant()
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
 $rules = Get-PolicyRules -RepoRoot $repoRoot
 
 foreach ($rule in $rules) {
-  if ($candidateLower -match $rule.Pattern) {
+  if ($candidate -match $rule.Pattern) {
     Write-Error "[BLOCKED] $($rule.Reason)"
     Write-Host "Safer alternative: $($rule.Safer)"
     exit 1

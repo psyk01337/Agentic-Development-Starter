@@ -13,6 +13,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 - **[Agentic Development Workflow](agentic-dev.md)** - Standard workflow for AI-assisted development
 - **[Skills](skills.md)** - How to use and create workflow skills
 - **[Memory Strategy](memory-strategy.md)** - Manage agent memory across sessions
+- **[Static Prototypes](static-prototypes.md)** - Fast throwaway HTML + Bootstrap + HTMX mockups for presentations
 
 ## Security & Guardrails
 
@@ -36,6 +37,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 | Get started quickly | [Starter Adoption](starter-adoption.md) |
 | Understand the structure | [Starter Composition](starter-composition.md) |
 | Use agents effectively | [Agentic Development Workflow](agentic-dev.md) |
+| Build a throwaway prototype | [Static Prototypes](static-prototypes.md) |
 | Create custom skills | [Skills](skills.md) |
 | Set up guardrails | [Hooks](hooks.md) |
 | Enable MCP servers | [MCP Servers](mcp-servers.md) |

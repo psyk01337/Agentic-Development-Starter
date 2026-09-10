@@ -21,6 +21,8 @@ These rules are the language-agnostic baseline for repositories that use this st
 - Keep diffs small, reviewable, and tightly scoped to the request.
 - Fix root causes when feasible; avoid surface-only patches that preserve unclear behavior.
 - When behavior changes, update the nearest relevant tests and docs in the same change.
+- Prefer a regression test for defect fixes and behavior changes; when a test cannot run, say why.
+- Report validation evidence (commands run and results) before treating a change as complete.
 - Prefer extending existing patterns before introducing new abstractions, roles, or workflow layers.
 
 ## Collaboration

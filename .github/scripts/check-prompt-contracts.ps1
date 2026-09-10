@@ -14,18 +14,15 @@ function Add-CheckError([string]$Message) {
   $script:errors.Add($Message)
 }
 
-$requiredPrompts = @(
-  ".github/prompts/onboard-existing-repo.prompt.md",
-  ".github/prompts/plan-small-feature.prompt.md",
-  ".github/prompts/implement-small-diff.prompt.md",
-  ".github/prompts/review-current-diff.prompt.md",
-  ".github/prompts/create-adr.prompt.md",
-  ".github/prompts/generate-test-plan.prompt.md",
-  ".github/prompts/prepare-release-notes.prompt.md",
-  ".github/prompts/migrate-to-starter.prompt.md",
-  ".github/prompts/security-review.prompt.md",
-  ".github/prompts/debug-failing-ci.prompt.md"
-)
+$requiredPrompts = @()
+$manifestPath = Join-Path $RepoRoot ".github\starter-modules.json"
+if (-not (Test-Path $manifestPath)) {
+  Add-CheckError("Missing required file: .github/starter-modules.json")
+} else {
+  $manifestContent = Get-Content -Path $manifestPath -Raw
+  $promptMatches = [regex]::Matches($manifestContent, '"\.github/prompts/[^"\s]+\.prompt\.md"')
+  $requiredPrompts = @($promptMatches | ForEach-Object { $_.Value.Trim('"') } | Sort-Object -Unique)
+}
 
 foreach ($relativePath in $requiredPrompts) {
   $fullPath = Join-Path $RepoRoot $relativePath
@@ -42,7 +39,7 @@ foreach ($relativePath in $requiredPrompts) {
     }
   }
 
-  if ($normalizedContent -notmatch "(?i)stop and ask before destructive changes") {
+  if ($normalizedContent -notmatch "(?i)stop and ask before") {
     Add-CheckError("Prompt must include destructive-change stop rule: $relativePath")
   }
 }

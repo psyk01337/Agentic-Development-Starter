@@ -17,6 +17,8 @@ Do not use Honcho for secrets, production data, regulated data, or decisions tha
 - Conservative dialectic depth.
 - Scheduled review and pruning.
 
+The instruction overlay activates in VS Code only when the repository contains Honcho config files (`honcho.*` or a `.honcho/` directory); repositories without Honcho files never load those rules.
+
 ## Setup Review
 
 Before enabling Honcho, confirm:

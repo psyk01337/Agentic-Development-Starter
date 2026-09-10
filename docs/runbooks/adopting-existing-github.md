@@ -41,6 +41,7 @@ Use this table during discovery so you can map by purpose even when target file 
 | PHP overlay | Optional | `.github/instructions/php.instructions.md` | PHP 8+ language conventions for repos with PHP code | Skip until repo has matching PHP assets |
 | Laravel ecosystem overlays | Optional | `.github/instructions/laravel.instructions.md` plus stack overlays (Filament, Livewire, Inertia, Alpine, Valkey) | Framework- and ecosystem-specific guidance for Laravel repos | Add only the overlays matching the repo's actual stack |
 | Database overlays | Optional | `.github/instructions/sqlite.instructions.md`, `.github/instructions/postgresql.instructions.md`, `.github/instructions/mariadb.instructions.md` | Database-specific conventions for SQLite, PostgreSQL, or MariaDB | Add only the overlays matching the repo's actual databases |
+| CI workflow overlay | Optional | `.github/instructions/ci.instructions.md` | Supply-chain, permission, and secret hygiene for GitHub Actions workflows | Add when the repo edits CI workflows |
 | Specialist agents | Optional | `.github/agents/*.agent.md` | Role-specific workflows beyond baseline implementation | Add in follow-up PRs only when active team usage is expected |
 | Skills catalog | Optional | `.github/skills/*/SKILL.md` | Reusable playbooks for repeated workflows | Add incrementally based on repeated needs |
 | Hook policy and scripts | Optional | `.github/hooks/*` | Command guardrails and audit hooks | Defer until policy owners review impact |

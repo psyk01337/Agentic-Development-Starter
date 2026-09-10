@@ -35,7 +35,15 @@ Role applicability is documented in `.github/hooks/agent-policy.json` under `rol
 - `wget | sh`
 - Remote content piped to `Invoke-Expression`
 - `chmod -R 777`
-- Writing likely real secrets/tokens into `.env`
+- `git clean -f` (also `-fd`, `-fdx`, or `--force`)
+- `git checkout .` or `git restore .` (discard-all working tree)
+- `git stash drop` or `git stash clear`
+- `git branch -D`
+- `rmdir /s /q` or `rd /s /q`
+- `docker compose down -v` (teardown with volume deletion)
+- `docker volume prune` or `docker system prune`
+- `git add .env` or staging common credential files (`.pem`, `.key`, `.npmrc`, `id_rsa`)
+- Writing likely real secrets/tokens into `.env`, including common credential names such as `secret=`, `api_key=`, and cloud credential variables
 - `pip install --trusted-host` or `pip install --index-url http://` (TLS bypass for package sources)
 - `npm install --registry http://` (plain HTTP npm registry)
 - Unapproved edits to core policy files when the command explicitly says the edit is unapproved
@@ -68,10 +76,11 @@ Role applicability is documented in `.github/hooks/agent-policy.json` under `rol
 4. Update both shell variants only when the hook mechanism changes, not when only the rule data changes.
 5. Add a denied fixture and at least one safe allowed fixture to `.github/scripts/check-hook-policy.*`.
 6. Run `.github/scripts/check-hook-policy.sh` and `.github/scripts/check-hook-policy.ps1` before merging.
+7. Matching is case-insensitive by default; use a scoped `(?-i:...)` group when a rule must distinguish case (for example, blocking `git branch -D` while allowing `git branch -d`).
 
 ## Policy Test Fixtures
 
-Denied fixtures cover destructive deletion, remote shell execution, hard reset, force push, secret writes to `.env`, HTTP package registries, and unapproved policy edits.
+Denied fixtures cover destructive deletion (including `git clean -f`, discard-all restores, `rmdir /s /q`, and Docker prunes), remote shell execution, hard reset, force push, stash and branch destruction, secret-file staging, secret writes to `.env`, HTTP package registries, and unapproved policy edits.
 
 Allowed fixtures cover common safe commands such as `git status --short`, `git diff --stat`, local test commands, and starter validation scripts.
 

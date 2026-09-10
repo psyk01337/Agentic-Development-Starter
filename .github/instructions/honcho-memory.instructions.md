@@ -1,9 +1,11 @@
 ---
-applyTo: "**/*"
+applyTo: "{honcho.*,.honcho/**}"
 ---
 # Honcho Memory Overlay Instructions
 
 Use these rules only when a repository explicitly opts into Honcho or another durable agent memory provider. Honcho is optional and must not become the source of truth.
+
+In VS Code, this overlay only attaches when the repository contains Honcho config files (`honcho.*` or a `.honcho/` directory); repositories without Honcho files never load these rules.
 
 ## Memory Boundaries
 

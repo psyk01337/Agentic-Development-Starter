@@ -125,6 +125,22 @@ Keep database-specific rules in their own overlays so each database can be enabl
 
 Use the core modules first, then add new overlays only after the repo has stable conventions worth encoding.
 
+### Static prototypes (presentation-only)
+
+Add or keep:
+
+- `.github/instructions/static-prototype.instructions.md`
+
+Use this overlay for throwaway HTML + Bootstrap + HTMX prototypes deployed to static hosts such as Netlify. Keep it enabled only for prototype work where fast mock interactivity matters more than production rigor; see `docs/runbooks/static-prototypes.md`.
+
+### CI/CD workflow repos
+
+Add or keep:
+
+- `.github/instructions/ci.instructions.md`
+
+Use this overlay for repositories that edit GitHub Actions workflows. It covers action pinning, least-privilege permissions, and secret hygiene in CI, and stays additive to the security baseline.
+
 ## 3. Prefer Generic Roles Before Specialized Agents
 
 The default specialist set is:

@@ -1,9 +1,11 @@
 ---
-applyTo: "**/*"
+applyTo: ".hermes/**"
 ---
 # Hermes Runtime Overlay Instructions
 
 Use these rules only when a repository explicitly opts into a Hermes-style stateful runtime. This starter is not a Hermes replacement; it supplies repo-native rules, skills, prompts, policies, and handoff contracts for runtimes to honor.
+
+In VS Code, this overlay only attaches when the repository contains a `.hermes/` directory (or similar Hermes marker files); repositories without Hermes files never load these rules.
 
 ## Runtime Boundaries
 

@@ -101,6 +101,8 @@ graph LR
         OAG[overlay-approval-gated-orchestration]
         OHR[overlay-hermes-runtime]
         OHM[overlay-honcho-memory]
+        OCI[overlay-ci]
+        OST[overlay-static-prototype]
     end
 
     CB --> CG
@@ -132,6 +134,8 @@ graph LR
     OAG --> CE
     OHR --> CD
     OHM --> CD
+    OCI --> CG
+    OST --> CG
 ```
 
 ## Validation Workflow
