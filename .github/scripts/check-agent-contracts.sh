@@ -45,6 +45,7 @@ agent_files=(
   ".github/agents/process-improvement.agent.md"
   ".github/agents/tdd-vitest.agent.md"
   ".github/agents/orchestration-coordinator.agent.md"
+  ".github/agents/delegation-supervisor.agent.md"
 )
 
 for relative_path in "${agent_files[@]}"; do

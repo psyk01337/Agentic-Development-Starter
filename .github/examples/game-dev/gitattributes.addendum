@@ -1,0 +1,46 @@
+# Game Asset Storage Addendum (.gitattributes)
+#
+# Append these lines to the repository root .gitattributes AFTER the starter's
+# core lines, because later rules win in .gitattributes.
+#
+# Why this matters: the starter sets `* text=auto eol=lf` for all repositories.
+# Git cannot always infer that game asset files are binary, and a text-mode
+# checkout corrupts them. Every large-file or binary rule must therefore end in
+# `-text` so the core normalization rule stops applying.
+#
+# This file is an example addendum. It is NOT active in this repository.
+# Copy the lines you need into your own .gitattributes and delete the rest.
+
+# --- Option A: large-file storage for authoring masters (directory-scoped) ---
+# Prefer directory scope over extension scope. Tracking every *.png as a large
+# file is usually a mistake: runtime images are small, and metered large-file
+# storage is consumed again on every CI clone.
+#
+# app/game/assets/masters/** filter=lfs diff=lfs merge=lfs -text
+# art/**                     filter=lfs diff=lfs merge=lfs -text
+
+# --- Option B: no large-file storage, explicit binary markers only ---
+# Use this when masters live outside the repository, or all assets are small.
+# Without these lines Git usually detects binary content correctly, but the
+# explicit marker removes the guesswork for unusual formats.
+#
+# app/game/assets/masters/** binary
+# art/**                     binary
+
+# --- Authored data: keep as reviewable text ---
+# Tiled maps, atlas descriptors, and level data are JSON and should diff well.
+# Verify the current extension used by your tool version before relying on it.
+*.tmj   text eol=lf
+*.json  text eol=lf
+
+# --- Unity YAML assets: use the engine's merge tool, not plain text ---
+# Only relevant if the repo also contains Unity projects. The merge driver must
+# be registered in .git/config or the merge silently falls back to text.
+# *.unity   merge=unityyamlmerge eol=lf
+# *.prefab  merge=unityyamlmerge eol=lf
+
+# --- Reminder ---
+# After changing this file, renormalize once:
+#   git add --renormalize .
+# Then verify attribute resolution for a representative asset path:
+#   git check-attr text eol filter -- app/game/assets/masters/example.aseprite

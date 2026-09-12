@@ -1,0 +1,66 @@
+# Game Development .gitignore Addendum
+#
+# Append the block for your engine to the repository root .gitignore.
+#
+# This file is an example addendum. It is NOT active in this repository.
+# The starter's own .gitignore intentionally contains only generic OS and
+# local-only entries; engine-specific ignores belong here so they do not leak
+# into non-game repositories.
+
+# --- Phaser / web-game projects (Vite, or any bundler) ---
+# node_modules/
+# dist/
+# dist-ssr/
+# .vite/
+# *.local
+#
+# # Editor and tooling
+# .vscode/*
+# !.vscode/extensions.json
+# .idea/
+# *.tsbuildinfo
+#
+# # Generated runtime assets, when the pipeline rebuilds them
+# app/game/assets/runtime/generated/
+#
+# # Never commit real credentials or signing material
+# .env
+# .env.*
+# !.env.example
+# *.keystore
+# *.jks
+# *.p12
+# *.pfx
+# *.mobileprovision
+
+# --- Unity (only if the repo contains a Unity project) ---
+# [Ll]ibrary/
+# [Tt]emp/
+# [Oo]bj/
+# [Bb]uild/
+# [Bb]uilds/
+# [Ll]ogs/
+# [Uu]ser[Ss]ettings/
+# *.csproj
+# *.sln
+# *.unityproj
+# .vs/
+
+# --- Unreal (only if the repo contains an Unreal project) ---
+# Binaries/
+# DerivedDataCache/
+# Intermediate/
+# Saved/
+# .vs/
+# *.VC.db
+
+# --- Godot (only if the repo contains a Godot project) ---
+# .godot/
+# export_presets.cfg
+
+# --- Notes ---
+# 1. Keep engine blocks commented out until that engine is actually present.
+# 2. Never uncomment a line that ignores prebuilt binaries the project ships intentionally.
+# 3. Do not gitignore lockfiles (package-lock.json, pnpm-lock.yaml, yarn.lock).
+#    They must be committed so builds stay reproducible.
+# 4. Store real credentials in a secret manager or CI secrets, never in .env.

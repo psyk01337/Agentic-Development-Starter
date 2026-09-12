@@ -1,0 +1,83 @@
+{
+  "planVersion": "1.0",
+  "supervisor": "delegation-supervisor",
+  "classification": {
+    "level": "complex",
+    "matchedCriteria": [
+      "Changes authentication, authorization, secrets, permissions, identity, security controls, or trust boundaries.",
+      "Crosses a mandatory human-approval boundary."
+    ]
+  },
+  "task": {
+    "objective": "Add role-based authorization to the admin area.",
+    "acceptanceCriteria": [
+      "An admin role exists and is enforced server-side.",
+      "Unauthorized users receive a 403 response.",
+      "Existing users continue to function unchanged."
+    ]
+  },
+  "approval": {
+    "required": true,
+    "matchedCategories": ["identity-security-change"],
+    "status": "approved",
+    "approverReference": "session approval recorded before any write delegation"
+  },
+  "delegations": [
+    {
+      "agent": "analyst",
+      "objective": "Trace current authentication and authorization and report where admin routes are guarded.",
+      "mode": "machine-delegation",
+      "capability": "read-only",
+      "parallel": true,
+      "outcome": "Authentication uses the existing session guard; no role abstraction exists yet; admin routes live in the admin route file."
+    },
+    {
+      "agent": "security-reviewer",
+      "objective": "Identify server-side authorization requirements and existing gaps for the admin area.",
+      "mode": "machine-delegation",
+      "capability": "read-only",
+      "parallel": true,
+      "outcome": "Server-side authorization is mandatory; hiding UI is insufficient; existing admin endpoints have inconsistent policy checks."
+    },
+    {
+      "agent": "senior-software-engineer",
+      "objective": "Implement the approved authorization design with focused tests.",
+      "mode": "machine-delegation",
+      "capability": "write",
+      "writeSet": [
+        "app/Policies/**",
+        "app/Models/User.php",
+        "routes/admin.php",
+        "tests/Feature/AdminAuthorizationTest.php"
+      ],
+      "parallel": false,
+      "serializedReason": "Single write-capable delegation in this turn.",
+      "outcome": "Authorization policies added and admin routes guarded; focused feature test added."
+    },
+    {
+      "agent": "code-reviewer",
+      "objective": "Review the implemented change for correctness, regressions, and missing tests.",
+      "mode": "machine-delegation",
+      "capability": "read-only",
+      "parallel": true,
+      "outcome": "No blocking findings."
+    },
+    {
+      "agent": "qa",
+      "objective": "Verify the authorization behavior and risky user flows.",
+      "mode": "machine-delegation",
+      "capability": "read-only",
+      "parallel": true,
+      "outcome": "Authorization behavior verified; existing user flows intact."
+    }
+  ],
+  "fallback": {
+    "used": false
+  },
+  "reconciliation": {
+    "consolidatedResult": "Role-based authorization implemented and independently verified with no blocking findings.",
+    "conflicts": [],
+    "blockingFindings": [],
+    "repairPassIssued": false
+  }
+}

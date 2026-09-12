@@ -153,6 +153,17 @@ Example prompts:
 - `Use ui-scaffold to draft a Livewire component and Blade view stubs for this settings form, honoring the repo's Livewire overlay.`
 - `Use ui-scaffold to outline a Filament resource and form schema for this admin screen.`
 
+### `game-perf-triage`
+
+Use when a game stutters, drops frames, hitches on load, or grows in memory and the cause is unknown. Forces a measured budget, a classified bottleneck, one verified fix, and a matched after-measurement.
+
+Example prompts:
+
+- `Use game-perf-triage on this frame drop in the combat scene.`
+- `The game stutters when many enemies spawn; find the bottleneck before I optimize.`
+- `Triage the memory growth across scene transitions.`
+- `We load everything at boot and first load is slow; triage it.`
+
 ## Consistency Check
 
 Use the starter skill checks to confirm the manifest and skill directories stay aligned:

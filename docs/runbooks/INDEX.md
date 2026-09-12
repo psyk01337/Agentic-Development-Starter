@@ -14,6 +14,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 - **[Skills](skills.md)** - How to use and create workflow skills
 - **[Memory Strategy](memory-strategy.md)** - Manage agent memory across sessions
 - **[Static Prototypes](static-prototypes.md)** - Fast throwaway HTML + Bootstrap + HTMX mockups for presentations
+- **[Game Development](game-dev.md)** - Browser game conventions, performance budgets, asset pipelines, and the client-trust boundary
 
 ## Security & Guardrails
 
@@ -23,6 +24,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 ## Advanced Workflows
 
 - **[Approval-Gated Handoffs](approval-gated-handoffs.md)** - Implement approval workflows between agents
+- **[Supervisor Orchestration](supervisor-orchestration.md)** - Run supervised delegation to approved specialist agents
 - **[Tool Surface Matrix](tool-surface-matrix.md)** - Compare agent platforms and tool capabilities
 
 ## Runtime Integration
@@ -38,11 +40,13 @@ This index organizes all runbooks by use case to help you find the right guidanc
 | Understand the structure | [Starter Composition](starter-composition.md) |
 | Use agents effectively | [Agentic Development Workflow](agentic-dev.md) |
 | Build a throwaway prototype | [Static Prototypes](static-prototypes.md) |
+| Build a browser game | [Game Development](game-dev.md) |
 | Create custom skills | [Skills](skills.md) |
 | Set up guardrails | [Hooks](hooks.md) |
 | Enable MCP servers | [MCP Servers](mcp-servers.md) |
 | Manage agent memory | [Memory Strategy](memory-strategy.md) |
 | Add approval workflows | [Approval-Gated Handoffs](approval-gated-handoffs.md) |
+| Run supervised delegation | [Supervisor Orchestration](supervisor-orchestration.md) |
 | Compare agent platforms | [Tool Surface Matrix](tool-surface-matrix.md) |
 | Integrate Hermes | [Hermes Runtime](hermes-runtime.md) |
 | Use Honcho memory | [Honcho Memory](honcho-memory.md) |

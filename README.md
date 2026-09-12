@@ -147,7 +147,7 @@ Core modules cover baseline instructions, security, memory strategy, governance,
 
 Optional modules cover prompt workflows, skills, evals, editor templates, and MCP templates.
 
-Overlay modules cover stack-specific guidance (frontend, backend, PHP/Laravel ecosystem, database, and CI workflow overlays), Vitest TDD, approval-gated orchestration, Hermes runtime integration, and Honcho durable memory integration.
+Overlay modules cover stack-specific guidance (frontend, backend, PHP/Laravel ecosystem, database, CI workflow, and game development overlays), Vitest TDD, approval-gated orchestration, supervisor orchestration, Hermes runtime integration, and Honcho durable memory integration.
 
 ## Prompts
 
@@ -166,6 +166,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 - CI failure debugging.
 - Problem structuring.
 - Hook policy rule updates.
+- Game system design, mechanic implementation, performance profiling, and build preparation.
 
 Each prompt states what context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and expected output.
 
@@ -175,13 +176,13 @@ Skills are bounded multi-step playbooks. Use them when the workflow is repeatabl
 
 Included workflow skills cover ADR authoring, bug triage, PR review, QA test plans, security checks, release notes, session compaction, memory curation, repo onboarding, CI failure debugging, migration planning, tool-surface audits, and problem structuring.
 
-Stack overlays include API and UI scaffold skills. Approval-gated handoffs are an optional overlay skill.
+Stack overlays include API and UI scaffold skills, plus `game-perf-triage` for game frame-time, memory, and load-time diagnosis. Approval-gated handoffs are an optional overlay skill.
 
 ## Agents
 
 The starter uses guided handoffs, not hidden automatic chains.
 
-Core agents include analyst, tech planner, architecture reviewer, senior software engineer, code reviewer, security reviewer, QA, documentation maintainer, and process improvement. Vitest TDD and orchestration coordinator are overlays.
+Core agents include analyst, tech planner, architecture reviewer, senior software engineer, code reviewer, security reviewer, QA, documentation maintainer, and process improvement. Vitest TDD, the orchestration coordinator, and the delegation supervisor are overlays. The delegation supervisor is opt-in and distinct from the orchestration coordinator: the coordinator governs human-guided and approval-gated transitions, while the supervisor governs supervised machine delegation of bounded tasks to allow-listed agents.
 
 Each agent defines handoff memory, escalation behavior, required inputs, constraints, approach, and output format.
 
@@ -189,7 +190,7 @@ Each agent defines handoff memory, escalation behavior, required inputs, constra
 
 Hook policy lives in `.github/hooks/policy-rules.tsv` and is consumed by Bash and PowerShell pre-tool policy scripts.
 
-Default blocks include destructive deletion, hard reset, checkout discard, force push, remote shell execution, `Invoke-Expression` from network content, recursive `chmod 777`, secret-like writes to `.env`, HTTP package registries, and explicitly unapproved core policy edits.
+Default blocks include destructive deletion, hard reset, checkout discard, force push, remote shell execution, `Invoke-Expression` from network content, recursive `chmod 777`, secret-like writes to `.env`, app signing keystores and provisioning profiles, `git lfs migrate` history rewrites, forced LFS prune, HTTP package registries, and explicitly unapproved core policy edits.
 
 Hook policy tests live in `.github/scripts/check-hook-policy.*` and run in CI.
 
@@ -223,7 +224,7 @@ Both overlays are disabled by default and documented in `docs/runbooks/hermes-ru
 
 ## Evaluation Harness
 
-`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, Laravel components, security review, docs/changelog updates, CI debugging, and problem structuring.
+`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, Laravel components, gameplay mechanics, game performance triage, security review, docs/changelog updates, CI debugging, and problem structuring.
 
 Structure checks:
 
@@ -277,6 +278,7 @@ Existing repo adoption:
 - Agent checks: `.github/scripts/check-agent-contracts.*`.
 - Prompt checks: `.github/scripts/check-prompt-contracts.*`.
 - Hook policy checks: `.github/scripts/check-hook-policy.*`.
+- Supervisor orchestration checks: `.github/scripts/check-supervisor-orchestration.*`.
 - MCP posture checks: `.github/scripts/check-mcp-posture.*`.
 - Markdown checks: `.github/scripts/check-markdown-quality.*`.
 - Eval harness checks: `.github/scripts/check-evals.*` or `evals/run-evals.*`.

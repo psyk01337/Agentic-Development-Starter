@@ -1,5 +1,5 @@
 {
-  "version": "1.5",
+  "version": "1.7",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -156,12 +156,16 @@
         "evals/tasks/debug-failing-ci.md",
         "evals/tasks/problem-structuring.md",
         "evals/tasks/laravel-component.md",
+        "evals/tasks/gameplay-mechanic.md",
+        "evals/tasks/game-perf-triage.md",
         "evals/expected/simple-bugfix.checklist.md",
         "evals/expected/add-api-endpoint.checklist.md",
         "evals/expected/frontend-component.checklist.md",
         "evals/expected/security-review.checklist.md",
         "evals/expected/problem-structuring.checklist.md",
         "evals/expected/laravel-component.checklist.md",
+        "evals/expected/gameplay-mechanic.checklist.md",
+        "evals/expected/game-perf-triage.checklist.md",
         "evals/run-evals.sh",
         "evals/run-evals.ps1"
       ]
@@ -350,6 +354,23 @@
       ]
     },
     {
+      "id": "overlay-supervisor-orchestration",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that want a supervisor to delegate bounded tasks to approved specialist agents while keeping guided handoffs as the core default",
+      "files": [
+        ".github/agents/delegation-supervisor.agent.md",
+        ".github/skills/supervisor-orchestration/SKILL.md",
+        ".github/roles/orchestration-policy.json",
+        ".github/schema/delegation-plan.schema.json",
+        ".github/examples/supervisor-orchestration/complex-feature-delegation-plan.json",
+        ".github/scripts/check-supervisor-orchestration.ps1",
+        ".github/scripts/check-supervisor-orchestration.sh",
+        "docs/runbooks/supervisor-orchestration.md",
+        "docs/adr/0003-supervisor-orchestration-overlay.md"
+      ]
+    },
+    {
       "id": "overlay-hermes-runtime",
       "kind": "overlay",
       "defaultEnabled": false,
@@ -393,14 +414,31 @@
       ]
     },
     {
-      "id": "editor-templates",
-      "kind": "optional",
+      "id": "overlay-game-core",
+      "kind": "overlay",
       "defaultEnabled": false,
-      "when": "Repositories standardizing on VS Code Agent Mode and MCP",
+      "when": "Repositories that build games and want engine-agnostic gameplay, performance, and asset-pipeline rules",
       "files": [
-        ".vscode/settings.json",
-        ".vscode/mcp.json",
-        "docs/runbooks/mcp-servers.md"
+        ".github/instructions/gameplay-systems.instructions.md",
+        ".github/instructions/game-performance.instructions.md",
+        ".github/instructions/game-assets-pipeline.instructions.md",
+        ".github/skills/game-perf-triage/SKILL.md",
+        ".github/prompts/design-game-system.prompt.md",
+        ".github/prompts/implement-game-mechanic.prompt.md",
+        ".github/prompts/profile-game-performance.prompt.md",
+        ".github/prompts/prepare-game-build.prompt.md",
+        ".github/examples/game-dev/gitattributes.addendum",
+        ".github/examples/game-dev/gitignore.addendum",
+        "docs/runbooks/game-dev.md"
+      ]
+    },
+    {
+      "id": "overlay-game-phaser",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that build browser games with Phaser",
+      "files": [
+        ".github/instructions/phaser.instructions.md"
       ]
     }
   ]

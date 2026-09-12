@@ -42,6 +42,13 @@ This runbook describes the daily operating model once the starter has been compo
 2. Require an explicit approval checkpoint before the coordinator drafts or advances the next handoff.
 3. Fall back to normal guided handoffs whenever approval is missing, rejected, or stale.
 
+### Supervisor delegation flow
+
+1. Start with `delegation-supervisor` only if the repo has enabled the supervisor orchestration overlay.
+2. Let the supervisor classify the task and declare the write set before any write-capable delegation.
+3. Stop for explicit human approval whenever the work matches a category in `.github/roles/orchestration-policy.json`.
+4. Fall back to a guided delegation plan when the runtime cannot delegate subagents.
+
 ## 1b) Redirect Mid-Chain When Signals Appear
 
 Normal guided chains can be redirected when an agent's output reveals a signal that a different specialist is needed. These are the most common redirects:
@@ -91,6 +98,7 @@ Each agent defines a **Handoff Memory Contract** at the top of its agent file. B
 - `process-improvement`: workflow issue, current gap, proposed change, files updated, approval status
 - `tdd-vitest`: behavior added, failing test written first, Vitest command run, implementation notes, residual risks
 - `orchestration-coordinator`: current workflow state, proposed next agent, approval status, transition metadata, fallback decision
+- `delegation-supervisor`: task classification, delegations issued with declared write sets, reconciliation, approval state, fallback decision
 
 Use the fields as a checklist — if a field has nothing meaningful to write, say so explicitly rather than omitting it.
 

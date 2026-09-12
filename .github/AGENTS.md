@@ -102,6 +102,14 @@ Each agent file also defines a `## Handoff Memory Contract` section that specifi
 - Use for: optional approval-gated orchestration in repos that explicitly opt into the orchestration overlay.
 - Role: overlay workflow coordinator
 
+### `delegation-supervisor`
+
+- File: `.github/agents/delegation-supervisor.agent.md`
+- Use for: optional supervised machine delegation of bounded tasks to approved specialist agents in repos that explicitly opt into the supervisor orchestration overlay.
+- Role: `orchestration` overlay
+- Not to be confused with `orchestration-coordinator`, which governs human-visible guided and approval-gated transitions. The supervisor never edits files or runs commands directly.
+- Its high-risk approval gate is a prompt-level contract, not enforced authorization: the repository has no trusted identity source, no validated enforcement point, and no hook seam for agent-to-agent delegation. See `docs/runbooks/supervisor-orchestration.md`.
+
 ## Ownership Map
 
 | Agent | Owns | Produces | Typical next handoff |
@@ -117,6 +125,7 @@ Each agent file also defines a `## Handoff Memory Contract` section that specifi
 | `documentation-maintainer` | README, runbooks, prompts, instructions, ADRs, and changelogs | Updated repo truth, link/validation notes, doc debt | `process-improvement` or none |
 | `process-improvement` | Workflow asset maintenance | Workflow changes, process fixes, repo-level guardrails | none or user decision |
 | `orchestration-coordinator` | Optional approval-gated transitions and transition records | Transition recommendation, approval checkpoint, handoff prompt draft | next specialist or none |
+| `delegation-supervisor` | Optional supervised machine delegation, write-set declaration, and a high-risk approval gate that is a prompt-level contract, not enforcement | Delegation plan, reconciled result, approval record, verification outcome | next specialist or none |
 
 ## Recommended Sequencing
 
@@ -130,6 +139,7 @@ Each agent file also defines a `## Handoff Memory Contract` section that specifi
 8. Use `qa` when you need explicit verification of test sufficiency and risky user flows.
 9. Use `documentation-maintainer` when repo truth, README, runbooks, prompts, instructions, ADRs, or changelogs need focused maintenance.
 10. Use `process-improvement` only for workflow assets, and only with clear user approval before edits.
+11. Use `delegation-supervisor` only in repos that enable the supervisor orchestration overlay; it classifies a task, delegates bounded work to the allow-listed agents, and reconciles the result.
 
 ## Conditional Delegation Triggers
 
@@ -184,6 +194,10 @@ These triggers are advisory signals. The orchestrating user or main chat always 
 
 - `orchestration-coordinator` -> approved specialist handoff
 
+### Supervisor delegation flow
+
+- `delegation-supervisor` -> allow-listed specialist agents -> reconciled result
+
 ## Manual Handoff Outputs
 
 - `analyst` handoff: problem statement, scope, constraints, unknowns, and impacted areas.
@@ -203,9 +217,9 @@ The adapted agent set intentionally does not include the following concepts from
 - Unsupported model pins
 - External Flowbaby memory tools
 - `agent-output/` lifecycle and status-document systems
-- Automatic multi-agent handoff chains
+- Automatic multi-agent handoff chains in core behavior. Supervised delegation is permitted only through the default-disabled `overlay-supervisor-orchestration` overlay, under the canonical policy in `.github/roles/orchestration-policy.json`.
 - Automatic planner, UAT, and devops role automation beyond the repo's documented manual handoff workflow
 
 Those exclusions are deliberate. If the repo later needs deeper orchestration, add it as a new optional overlay with explicit approval gates and auditable transitions rather than reintroducing the sample assumptions by copy-paste.
 
-See `docs/runbooks/approval-gated-handoffs.md` for the overlay-only orchestration model.
+See `docs/runbooks/approval-gated-handoffs.md` for the overlay-only orchestration model, and `docs/runbooks/supervisor-orchestration.md` for the supervisor overlay and the prompt-level, non-enforced status of its approval gate.

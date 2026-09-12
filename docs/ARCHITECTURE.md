@@ -103,6 +103,9 @@ graph LR
         OHM[overlay-honcho-memory]
         OCI[overlay-ci]
         OST[overlay-static-prototype]
+        OGC[overlay-game-core]
+        OGP[overlay-game-phaser]
+        OSO[overlay-supervisor-orchestration]
     end
 
     CB --> CG
@@ -132,10 +135,13 @@ graph LR
     OMA --> CG
     OVT --> CE
     OAG --> CE
+    OSO --> CE
     OHR --> CD
     OHM --> CD
     OCI --> CG
     OST --> CG
+    OGC --> CG
+    OGP --> OGC
 ```
 
 ## Validation Workflow
@@ -157,6 +163,7 @@ sequenceDiagram
         Val->>Val: check-starter-skills.sh
         Val->>Val: check-agent-contracts.sh
         Val->>Val: check-approval-gated-orchestration.sh
+        Val->>Val: check-supervisor-orchestration.sh
         Val->>Val: check-hook-policy.sh
         Val->>Val: check-prompt-contracts.sh
         Val->>Val: check-mcp-posture.sh

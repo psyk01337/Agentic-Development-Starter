@@ -1,0 +1,127 @@
+{
+  "version": "1.0",
+  "description": "Canonical machine-readable policy for the supervisor orchestration overlay: delegation depth, specialist allow-list, task routing, write-set discipline, and high-risk approval boundaries.",
+  "appliesTo": "overlay-supervisor-orchestration",
+  "canonical": true,
+  "singleSourceOfTruth": true,
+  "delegationDepth": {
+    "maxLevels": 1,
+    "nestedDelegationEnabled": false,
+    "onlySupervisorMayDelegate": true,
+    "workersMayDelegate": false,
+    "supervisorRole": "orchestration",
+    "capability": "delegate-agent"
+  },
+  "specialistAllowList": [
+    "analyst",
+    "tech-planner",
+    "architecture-reviewer",
+    "senior-software-engineer",
+    "code-reviewer",
+    "security-reviewer",
+    "qa",
+    "tdd-vitest",
+    "documentation-maintainer"
+  ],
+  "approvalRequiredCategories": [
+    {
+      "id": "architecture-change",
+      "description": "Changes to architectural layers, boundaries, public contracts, or module shape."
+    },
+    {
+      "id": "core-governance-change",
+      "description": "Changes to starter or repository governance assets such as AGENTS.md, tool-access.json, agent policy, module composition, validators, or architecture contracts."
+    },
+    {
+      "id": "dependency-change",
+      "description": "Adding, removing, or materially changing a dependency, framework, runtime, build tool, or infrastructure component."
+    },
+    {
+      "id": "destructive-data-change",
+      "description": "Database or schema migrations, data transformations, or any change that can destroy or irreversibly rewrite data."
+    },
+    {
+      "id": "identity-security-change",
+      "description": "Changes to authentication, authorization, secrets, permissions, identity, security controls, or trust boundaries."
+    },
+    {
+      "id": "production-or-deployment-change",
+      "description": "Changes to deployment, production infrastructure, networking, CI/CD, release behavior, or runtime configuration."
+    },
+    {
+      "id": "destructive-operation",
+      "description": "Commands or operations that delete, prune, force-reset, overwrite history, or otherwise destroy state."
+    },
+    {
+      "id": "scope-expansion",
+      "description": "Work that grows beyond the requested slice or the declared write set."
+    }
+  ],
+  "complexityRouting": {
+    "defaultWhenUncertain": "complex",
+    "complexIfAny": [
+      "Changes more than one architectural layer or independently owned subsystem.",
+      "Requires an architecture or public-contract decision.",
+      "Adds, removes, or materially changes a dependency, framework, runtime, build tool, or infrastructure component.",
+      "Requires a database or schema migration or a data transformation.",
+      "Changes authentication, authorization, secrets, permissions, identity, security controls, or trust boundaries.",
+      "Changes deployment, production infrastructure, networking, CI/CD, release behavior, or runtime configuration.",
+      "Modifies starter or core governance assets such as AGENTS.md, tool-access.json, agent policy, module composition, validators, or architecture contracts.",
+      "Contains multiple independent implementation workstreams.",
+      "Has incomplete, conflicting, or design-dependent acceptance criteria.",
+      "Crosses a mandatory human-approval boundary.",
+      "Cannot be bounded to a sufficiently narrow implementation scope or write set."
+    ],
+    "notBasedOn": [
+      "file count",
+      "prompt size",
+      "token count"
+    ],
+    "simpleWorkflow": "delegation-supervisor -> implementer -> appropriate validation/review",
+    "complexWorkflow": "delegation-supervisor -> parallel read-only analysis -> consolidated plan -> human approval when required -> implementer -> parallel independent verification -> one consolidated repair pass if needed"
+  },
+  "writeSet": {
+    "requiredBeforeWriteDelegation": true,
+    "parallelWriteDelegation": "declared-disjoint-sets-only",
+    "unboundedDeclarationOutcome": "serialize",
+    "unboundedIndicators": [
+      "unknown",
+      "broad",
+      "wildcard-only",
+      "tbd",
+      "not-safely-bounded"
+    ],
+    "readOnlyParallelAllowed": true,
+    "overlappingFilesConcurrent": false
+  },
+  "enforcement": {
+    "level": "prompt-contract",
+    "runtimeEnforced": false,
+    "note": "This policy is a governance expectation and a behavioral contract. No repository hook validates agent-to-agent delegation, and no trusted identity source or enforcement point exists for these approvals. Documentation must not describe this gate as enforced authorization."
+  },
+  "approvalOverlayComposition": {
+    "hardDependency": false,
+    "requiresOverlayApprovalGatedOrchestration": false,
+    "whenBothEnabled": "reuse the approval-gated transition envelope rather than defining a second approval experience",
+    "whenApprovalOverlayAbsent": "the supervisor still stops at the mandatory high-risk checkpoint"
+  },
+  "fallbackWhenDelegationUnavailable": {
+    "mode": "guided-delegation-plan",
+    "silentDegradationAllowed": false,
+    "planFields": [
+      "targetAgent",
+      "objective",
+      "context",
+      "writeSet",
+      "acceptanceCriteria",
+      "expectedReturnFormat",
+      "executionOrder"
+    ],
+    "note": "If the runtime cannot delegate subagents, the supervisor emits an ordered plan for the user to execute or refuses the delegation. It must not pretend delegation occurred."
+  },
+  "deferredProposal": {
+    "id": "option-c-core-high-risk-gate",
+    "status": "deferred-not-rejected",
+    "description": "Move a universal minimum high-risk approval contract into core governance so guided and supervisor workflows inherit it. Requires its own ADR and must not be bundled into the supervisor overlay."
+  }
+}

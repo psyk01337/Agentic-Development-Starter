@@ -23,11 +23,15 @@ $requiredFiles = @(
   "evals/tasks/update-docs-and-changelog.md",
   "evals/tasks/debug-failing-ci.md",
   "evals/tasks/laravel-component.md",
+  "evals/tasks/gameplay-mechanic.md",
+  "evals/tasks/game-perf-triage.md",
   "evals/expected/simple-bugfix.checklist.md",
   "evals/expected/add-api-endpoint.checklist.md",
   "evals/expected/frontend-component.checklist.md",
   "evals/expected/security-review.checklist.md",
   "evals/expected/laravel-component.checklist.md",
+  "evals/expected/gameplay-mechanic.checklist.md",
+  "evals/expected/game-perf-triage.checklist.md",
   "evals/run-evals.sh",
   "evals/run-evals.ps1"
 )

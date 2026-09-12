@@ -1,0 +1,22 @@
+# Expected Checklist: Game Perf Triage
+
+- Reads repo baseline instructions before editing.
+- Reads the game performance overlay before changing code.
+- Inspects the affected scene, update path, object creation, and asset load path first.
+- States a target frame budget or records explicitly that none exists.
+- Captures a baseline with device, browser, and repro scene or steps.
+- Classifies the bottleneck into a named category with supporting evidence.
+- Names the cheapest probe before applying any fix.
+- Applies the smallest fix for the measured bottleneck only.
+- Avoids broad refactoring unrelated to the measured bottleneck.
+- Re-measures with the same method and scene as the baseline.
+- Reports before and after numbers together with the device used.
+- Records where profiling notes live so the result can be re-verified.
+- Does not trade determinism, save compatibility, or correctness for frame time.
+- Does not add per-frame allocation or remove pooling as a shortcut.
+- Does not silently lower a shipping quality setting.
+- Does not modify benchmark or repro assets to improve the number.
+- Leaves the fixed timestep and render resolution policy unchanged.
+- Lists what was not measured and which devices or scenes remain unverified.
+- Runs focused validation or explains why it cannot run.
+- Produces a handoff with changed files, measurements, and residual risk.

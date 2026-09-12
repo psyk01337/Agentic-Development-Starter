@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/agentic-development-starter/delegation-plan.schema.json",
+  "title": "Supervisor Delegation Plan",
+  "description": "Record of one supervisor orchestration turn: task classification, approval check, declared write set, delegations issued, and reconciliation. Supports both machine delegation and the guided-delegation fallback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["planVersion", "classification", "task", "approval", "delegations"],
+  "properties": {
+    "planVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "supervisor": {
+      "type": "string",
+      "const": "delegation-supervisor"
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "matchedCriteria"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["simple", "complex"]
+        },
+        "matchedCriteria": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "acceptanceCriteria"],
+      "properties": {
+        "objective": { "type": "string", "minLength": 1 },
+        "acceptanceCriteria": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "status"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "matchedCategories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "architecture-change",
+              "core-governance-change",
+              "dependency-change",
+              "destructive-data-change",
+              "identity-security-change",
+              "production-or-deployment-change",
+              "destructive-operation",
+              "scope-expansion"
+            ]
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not-required", "pending", "approved", "rejected"]
+        },
+        "approverReference": { "type": "string" }
+      }
+    },
+    "delegations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["agent", "objective", "mode", "capability"],
+        "properties": {
+          "agent": {
+            "type": "string",
+            "enum": [
+              "analyst",
+              "tech-planner",
+              "architecture-reviewer",
+              "senior-software-engineer",
+              "code-reviewer",
+              "security-reviewer",
+              "qa",
+              "tdd-vitest",
+              "documentation-maintainer"
+            ]
+          },
+          "objective": { "type": "string", "minLength": 1 },
+          "mode": {
+            "type": "string",
+            "enum": ["machine-delegation", "guided-plan"]
+          },
+          "capability": {
+            "type": "string",
+            "enum": ["read-only", "write"]
+          },
+          "writeSet": {
+            "type": "array",
+            "description": "Declared files or globs this delegation may write. Write delegations must declare a bounded set; when the set is unknown, broad, wildcard-only, TBD, or otherwise not safely bounded, serialize instead of running in parallel. The canonical indicator list is writeSet.unboundedIndicators in .github/roles/orchestration-policy.json, and the repo-local validators reject an entry that is literally one of those indicators.",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "parallel": { "type": "boolean" },
+          "serializedReason": {
+            "type": "string",
+            "description": "Why this delegation was serialized instead of run in parallel. Optional in v1: the write-set rule is a review discipline rather than a validated contract, so a serialized delegation is not required to state its reason."
+          },
+          "outcome": { "type": "string" }
+        },
+        "if": {
+          "properties": { "capability": { "const": "write" } }
+        },
+        "then": {
+          "required": ["writeSet"],
+          "properties": { "writeSet": { "minItems": 1 } }
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["used"],
+      "properties": {
+        "used": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "executionOrder": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "consolidatedResult": { "type": "string" },
+        "conflicts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "blockingFindings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "repairPassIssued": { "type": "boolean" }
+      }
+    }
+  }
+}

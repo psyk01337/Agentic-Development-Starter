@@ -45,7 +45,8 @@ $agentFiles = @(
   ".github/agents/documentation-maintainer.agent.md",
   ".github/agents/process-improvement.agent.md",
   ".github/agents/tdd-vitest.agent.md",
-  ".github/agents/orchestration-coordinator.agent.md"
+  ".github/agents/orchestration-coordinator.agent.md",
+  ".github/agents/delegation-supervisor.agent.md"
 )
 
 foreach ($relativePath in $agentFiles) {

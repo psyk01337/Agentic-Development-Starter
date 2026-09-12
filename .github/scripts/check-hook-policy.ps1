@@ -80,6 +80,10 @@ if (Test-Path $policyScript) {
   Expect-Blocked -Command "docker system prune -a"
   Expect-Blocked -Command "git add .env"
   Expect-Blocked -Command "secret=x >> .env"
+  Expect-Blocked -Command "git add release.keystore"
+  Expect-Blocked -Command "keystore=SECRET >> .env"
+  Expect-Blocked -Command "git lfs migrate import"
+  Expect-Blocked -Command "git lfs prune --force"
 
   Expect-Allowed -Command "git status --short"
   Expect-Allowed -Command "git diff --stat"
@@ -94,6 +98,10 @@ if (Test-Path $policyScript) {
   Expect-Allowed -Command "docker compose down"
   Expect-Allowed -Command "git add src/main.py"
   Expect-Allowed -Command "echo token=demo > /dev/null"
+  Expect-Allowed -Command "git lfs pull"
+  Expect-Allowed -Command "git lfs status"
+  Expect-Allowed -Command "git lfs prune --dry-run"
+  Expect-Allowed -Command "git add app/game/assets/runtime/hero.png"
 }
 
 if ($errors.Count -gt 0) {

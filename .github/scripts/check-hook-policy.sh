@@ -74,6 +74,10 @@ if [[ -f "${POLICY_SCRIPT}" ]]; then
   expect_blocked "docker system prune -a"
   expect_blocked "git add .env"
   expect_blocked "secret=x >> .env"
+  expect_blocked "git add release.keystore"
+  expect_blocked "keystore=SECRET >> .env"
+  expect_blocked "git lfs migrate import"
+  expect_blocked "git lfs prune --force"
 
   expect_allowed "git status --short"
   expect_allowed "git diff --stat"
@@ -88,6 +92,10 @@ if [[ -f "${POLICY_SCRIPT}" ]]; then
   expect_allowed "docker compose down"
   expect_allowed "git add src/main.py"
   expect_allowed "echo token=demo > /dev/null"
+  expect_allowed "git lfs pull"
+  expect_allowed "git lfs status"
+  expect_allowed "git lfs prune --dry-run"
+  expect_allowed "git add app/game/assets/runtime/hero.png"
 fi
 
 if [[ "${FAILED}" -ne 0 ]]; then

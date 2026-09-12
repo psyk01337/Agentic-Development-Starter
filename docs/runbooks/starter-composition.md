@@ -125,6 +125,22 @@ Keep database-specific rules in their own overlays so each database can be enabl
 
 Use the core modules first, then add new overlays only after the repo has stable conventions worth encoding.
 
+### Game development repos
+
+Add or keep the engine-agnostic game overlays:
+
+- `.github/instructions/gameplay-systems.instructions.md`
+- `.github/instructions/game-performance.instructions.md`
+- `.github/instructions/game-assets-pipeline.instructions.md`
+
+If the repo builds browser games with Phaser, also add:
+
+- `.github/instructions/phaser.instructions.md`
+
+Keep engine-agnostic gameplay, determinism, performance, and asset rules in the engine-agnostic overlays, and keep engine-specific rules (scene lifecycle, loader, scale manager, physics options) in the engine overlay.
+Scope game overlays by path such as `app/game/**` rather than by file extension, so they never attach to non-game TypeScript or JavaScript. Inside `app/game/`, the engine overlay takes precedence over the frontend or React overlay.
+See `docs/runbooks/game-dev.md` for the `app/game/` layout, the asset storage decision, and the client-trust boundary.
+
 ### Static prototypes (presentation-only)
 
 Add or keep:
@@ -172,6 +188,17 @@ The file includes a `toolDefinitions` section explaining what each capability (`
 The core starter uses guided handoffs, not automatic handoffs. If a target repo later needs agent-to-agent orchestration, add it as an optional overlay with explicit approval and audit behavior.
 
 The optional approval-gated orchestration overlay is documented in `docs/runbooks/approval-gated-handoffs.md` and should remain default-disabled unless a team has an explicit reason to adopt it.
+
+### Supervisor orchestration overlay
+
+Add only when a repo wants supervised machine delegation to approved specialist agents:
+
+- `.github/agents/delegation-supervisor.agent.md`
+- `.github/skills/supervisor-orchestration/SKILL.md`
+- `.github/roles/orchestration-policy.json`
+- `docs/runbooks/supervisor-orchestration.md`
+
+Keep it default-disabled and independent of `overlay-approval-gated-orchestration`; the supervisor retains its own minimum approval semantics and does not require the other overlay. `delegation-supervisor` complements `orchestration-coordinator` rather than replacing it. See `docs/runbooks/supervisor-orchestration.md` for the routing criteria, delegation depth, write-set rule, and fallback behavior.
 
 ## 4. Keep Hook Policy Data-Driven
 

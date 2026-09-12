@@ -1,48 +1,108 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "description": "Shared tool-access roles for custom agents in this starter with per-tool and per-agent capability matrix.",
   "toolDefinitions": {
     "read": {
       "description": "Read files and directories, inspect code, get context from codebase.",
-      "examples": ["read_file", "list_dir", "view_image"]
+      "examples": [
+        "read_file",
+        "list_dir",
+        "view_image"
+      ]
     },
     "search": {
       "description": "Search codebase with grep, regex, semantic search, and file glob patterns.",
-      "examples": ["grep_search", "semantic_search", "file_search"]
+      "examples": [
+        "grep_search",
+        "semantic_search",
+        "file_search"
+      ]
     },
     "edit": {
       "description": "Create and modify files and directories without restrictions; includes workflow assets and application code depending on agent role.",
-      "examples": ["create_file", "replace_string_in_file", "multi_replace_string_in_file", "create_directory"]
+      "examples": [
+        "create_file",
+        "replace_string_in_file",
+        "multi_replace_string_in_file",
+        "create_directory"
+      ]
     },
     "execute": {
       "description": "Run terminal commands, tests, validation checks, and external tools to gather evidence and verify work.",
-      "examples": ["run_in_terminal", "terminal_last_command", "terminal_selection"]
+      "examples": [
+        "run_in_terminal",
+        "terminal_last_command",
+        "terminal_selection"
+      ]
     },
     "todo": {
       "description": "Create and manage task tracking to organize work, maintain visibility, and preserve session state.",
-      "examples": ["manage_todo_list"]
+      "examples": [
+        "manage_todo_list"
+      ]
+    },
+    "delegate-agent": {
+      "description": "Delegate a bounded task to an approved specialist agent in an isolated context and receive its result.",
+      "examples": [
+        "platform-mapped, not a literal tool name: VS Code agent/runSubagent; other runtimes use their own delegation primitive"
+      ]
     }
   },
   "roles": {
     "analysis": {
-      "tools": ["read", "search", "execute", "todo"],
+      "tools": [
+        "read",
+        "search",
+        "execute",
+        "todo"
+      ],
       "intent": "Gather evidence and reduce uncertainty without editing files. Inspects codebase, docs, and runs verification commands to answer technical questions with confidence."
     },
     "planning": {
-      "tools": ["read", "search", "edit", "execute", "todo"],
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "execute",
+        "todo"
+      ],
       "intent": "Create design artifacts, validate assumptions, and prepare implementation-ready plans. Can edit ADRs and planning docs, but does not own application code changes by default."
     },
     "review": {
-      "tools": ["read", "search", "todo"],
+      "tools": [
+        "read",
+        "search",
+        "todo"
+      ],
       "intent": "Inspect work and report findings without making changes. Reviews code, architecture, and proposals against repo standards and source-of-truth docs."
     },
     "implementation": {
-      "tools": ["read", "search", "edit", "execute", "todo"],
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "execute",
+        "todo"
+      ],
       "intent": "Implement focused changes and validate them with the smallest relevant commands. Can edit application code, tests, and supporting docs; validates changes before handoff."
     },
     "workflow-maintenance": {
-      "tools": ["read", "search", "edit", "todo"],
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "todo"
+      ],
       "intent": "Update workflow assets such as agents, skills, instructions, and runbooks. Does not run terminal commands; scoped to repo customization files only."
+    },
+    "orchestration": {
+      "tools": [
+        "read",
+        "search",
+        "todo",
+        "delegate-agent"
+      ],
+      "intent": "Classify a task, delegate bounded work to approved specialist agents, reconcile results, and stop at the high-risk approval boundary. The gate is a prompt-level contract, not a runtime control. Does not edit files or run commands directly."
     }
   },
   "agentCapabilityMatrix": {
@@ -165,6 +225,19 @@
         "edit-notes": "Scoped to .github/, docs/runbooks/, and other workflow assets only",
         "todo": true
       }
+    },
+    "delegation-supervisor": {
+      "role": "orchestration",
+      "scope": "Overlay-only task classification, bounded delegation to approved specialist agents, result reconciliation, and a high-risk approval gate that is a prompt-level contract, not enforcement",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": false,
+        "edit": false,
+        "todo": true,
+        "delegate-agent": true,
+        "delegate-agent-notes": "Sole holder in v1. Delegates only to the explicit specialist allow-list and never to another delegation-capable agent."
+      }
     }
   },
   "agentRoleHints": {
@@ -177,6 +250,7 @@
     "documentation-maintainer": "workflow-maintenance",
     "process-improvement": "workflow-maintenance",
     "tech-planner": "planning",
-    "tdd-vitest": "implementation"
+    "tdd-vitest": "implementation",
+    "delegation-supervisor": "orchestration"
   }
 }

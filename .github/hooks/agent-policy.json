@@ -9,7 +9,7 @@
       "planning",
       "implementation"
     ],
-    "notes": "preToolUse command-pattern blocking is most relevant for roles that can execute commands. Review and workflow-maintenance roles are still subject to hooks but normally do not invoke execute tools."
+    "notes": "preToolUse command-pattern blocking is most relevant for roles that can execute commands. Review and workflow-maintenance roles are still subject to hooks but normally do not invoke execute tools. The orchestration role is not execute-capable and is the only role that holds delegate-agent; it never runs commands or edits files directly."
   },
   "logging": {
     "path": ".github/hooks/logs/agent-audit.log",

@@ -1,0 +1,22 @@
+# Expected Checklist: Gameplay Mechanic
+
+- Reads repo baseline instructions before editing.
+- Reads the game instruction overlays before writing code.
+- Respects engine overlay precedence inside `app/game/`.
+- Inspects nearby gameplay modules, tests, and tuning data first.
+- States an explicit ownership boundary for the mechanic.
+- Keeps rules in a pure module with engine calls confined to an adapter.
+- Drives gameplay from the fixed timestep rather than raw frame delta.
+- Does not mutate simulation state from rendering, animation, or audio callbacks.
+- Uses an explicit state machine instead of nested conditionals.
+- Externalizes tuning values with named units and effects.
+- Uses seeded randomness for any random behaviour.
+- Adds unit tests for pure logic including boundary and capacity edge cases.
+- Notes frame-budget impact when the mechanic runs per frame.
+- Does not allocate per frame in the update path.
+- Does not treat client-computed outcomes as authoritative for shared or ranked values.
+- Leaves the save format, save version, and core loop unchanged.
+- Cites official engine documentation for engine APIs used.
+- Updates `CHANGELOG.md` when executable behavior changes.
+- Runs focused validation or explains why it cannot run.
+- Produces a handoff with changed files, validation, and residual risk.

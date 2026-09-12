@@ -26,6 +26,7 @@ Legend:
 | Skills | Direct VS Code customization | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Runtime convention |
 | Prompt files | Direct VS Code customization | Repo convention | Repo convention | Repo convention | Repo convention | Direct or repo convention | Repo convention | Runtime convention |
 | Custom agents | Direct VS Code customization | Repo convention | Unsupported or repo convention | Repo convention | Repo convention | Direct or repo convention | Repo convention | Runtime convention |
+| Delegate subagent | Direct (agent/runSubagent) | Unknown | Unsupported | Repo convention | Repo convention | Unknown | Unknown | Runtime tool |
 | Memory | Session memory plus optional providers | Platform-dependent | Session only or external | Tool-dependent | Tool-dependent | Tool-dependent | Tool-dependent | Runtime memory plus optional providers |
 | Handoffs | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Runtime plus repo convention |
 
