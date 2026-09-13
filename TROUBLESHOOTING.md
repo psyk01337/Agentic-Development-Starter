@@ -18,11 +18,29 @@ ls -la .github/scripts/
 cp -r Agentic-Development-Starter/.github/scripts/ .github/
 ```
 
-### "actions/checkout@v4" resolver warning
+### "Unable to resolve action" warning in a workflow
 
-**Problem**: VS Code shows "Unable to resolve action `actions/checkout@v4`"
+**Problem**: VS Code reports `Unable to resolve action ...`, for example `Unable to resolve action actions/checkout@v4, repository or version not found`.
 
-**Solution**: This is a VS Code local resolver limitation, not an actual error. The workflows will run correctly on GitHub Actions. You can safely ignore this warning.
+**Cause**: The GitHub Actions extension resolves every `uses:` entry by fetching that action's `action.yml` through the GitHub API (`repos.getContent` with the ref). Its language server reports one message for *every* failed fetch: no network access, a blocked or TLS-inspected proxy, an expired GitHub sign-in, an exhausted API rate limit, or a genuinely missing ref. The ref form is not a factor, because `@v4`, `@v3`, a full version tag, and a commit SHA all request the same file, so rewriting the ref does not change this warning.
+
+**Diagnose it from the extension log**: open the Output panel and select `GitHub Actions Language Server`. The log records the real HTTP status behind the generic message: `401` with `Bad credentials` means the stored VS Code GitHub token is expired, revoked, or belongs to a different signed-in account; `403` means the API rate limit is exhausted; and `404` means the ref genuinely does not exist. When more than one GitHub account is signed in, confirm that the extension is using the account that owns the repository.
+
+**Confirm the workflow is correct**: verify the ref resolves from the command line.
+
+```bash
+git ls-remote https://github.com/actions/checkout refs/tags/v4
+curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com/repos/actions/checkout/contents/action.yml?ref=v4
+```
+
+A `200` from the second command means the action resolves and the warning is local to the editor. Hosted GitHub Actions runners resolve actions independently, so CI results stay authoritative either way.
+
+**Clear it in the editor**:
+
+1. Run `GitHub Actions: Sign in to GitHub` from the Command Palette. Unauthenticated GitHub API access allows 60 requests per hour, which the resolver exhausts quickly; signing in raises the limit to 5,000.
+2. Check that the window has internet access. The Actions views stay hidden when the extension cannot reach GitHub; behind a proxy, confirm VS Code's `http.proxy` setting and any TLS-inspection certificate.
+3. Run `Developer: Reload Window` to discard cached resolution failures.
+4. If the warning remains, open the Output panel and read the extension's log, which records the underlying fetch failure rather than the generic message.
 
 ### Line ending warnings (CRLF/LF)
 

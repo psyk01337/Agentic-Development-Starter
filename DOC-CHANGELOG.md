@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-09-12 - Add a usage guide to the README
+
+- Area: README (repo landing guide)
+- Change type: docs, onboarding
+- Summary: added a `Start Here` reading order and a `How To Use This Repo Well` section to `README.md`, both linked from the table of contents. The new section records the per-task loop (frame, route, deliver, verify, record, validate, hand off), a table for choosing between instructions, prompts, skills, agents, ADRs, runbooks, and hook rules, adoption-mode selection by team shape, the repo-truth and validation expectations, a seven-step checklist for extending the starter with a new agent, skill, or prompt, and a short list of common mistakes. The `Validation Commands` section now names the `Makefile` targets and the two CI workflows that run the same contracts. Existing Quick Start, Adoption Modes, catalog, and Roadmap content is unchanged.
+- Reason: the README catalogued what the starter contains but not how to operate it. Prompt, skill, and agent inventories, adoption-mode lists, and validation scripts were all present without guidance on which surface to reach for, in what order to use the roles, or what to do when adding a new asset, so an adopter had to reconstruct the daily workflow from `docs/runbooks/agentic-dev.md` and `.github/AGENTS.md`.
+- Affected files: README.md, DOC-CHANGELOG.md
+- Related code: None; no executable asset changed.
+- Review status: pending-review
+- Discrepancies or follow-up: README content beyond Markdown link integrity and trailing whitespace is not pinned by any validator, so the new surface table, the extension checklist, and the `Makefile` target enumeration can drift from `.github/starter-modules.json`, `.github/AGENTS.md`, `.github/roles/tool-access.json`, and the runbooks without a failing check. Adding an assertion for the README's surface-to-directory mapping was left out of this slice deliberately. `QUICKSTART.md` still duplicates the README quick-start steps and was not touched, so the two can drift independently. The earlier entries in this log remain `pending-review`.
+
+### 2026-09-12 - Correct the "Unable to resolve action" troubleshooting guidance
+
+- Area: TROUBLESHOOTING.md validation section
+- Change type: docs
+- Summary: replaced the "VS Code local resolver limitation ... safely ignore" explanation with the verified mechanism and ordered remediation steps. The section now states that the GitHub Actions extension's language server resolves each `uses:` entry by fetching that action's `action.yml` through the GitHub API, that every failed fetch collapses into the same "repository or version not found" message, and that the ref form is not a factor. It adds two commands that prove the refs resolve, plus sign-in, connectivity, cache-reload, and log-inspection steps. It also maps the extension log's HTTP status to the underlying cause, because the generic message hides it: `401 Bad credentials` for an expired, revoked, or wrong-account token, `403` for an exhausted rate limit, and `404` for a ref that genuinely does not exist.
+- Reason: the previous text asserted a cause without evidence and offered no action, and the same unresolved warning was carried forward as a known diagnostic in two 2026-06-06 `CHANGELOG.md` entries. Reading the bundled language server showed the resolver calls `repos.getContent` and maps every failure to that one message, and live probes of that exact endpoint returned `200` for `@v3`, `@v4`, `@v4.4.0`, and the commit SHA, so the warning is not caused by the workflow refs.
+- Affected files: TROUBLESHOOTING.md, DOC-CHANGELOG.md
+- Related code: None; no executable asset changed.
+- Review status: reviewed
+- Discrepancies or follow-up: no workflow file changed, because the workflow refs are valid as written. A separate finding is unresolved: `.github/workflows/validation.yml` and `.github/workflows/skill-contract-tests.yml` reference `actions/checkout` by mutable major tags (`@v4` and `@v3`) instead of the full commit SHA required by `.github/instructions/ci.instructions.md`. That is a supply-chain policy gap, not the cause of this warning, and it needs a maintainer decision.
+
 ### 2026-09-12 - Record the SEC-1 skip notice, the corrected index wording, and ADR 0003 acceptance
 
 - Area: overlay runbook, overlay ADR

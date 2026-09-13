@@ -7,6 +7,8 @@ The starter is lightweight and composable. It is not a full agent runtime.
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Start Here](#start-here)
+- [How To Use This Repo Well](#how-to-use-this-repo-well)
 - [How It Is Organized](#how-it-is-organized)
 - [Use This When](#use-this-when)
 - [Do Not Use This When](#do-not-use-this-when)
@@ -76,6 +78,90 @@ bash .github/scripts/check-starter-workflow.sh
 ```powershell
 .github/scripts/check-starter-workflow.ps1
 ```
+
+## Start Here
+
+Read these five files, in this order, before your first change:
+
+1. `.github/copilot-instructions.md` — the always-on baseline that every session inherits.
+2. `.github/AGENTS.md` — the specialist roles, the guided handoff contract, and the delegation triggers.
+3. `docs/runbooks/agentic-dev.md` — the daily operating rhythm.
+4. `docs/runbooks/starter-adoption.md` — how much of the starter to adopt.
+5. `docs/runbooks/starter-composition.md` — what each module and overlay is for.
+
+After that, use the [Runbooks Index](docs/runbooks/INDEX.md) to find guidance by task, and `.github/starter-modules.json` as the authoritative inventory of what ships enabled.
+
+## How To Use This Repo Well
+
+The starter earns its keep only when the repo stays the source of truth and the workflow runs as a loop rather than a one-off prompt. These habits are what make it pay off.
+
+### 1. Run every task as a loop
+
+1. **Frame.** If the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
+2. **Route.** Choose the smallest surface that fits the task, using the surface table below.
+3. **Deliver.** Use `senior-software-engineer`, or `tdd-vitest` only in repos that actually run Vitest.
+4. **Verify.** Run the smallest relevant validation. Add `code-reviewer` and `qa` for anything user-facing, and `security-reviewer` when the change touches secrets, auth, command execution, hooks, MCP, memory, or dependency trust.
+5. **Record.** `CHANGELOG.md` for executable behavior, `DOC-CHANGELOG.md` for docs, and an ADR for durable decisions.
+6. **Validate.** Workflow-asset edits are not finished until the starter checks pass.
+7. **Hand off.** Every agent ends with `Decision status`, `Recommended next agent`, `Why that next agent`, `Inputs for next agent`, and `Blockers or approvals needed`.
+
+Chains and conditional redirects are listed in `.github/AGENTS.md` and walked through in `docs/runbooks/agentic-dev.md`.
+
+### 2. Pick the right surface for the job
+
+| You have... | Use a... | It lives in |
+| --- | --- | --- |
+| A rule that must apply to every session | Instruction | `.github/instructions/` |
+| A repeatable one-off task | Prompt | `.github/prompts/` |
+| A bounded, format-sensitive playbook | Skill | `.github/skills/` |
+| A recurring role that needs judgment | Agent | `.github/agents/` |
+| A durable decision with tradeoffs | ADR | `docs/adr/` |
+| An operational procedure | Runbook | `docs/runbooks/` |
+| A shell command that should be blocked | Hook rule | `.github/hooks/policy-rules.tsv` |
+
+Promote upward only when a pattern proves itself: a prompt that keeps being reused becomes a skill, a skill that keeps needing judgment becomes an agent, and a rule that must never be forgotten becomes an instruction.
+
+### 3. Choose the smallest adoption mode that works
+
+| Your situation | Start with |
+| --- | --- |
+| Solo work on a small repo | Minimal Install |
+| Multiple contributors or agents sharing workflows | Team Mode |
+| Review gates, eval harness, or MCP templates after review | Advanced Mode |
+| Org-wide policy, audit, and approval records | Enterprise Mode |
+
+Add a mode's assets only when the team can review the risk, and keep MCP servers, durable memory, and high-risk automation disabled until that review happens.
+
+### 4. Keep repo truth authoritative
+
+- Repo files outrank session memory, chat history, and personal preference. A decision that only exists in a chat is not yet repo truth.
+- Never put secrets, credentials, tokens, customer data, or production logs in repo files, logs, fixtures, or memory.
+- Cross-reference `CHANGELOG.md` and `DOC-CHANGELOG.md` entries when code and docs move together, and record known drift explicitly instead of leaving it implicit.
+
+### 5. Keep the checks green
+
+- Umbrella check after any workflow-asset edit: `bash .github/scripts/check-starter-workflow.sh` or `.github/scripts/check-starter-workflow.ps1`.
+- Single-purpose checks: `make markdown`, `make hooks`, `make skills`, `make agents`, `make prompts`, `make mcp`, and `make evals`.
+- Treat a red check as a blocker, not a warning. CI runs the same contracts on push and pull request.
+
+### 6. Extend it deliberately
+
+1. Add the file in the surface directory that matches the table above.
+2. Register it in `.github/starter-modules.json`, or the manifest check fails.
+3. For an agent, also register it in `.github/AGENTS.md` and `.github/roles/tool-access.json` (`agentRoleHints` plus `agentCapabilityMatrix`), and include a `## Handoff Memory Contract` section.
+4. For a skill, give `SKILL.md` frontmatter a lowercase hyphenated `name` and a `description`.
+5. For a prompt, state the context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and the expected output.
+6. Add an eval task and matching checklist under `evals/` when the workflow should be behavior-tested.
+7. Update both changelogs and run the umbrella check.
+
+### 7. Avoid these common mistakes
+
+- Copying the starter's example docs into a project instead of pointing at the repo's real source-of-truth docs.
+- Enabling an overlay before its code path exists, such as game overlays in a repo with no `app/game/`.
+- Letting a prompt file quietly become an always-on rule; durable standards belong in instructions.
+- Editing policy inside the hook scripts instead of `.github/hooks/policy-rules.tsv`.
+- Trusting chat memory for decisions that belong in an ADR or runbook.
+- Skipping the changelog because the change "was small".
 
 ## Adoption Modes
 
@@ -282,6 +368,10 @@ Existing repo adoption:
 - MCP posture checks: `.github/scripts/check-mcp-posture.*`.
 - Markdown checks: `.github/scripts/check-markdown-quality.*`.
 - Eval harness checks: `.github/scripts/check-evals.*` or `evals/run-evals.*`.
+
+`Makefile` wraps the most common runs: `make validate` (umbrella, Bash), `make validate-ps` (umbrella, PowerShell), `make check-all` (every individual check including Markdown quality), and the single-purpose targets `make markdown`, `make hooks`, `make skills`, `make agents`, `make prompts`, `make mcp`, and `make evals`.
+
+CI runs the same contracts through `.github/workflows/validation.yml` and `.github/workflows/skill-contract-tests.yml` on push and pull request, so a local pass and a green PR check validate the same expectations.
 
 ## Security Defaults
 
