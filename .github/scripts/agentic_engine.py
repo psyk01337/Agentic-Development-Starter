@@ -25,11 +25,35 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
+UNBOUNDED_WRITE_SET_ENTRIES = {
+    "*",
+    "**",
+    "unknown",
+    "broad",
+    "wildcard-only",
+    "tbd",
+    "not-safely-bounded",
+}
+EVIDENCE_SCHEMES = (
+    "http://",
+    "https://",
+    "cmd:",
+    "test:",
+    "commit:",
+    "diff:",
+    "trace:",
+    "screenshot:",
+    "benchmark:",
+    "artifact:",
+)
+LOCK_STALE_SECONDS = 300
+LOCK_TIMEOUT_SECONDS = 10
 APPROVAL_CATEGORY_IDS = (
     "architecture-change",
     "core-governance-change",
@@ -201,21 +225,99 @@ def append_history(state: dict, **entry) -> None:
 
 
 def failure_signature(result: dict) -> str:
-    explicit = result.get("failureSignature")
-    if isinstance(explicit, str) and explicit.strip():
-        basis = explicit.strip()
-    else:
-        failing = []
-        for check in result.get("checks", []) or []:
-            if isinstance(check, dict) and not check.get("ok", False):
-                failing.append(f"{check.get('name', '?')}:{check.get('message', '')}")
-        for finding in result.get("findings", []) or []:
-            if isinstance(finding, dict):
-                failing.append(f"{finding.get('severity', '?')}:{finding.get('summary', '')}")
-        if not failing:
-            failing = [str(result.get("summary") or result.get("decision") or "unknown-failure")]
+    """Derive a stable signature from observed failures.
+
+    Structured checks and findings always win. A caller-supplied
+    ``failureSignature`` is used only when there is nothing structured to hash,
+    so a failing agent cannot make each attempt look unique and defeat the
+    identical-failure stop.
+    """
+    failing = []
+    for check in result.get("checks", []) or []:
+        if isinstance(check, dict) and check.get("ok") is not True:
+            failing.append(f"{check.get('name', '?')}:{check.get('message', '')}")
+    for finding in result.get("findings", []) or []:
+        if isinstance(finding, dict):
+            failing.append(f"{finding.get('severity', '?')}:{finding.get('summary', '')}")
+    if failing:
         basis = "\n".join(sorted(failing))
+    else:
+        explicit = result.get("failureSignature")
+        if isinstance(explicit, str) and explicit.strip():
+            basis = explicit.strip()
+        else:
+            basis = str(result.get("summary") or result.get("decision") or "unknown-failure")
     return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
+
+
+def validate_evidence(evidence, repo_root: Path) -> list:
+    if not isinstance(evidence, list) or not evidence:
+        raise EngineError("result must include at least one evidence pointer")
+    pointers = []
+    missing = []
+    for item in evidence:
+        if not isinstance(item, str) or not item.strip():
+            raise EngineError("evidence entries must be non-empty strings")
+        pointer = item.strip()
+        pointers.append(pointer)
+        if pointer.lower().startswith(EVIDENCE_SCHEMES):
+            continue
+        candidate = Path(pointer)
+        if not candidate.is_absolute():
+            candidate = repo_root / candidate
+        if not candidate.exists():
+            missing.append(pointer)
+    if missing:
+        raise EngineError(
+            "evidence pointers must exist or use a known scheme "
+            f"({', '.join(EVIDENCE_SCHEMES)}): {', '.join(missing)}"
+        )
+    return pointers
+
+
+def _validate_write_set(write_set) -> None:
+    if not isinstance(write_set, list):
+        raise EngineError("task.writeSet must be a list (may be empty for read-only work)")
+    for entry in write_set:
+        if not isinstance(entry, str) or not entry.strip():
+            raise EngineError("task.writeSet entries must be non-empty strings")
+        normalized = entry.strip().lower()
+        if normalized in UNBOUNDED_WRITE_SET_ENTRIES or any(char in entry for char in "*?"):
+            raise EngineError(
+                f"task.writeSet entry {entry!r} is unbounded; declare explicit paths"
+            )
+
+
+@contextlib.contextmanager
+def run_lock(state_dir: Path, run_id: str):
+    """Advisory per-run lock so concurrent records cannot lose updates."""
+    state_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = state_dir / f".{run_id}.lock"
+    deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            try:
+                os.write(fd, str(os.getpid()).encode("ascii", "replace"))
+            finally:
+                os.close(fd)
+            break
+        except FileExistsError:
+            try:
+                age = time.time() - lock_path.stat().st_mtime
+                if age > LOCK_STALE_SECONDS:
+                    lock_path.unlink()
+                    continue
+            except FileNotFoundError:
+                continue
+            if time.monotonic() > deadline:
+                raise EngineError(f"state is locked by another process: {lock_path.name}")
+            time.sleep(0.05)
+    try:
+        yield
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            lock_path.unlink()
 
 
 def minutes_elapsed(state: dict) -> float:
@@ -252,12 +354,13 @@ def validate_task(task: dict, categories: set) -> dict:
     criteria = task.get("acceptanceCriteria")
     if not isinstance(criteria, list) or not criteria:
         raise EngineError("task.acceptanceCriteria must be a non-empty list")
-    write_set = task.get("writeSet")
-    if not isinstance(write_set, list):
-        raise EngineError("task.writeSet must be a list (may be empty for read-only work)")
+    _validate_write_set(task.get("writeSet"))
     category = task.get("approvalCategory")
     if category is not None and category not in categories:
         raise EngineError(f"task.approvalCategory is not a known category: {category}")
+    requested_by = task.get("requestedBy")
+    if category is not None and (not isinstance(requested_by, str) or not requested_by.strip()):
+        raise EngineError("task.requestedBy is required when task.approvalCategory is set")
     task.setdefault("class", "FEATURE")
     task.setdefault("complexity", "simple")
     task.setdefault("evidenceSurfaces", [])
@@ -303,25 +406,32 @@ def cmd_init(args: argparse.Namespace) -> int:
     task = validate_task(read_json_file(args.task), categories)
     state_dir = state_dir_for(repo_root, args.state_dir)
     path = state_path(state_dir, args.run_id)
-    if path.exists() and not args.force:
-        raise EngineError(f"state already exists for run-id {args.run_id}; use --force to replace")
-    state = {
-        "runId": args.run_id,
-        "status": "RUNNING",
-        "stage": "approval" if task.get("approvalCategory") else "implement",
-        "task": task,
-        "attempt": 0,
-        "repairAttempts": 0,
-        "verifyAttempts": 0,
-        "failureSignatures": {},
-        "approvals": [],
-        "blockingFindings": [],
-        "history": [],
-        "createdAt": utcnow(),
-        "updatedAt": utcnow(),
-    }
-    append_history(state, stage=state["stage"], action="init", detail="run initialized")
-    save_state(state_dir, state)
+    with run_lock(state_dir, args.run_id):
+        if path.exists() and not args.force:
+            raise EngineError(f"state already exists for run-id {args.run_id}; use --force to replace")
+        if path.exists() and args.force:
+            previous = json.loads(path.read_text(encoding="utf-8"))
+            if previous.get("stage") == "done":
+                raise EngineError(
+                    "refusing to replace a completed run; use a new run-id to preserve the audit trail"
+                )
+        state = {
+            "runId": args.run_id,
+            "status": "RUNNING",
+            "stage": "approval" if task.get("approvalCategory") else "implement",
+            "task": task,
+            "attempt": 0,
+            "repairAttempts": 0,
+            "verifyAttempts": 0,
+            "failureSignatures": {},
+            "approvals": [],
+            "blockingFindings": [],
+            "history": [],
+            "createdAt": utcnow(),
+            "updatedAt": utcnow(),
+        }
+        append_history(state, stage=state["stage"], action="init", detail="run initialized")
+        save_state(state_dir, state)
     emit(next_payload(state))
     return 0
 
@@ -370,14 +480,21 @@ def _check_budget(state: dict, policy: dict) -> None:
     limits = retry_policy(policy)
     limit = limits.get("maxWallClockMinutes")
     if isinstance(limit, (int, float)) and limit > 0 and minutes_elapsed(state) > limit:
-        raise EngineError(f"wall-clock budget exceeded ({limit} minutes)")
+        block(
+            state,
+            "wall-clock-budget-exceeded",
+            f"run exceeded the {limit}-minute wall-clock budget",
+            state.get("lastEvidence", []),
+        )
+
+
+def _normalize_path(value: str) -> str:
+    return str(value).strip().replace("\\", "/").removeprefix("./").lower()
 
 
 def _outside_write_set(files: list, write_set: list) -> list:
-    if "*" in write_set:
-        return []
-    allowed = {str(item).replace("\\", "/") for item in write_set}
-    return [str(item) for item in files if str(item).replace("\\", "/") not in allowed]
+    allowed = {_normalize_path(item) for item in write_set}
+    return [str(item) for item in files if _normalize_path(str(item)) not in allowed]
 
 
 def _handle_failure(state: dict, policy: dict, result: dict, evidence: list) -> tuple[str, str]:
@@ -418,7 +535,12 @@ def cmd_record(args: argparse.Namespace) -> int:
     policy = load_policy(repo_root)
     limits = retry_policy(policy)
     state_dir = state_dir_for(repo_root, args.state_dir)
-    state = load_state(state_dir, args.run_id)
+    with run_lock(state_dir, args.run_id):
+        state = load_state(state_dir, args.run_id)
+        return _record_locked(args, repo_root, policy, limits, state_dir, state)
+
+
+def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
     if state["stage"] == "blocked":
         raise EngineError("run is blocked; escalate instead of recording more work")
     if state["stage"] == "done":
@@ -426,8 +548,13 @@ def cmd_record(args: argparse.Namespace) -> int:
     if args.stage != state["stage"]:
         raise EngineError(f"recorded stage {args.stage} does not match current stage {state['stage']}")
     _check_budget(state, policy)
+    if state["stage"] == "blocked":
+        save_state(state_dir, state)
+        emit(next_payload(state))
+        return 3
     result = read_json_file(args.result)
-    evidence = result.get("evidence") if isinstance(result.get("evidence"), list) else []
+    evidence = validate_evidence(result.get("evidence"), repo_root)
+    state["lastEvidence"] = evidence
 
     if args.stage in ("implement", "repair"):
         if result.get("status") != "done":
@@ -435,6 +562,8 @@ def cmd_record(args: argparse.Namespace) -> int:
         files = result.get("filesChanged") or []
         if not isinstance(files, list):
             raise EngineError("filesChanged must be a list")
+        if not all(isinstance(item, str) and item.strip() for item in files):
+            raise EngineError("filesChanged entries must be non-empty strings")
         outside = _outside_write_set(files, state["task"]["writeSet"])
         if outside:
             block(
@@ -446,8 +575,6 @@ def cmd_record(args: argparse.Namespace) -> int:
             save_state(state_dir, state)
             emit(next_payload(state))
             return 3
-        if not evidence:
-            raise EngineError("implement/repair result must include at least one evidence pointer")
         state["stage"] = "verify"
         state["status"] = "RUNNING"
         append_history(state, stage=args.stage, action="recorded", files=files, evidence=evidence)
@@ -456,6 +583,17 @@ def cmd_record(args: argparse.Namespace) -> int:
         verdict = result.get("result")
         if verdict not in ("VERIFIED", "NOT_VERIFIED", "INCONCLUSIVE"):
             raise EngineError("verify result must be VERIFIED, NOT_VERIFIED, or INCONCLUSIVE")
+        checks = result.get("checks")
+        if not isinstance(checks, list) or not checks:
+            raise EngineError("verify result must include at least one check")
+        if not all(isinstance(check, dict) and isinstance(check.get("name"), str) and check["name"].strip() for check in checks):
+            raise EngineError("every check must have a non-empty name")
+        failing = [check for check in checks if check.get("ok") is not True]
+        if verdict == "VERIFIED" and failing:
+            raise EngineError(
+                "VERIFIED is refused while checks report failures: "
+                + ", ".join(str(check.get("name")) for check in failing)
+            )
         append_history(state, stage="verify", action="recorded", result=verdict, evidence=evidence)
         if verdict == "VERIFIED":
             state["stage"] = "review"
@@ -486,6 +624,11 @@ def cmd_record(args: argparse.Namespace) -> int:
         decision = result.get("decision")
         if decision not in ("pass", "needs-revision"):
             raise EngineError("review decision must be 'pass' or 'needs-revision'")
+        findings = result.get("findings")
+        if not isinstance(findings, list):
+            raise EngineError("review result must include a findings list")
+        if decision == "needs-revision" and not findings:
+            raise EngineError("a needs-revision review must name at least one finding")
         append_history(state, stage="review", action="recorded", decision=decision, evidence=evidence)
         if decision == "pass":
             state["stage"] = "done"
@@ -505,23 +648,29 @@ def cmd_record(args: argparse.Namespace) -> int:
 def cmd_approve(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
     state_dir = state_dir_for(repo_root, args.state_dir)
-    state = load_state(state_dir, args.run_id)
-    if state["stage"] != "approval":
-        raise EngineError("run is not waiting for approval")
-    if not args.approver.strip():
-        raise EngineError("approver is required")
-    state.setdefault("approvals", []).append(
-        {
-            "category": state["task"].get("approvalCategory"),
-            "approver": args.approver.strip(),
-            "note": (args.note or "").strip(),
-            "at": utcnow(),
-        }
-    )
-    state["stage"] = "implement"
-    state["status"] = "RUNNING"
-    append_history(state, stage="approval", action="recorded", approver=args.approver.strip())
-    save_state(state_dir, state)
+    with run_lock(state_dir, args.run_id):
+        state = load_state(state_dir, args.run_id)
+        if state["stage"] != "approval":
+            raise EngineError("run is not waiting for approval")
+        approver = args.approver.strip()
+        if not approver:
+            raise EngineError("approver is required")
+        requested_by = str(state["task"].get("requestedBy") or "").strip()
+        if requested_by and approver.lower() == requested_by.lower():
+            raise EngineError("the requester cannot approve their own high-risk change")
+        state.setdefault("approvals", []).append(
+            {
+                "category": state["task"].get("approvalCategory"),
+                "approver": approver,
+                "requestedBy": requested_by or None,
+                "note": (args.note or "").strip(),
+                "at": utcnow(),
+            }
+        )
+        state["stage"] = "implement"
+        state["status"] = "RUNNING"
+        append_history(state, stage="approval", action="recorded", approver=approver)
+        save_state(state_dir, state)
     emit(next_payload(state))
     return 0
 
@@ -575,17 +724,27 @@ class EngineSelfTest(unittest.TestCase):
     def init(self) -> tuple[int, dict]:
         return self.run_cli(["init", "--run-id", "r1", "--task", str(self.task_path)])
 
+    def raw(self, stage: str, payload: dict) -> tuple[int, dict]:
+        return self.record(stage, payload)
+
     def implement(self) -> tuple[int, dict]:
-        return self.record("implement", {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff"]})
+        return self.record(
+            "implement",
+            {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]},
+        )
 
     def verify(self, result: str, checks: list) -> tuple[int, dict]:
-        return self.record("verify", {"result": result, "checks": checks, "evidence": ["log"]})
+        return self.record(
+            "verify", {"result": result, "checks": checks, "evidence": ["cmd:pytest"]}
+        )
 
     def test_happy_path(self) -> None:
         self.init()
         self.assertEqual(self.implement()[1]["stage"], "verify")
         self.assertEqual(self.verify("VERIFIED", [{"name": "pytest", "ok": True}])[1]["stage"], "review")
-        code, payload = self.record("review", {"decision": "pass", "findings": [], "evidence": ["review"]})
+        code, payload = self.record(
+            "review", {"decision": "pass", "findings": [], "evidence": ["cmd:review"]}
+        )
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "done")
 
@@ -596,17 +755,53 @@ class EngineSelfTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "repair")
         self.assertEqual(payload["repairAttempts"], 1)
-        self.assertEqual(self.record("repair", {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["fix"]})[1]["stage"], "verify")
+        self.assertEqual(
+            self.record(
+                "repair",
+                {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]},
+            )[1]["stage"],
+            "verify",
+        )
         self.assertEqual(self.verify("VERIFIED", [{"name": "pytest", "ok": True}])[1]["stage"], "review")
 
     def test_identical_failure_escalates(self) -> None:
         self.init()
         self.implement()
         self.verify("NOT_VERIFIED", [{"name": "pytest", "ok": False, "message": "same"}])
-        self.record("repair", {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["fix"]})
+        self.record(
+            "repair", {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]}
+        )
         code, payload = self.verify("NOT_VERIFIED", [{"name": "pytest", "ok": False, "message": "same"}])
         self.assertEqual(code, 3)
         self.assertEqual(payload["stage"], "blocked")
+        self.assertEqual(payload["blocker"]["reason"], "identical-failure")
+
+    def test_supplied_signature_cannot_defeat_repeat_guard(self) -> None:
+        self.init()
+        self.implement()
+        self.verify(
+            "NOT_VERIFIED",
+            [{"name": "pytest", "ok": False, "message": "same"}],
+        )
+        self.record(
+            "repair", {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]}
+        )
+        result_path = self.root / "spoof.json"
+        result_path.write_text(
+            json.dumps(
+                {
+                    "result": "NOT_VERIFIED",
+                    "failureSignature": "brand-new-every-time",
+                    "checks": [{"name": "pytest", "ok": False, "message": "same"}],
+                    "evidence": ["cmd:pytest"],
+                }
+            ),
+            encoding="utf-8",
+        )
+        code, payload = self.run_cli(
+            ["record", "--run-id", "r1", "--stage", "verify", "--result", str(result_path)]
+        )
+        self.assertEqual(code, 3)
         self.assertEqual(payload["blocker"]["reason"], "identical-failure")
 
     def test_attempt_budget_escalates(self) -> None:
@@ -614,7 +809,10 @@ class EngineSelfTest(unittest.TestCase):
         self.implement()
         for index in range(3):
             self.verify("NOT_VERIFIED", [{"name": f"check-{index}", "ok": False, "message": str(index)}])
-            self.record("repair", {"status": "done", "filesChanged": ["src/a.py"], "evidence": [f"fix-{index}"]})
+            self.record(
+                "repair",
+                {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]},
+            )
         code, payload = self.verify("NOT_VERIFIED", [{"name": "check-final", "ok": False, "message": "final"}])
         self.assertEqual(code, 3)
         self.assertEqual(payload["blocker"]["reason"], "attempt-budget-exhausted")
@@ -622,32 +820,233 @@ class EngineSelfTest(unittest.TestCase):
     def test_inconclusive_never_completes(self) -> None:
         self.init()
         self.implement()
-        self.assertEqual(self.verify("INCONCLUSIVE", [])[1]["stage"], "verify")
-        code, payload = self.verify("INCONCLUSIVE", [])
+        self.assertEqual(self.verify("INCONCLUSIVE", [{"name": "probe", "ok": True}])[1]["stage"], "verify")
+        code, payload = self.verify("INCONCLUSIVE", [{"name": "probe", "ok": True}])
         self.assertEqual(code, 3)
         self.assertEqual(payload["blocker"]["reason"], "inconclusive")
 
     def test_approval_gate(self) -> None:
-        self.write_task(approvalCategory="identity-security-change")
+        self.write_task(
+            approvalCategory="identity-security-change", requestedBy="supervisor"
+        )
         self.assertEqual(self.init()[1]["stage"], "approval")
         code, payload = self.run_cli(["approve", "--run-id", "r1", "--approver", "alice", "--note", "ok"])
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "implement")
 
+    def test_self_approval_rejected(self) -> None:
+        self.write_task(
+            approvalCategory="identity-security-change", requestedBy="supervisor"
+        )
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "approve",
+                    "--run-id",
+                    "r1",
+                    "--approver",
+                    "supervisor",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(self.run_cli(["status", "--run-id", "r1"])[1]["stage"], "approval")
+
+    def test_approval_requires_requester(self) -> None:
+        self.write_task(approvalCategory="identity-security-change")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
     def test_write_set_violation_blocks(self) -> None:
         self.init()
         code, payload = self.record(
-            "implement", {"status": "done", "filesChanged": ["src/other.py"], "evidence": ["diff"]}
+            "implement",
+            {"status": "done", "filesChanged": ["src/other.py"], "evidence": ["diff:HEAD"]},
         )
         self.assertEqual(code, 3)
         self.assertEqual(payload["blocker"]["reason"], "write-set-violation")
 
-    def test_missing_evidence_rejected(self) -> None:
+    def test_write_set_violation_with_normalized_path_passes(self) -> None:
         self.init()
-        result_path = self.root / "no-evidence.json"
-        result_path.write_text(json.dumps({"status": "done", "filesChanged": []}), encoding="utf-8")
-        buffer = io.StringIO()
-        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(io.StringIO()):
+        code, _ = self.record(
+            "implement",
+            {"status": "done", "filesChanged": ["./src/a.py"], "evidence": ["diff:HEAD"]},
+        )
+        self.assertEqual(code, 0)
+
+    def test_wildcard_write_set_rejected(self) -> None:
+        self.write_task(writeSet=["*"])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_unbounded_write_set_rejected(self) -> None:
+        self.write_task(writeSet=["unknown"])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_verify_requires_evidence(self) -> None:
+        self.init()
+        self.implement()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "verify",
+                    "--result",
+                    str(self.write_result({"result": "VERIFIED", "checks": [{"name": "p", "ok": True}], "evidence": []})),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(self.run_cli(["status", "--run-id", "r1"])[1]["stage"], "verify")
+
+    def test_verify_refuses_failing_checks(self) -> None:
+        self.init()
+        self.implement()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "verify",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "result": "VERIFIED",
+                                "checks": [{"name": "pytest", "ok": False, "message": "boom"}],
+                                "evidence": ["cmd:pytest"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(self.run_cli(["status", "--run-id", "r1"])[1]["stage"], "verify")
+
+    def test_verify_requires_a_check(self) -> None:
+        self.init()
+        self.implement()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "verify",
+                    "--result",
+                    str(self.write_result({"result": "VERIFIED", "checks": [], "evidence": ["cmd:x"]})),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_review_requires_evidence(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "review",
+                    "--result",
+                    str(self.write_result({"decision": "pass", "findings": [], "evidence": []})),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_needs_revision_requires_findings(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "review",
+                    "--result",
+                    str(self.write_result({"decision": "needs-revision", "findings": [], "evidence": ["cmd:r"]})),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_bogus_evidence_pointer_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             code = main(
                 [
                     "record",
@@ -656,7 +1055,35 @@ class EngineSelfTest(unittest.TestCase):
                     "--stage",
                     "implement",
                     "--result",
-                    str(result_path),
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["/nonexistent/proof.log"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_missing_evidence_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(self.write_result({"status": "done", "filesChanged": []})),
                     "--repo-root",
                     str(self.root),
                     "--state-dir",
@@ -666,11 +1093,75 @@ class EngineSelfTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(self.run_cli(["status", "--run-id", "r1"])[1]["stage"], "implement")
 
+    def test_wall_clock_budget_blocks(self) -> None:
+        self.write_task()
+        policy_path = self.root / ".github" / "roles" / "orchestration-policy.json"
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        policy["retryPolicy"]["maxWallClockMinutes"] = 0.000001
+        policy_path.write_text(json.dumps(policy), encoding="utf-8")
+        self.init()
+        time.sleep(0.05)
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["diff:HEAD"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 3)
+        payload = self.run_cli(["status", "--run-id", "r1"])[1]
+        self.assertEqual(payload["stage"], "blocked")
+        self.assertEqual(payload["blocker"]["reason"], "wall-clock-budget-exceeded")
+
+    def test_force_cannot_replace_completed_run(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record("review", {"decision": "pass", "findings": [], "evidence": ["cmd:review"]})
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--force",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
     def test_state_persists(self) -> None:
         self.init()
         code, payload = self.run_cli(["status", "--run-id", "r1"])
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "implement")
+
+    def write_result(self, payload: dict) -> Path:
+        path = self.root / f"result-{time.time_ns()}.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
 
 
 def _add_location_options(parser: argparse.ArgumentParser) -> None:

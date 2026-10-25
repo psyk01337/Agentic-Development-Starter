@@ -66,9 +66,15 @@ if [[ ! -f "${REPO_ROOT}/.github/examples/agentic-engine/simple-feature-task.jso
   report_error "Missing example task: .github/examples/agentic-engine/simple-feature-task.json"
 fi
 
+fixture_state="$(mktemp -d)"
+cleanup() {
+  rm -rf "${fixture_state}"
+}
+trap cleanup EXIT
+
 if ! assert_output="$(python3 "${REPO_ROOT}/.github/scripts/agentic_engine.py" init --run-id check-fixture \
   --task "${REPO_ROOT}/.github/examples/agentic-engine/simple-feature-task.json" \
-  --repo-root "${REPO_ROOT}" --state-dir "$(mktemp -d)" 2>&1)"; then
+  --repo-root "${REPO_ROOT}" --state-dir "${fixture_state}" 2>&1)"; then
   report_error "Engine rejected the shipped example task"
 else
   if [[ "${assert_output}" != *'"stage": "implement"'* ]]; then

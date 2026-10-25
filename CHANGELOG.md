@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Close the agentic engine QA and review findings
+
+- Area: orchestration engine, tests, runbook
+- Change type: fix, test, docs
+- Summary: hardens `agentic_engine.py` against the ten findings from the QA and code-review pass. `verify` and `review` now require at least one evidence pointer; `VERIFIED` is refused while any check reports `ok: false` and requires at least one named check; wildcard and unbounded write sets are rejected at `init`; failure signatures are always derived from checks and findings so a supplied signature cannot defeat the repeat guard; wall-clock exhaustion persists `BLOCKED` with `wall-clock-budget-exceeded` and exits `3`; approval requires `requestedBy` and rejects self-approval; evidence pointers must exist or use a known scheme; a per-run lock prevents lost updates; `init --force` refuses to replace a completed run; write-set comparison normalizes `./` and case; the Bash check cleans its temp directory. Self-tests grow from 9 to 23.
+- Reason: QA found that a run could complete with no evidence, `VERIFIED` was accepted with failing checks, and a wildcard write set disabled enforcement. The engine's stated guarantees were not all true.
+- Affected files: .github/scripts/agentic_engine.py, .github/scripts/check-agentic-engine.sh, .github/examples/agentic-engine/simple-feature-task.json, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the agentic engine hardening"
+- Validation: `python .github/scripts/agentic_engine.py selftest` passed 23 tests; bypass probes for evidence-free completion, `VERIFIED` with failing checks, wildcard write sets, and bogus evidence pointers now return exit `1`; the repaired Bash check leaves no temp directory; both umbrellas pass.
+- Discrepancies or follow-up: the engine remains a deterministic control plane, not an LLM runtime. Evidence schemes are a closed list; add a scheme deliberately rather than accepting arbitrary strings.
+
 ### 2026-10-25 - Add the deterministic agentic engine and bounded repair loop
 
 - Area: orchestration engine, policy, skills, runbooks, validators

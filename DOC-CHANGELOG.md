@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the agentic engine hardening
+
+- Area: agentic-engine runbook
+- Change type: docs, runbook
+- Summary: documents the hardened stage contract, evidence schemes, bounded write-set rule, signature derivation, approval `requestedBy` requirement, per-run lock, budget blocking with exit `3`, and the expanded self-test inventory.
+- Reason: the QA and code-review pass changed enforceable behavior; the runbook must match it.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Close the agentic engine QA and review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: evidence schemes are a closed list by design.
+
 ### 2026-10-25 - Document the agentic engine and bounded repair loop
 
 - Area: runbooks, skills, README, QUICKSTART

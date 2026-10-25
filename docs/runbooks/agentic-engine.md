@@ -54,11 +54,20 @@ Exit codes: `0` success, `1` invalid input or transition, `3` blocked or escalat
 
 | Stage | Required result |
 | --- | --- |
-| `approval` | Use `approve`, not `record` |
+| `approval` | Use `approve`, not `record`; the task must declare `requestedBy`, and the approver must differ from it |
 | `implement` | `status: done`, `filesChanged`, `evidence` |
-| `verify` | `result: VERIFIED \| NOT_VERIFIED \| INCONCLUSIVE`, `checks`, `evidence` |
+| `verify` | `result: VERIFIED \| NOT_VERIFIED \| INCONCLUSIVE`, at least one named `check`, `evidence`; `VERIFIED` is refused while any check reports `ok: false` |
 | `repair` | `status: done`, `filesChanged`, `evidence` |
-| `review` | `decision: pass \| needs-revision`, `findings`, `evidence` |
+| `review` | `decision: pass \| needs-revision`, `findings`, `evidence`; `needs-revision` must name at least one finding |
+
+Every stage requires at least one evidence pointer. A pointer is either a local
+path that must exist, or a reference using one of these schemes:
+`http://`, `https://`, `cmd:`, `test:`, `commit:`, `diff:`, `trace:`,
+`screenshot:`, `benchmark:`, `artifact:`.
+
+The task spec must declare a bounded write set of explicit paths. Wildcards
+(`*`, `?`) and the policy's unbounded indicators (`unknown`, `broad`,
+`wildcard-only`, `tbd`, `not-safely-bounded`) are rejected at `init`.
 
 Example verification result:
 
@@ -82,7 +91,11 @@ Example verification result:
 - `maxWallClockMinutes` — optional run budget.
 - `inconclusiveIsNeverSuccess` — must stay `true`.
 
-The failure signature is a hash of the sorted failing check names and messages, or an explicit `failureSignature` in the result.
+The failure signature is always derived from the failing check names and messages (or review findings). A caller-supplied `failureSignature` is used only when there is no structured detail, so a failing agent cannot make each attempt look unique and defeat the identical-failure stop.
+
+Each run is guarded by an advisory lock (`.<run-id>.lock` in the state
+directory). A stale lock older than five minutes is reclaimed. `init --force`
+refuses to replace a completed run so the audit trail is preserved.
 
 ## Blocked Outcomes
 
@@ -92,7 +105,8 @@ The engine blocks with a reason and a packet:
 - `attempt-budget-exhausted` — repair limit reached.
 - `inconclusive` — verification could not produce evidence.
 - `write-set-violation` — changed files outside the declared write set.
-- `wall-clock-budget-exceeded` — run budget reached.
+- `wall-clock-budget-exceeded` — run budget reached; the run is persisted as
+  `BLOCKED` and exits with code `3` on the same call.
 
 A blocked run is not retried by the agent. It is escalated to the user with the packet.
 
@@ -115,4 +129,10 @@ The engine ships with its own suite:
 python .github/scripts/agentic_engine.py selftest
 ```
 
-It covers the happy path, repair-then-success, identical-failure escalation, attempt-budget escalation, `INCONCLUSIVE`, the approval gate, write-set violation, missing evidence, and state persistence. The umbrella check runs it on every validation.
+It covers the happy path, repair-then-success, identical-failure escalation,
+attempt-budget escalation, `INCONCLUSIVE`, the approval gate, self-approval
+rejection, write-set violation and path normalization, wildcard and unbounded
+write sets, missing evidence, bogus evidence pointers, `VERIFIED` with failing
+checks, `needs-revision` without findings, wall-clock blocking, `--force` on a
+completed run, and state persistence. The umbrella check runs it on every
+validation.
