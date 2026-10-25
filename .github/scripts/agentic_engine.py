@@ -138,7 +138,7 @@ class EngineError(Exception):
 
 
 def utcnow() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds")
 
 
 def emit(payload: dict) -> None:
@@ -2042,6 +2042,8 @@ class EngineSelfTest(unittest.TestCase):
             )
         self.assertEqual(code, 1)
 
+    def test_utcnow_keeps_sub_second_precision(self) -> None:
+        self.assertRegex(utcnow(), r"\.\d{6}\+00:00$")
     def test_budget_blocks_next(self) -> None:
         policy_path = self.root / ".github" / "roles" / "orchestration-policy.json"
         policy = json.loads(policy_path.read_text(encoding="utf-8"))

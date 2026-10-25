@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Fix wall-clock budget precision and the flaky budget test
+
+- Area: orchestration engine, tests
+- Change type: fix, test
+- Summary: `utcnow()` now records microsecond precision instead of truncating to whole seconds, so a wall-clock budget can be measured below one second and the budget checks are deterministic. Adds a regression test for the timestamp format.
+- Reason: the fifth-pass verification exposed an intermittent failure in `test_budget_blocks_next`. Timestamps were truncated to the second, so a sub-second budget read as zero elapsed time when both calls landed in the same second.
+- Affected files: .github/scripts/agentic_engine.py, CHANGELOG.md
+- Related docs: None
+- Validation: `python .github/scripts/agentic_engine.py selftest` passed 55 tests five consecutive times; `bash .github/scripts/check-agentic-engine.sh` passed three consecutive times; both umbrellas pass.
+- Discrepancies or follow-up: existing state files with second-precision timestamps still parse.
 ### 2026-10-25 - Close the fifth agentic engine review findings
 
 - Area: orchestration engine, tests, runbook
