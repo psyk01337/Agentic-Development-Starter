@@ -19,6 +19,7 @@ The starter is lightweight and composable. It is not a full agent runtime.
 - [Prompts](#prompts)
 - [Skills](#skills)
 - [Agents](#agents)
+- [Agentic Engine](#agentic-engine)
 - [Hooks And Guardrails](#hooks-and-guardrails)
 - [MCP Safety](#mcp-safety)
 - [Memory Strategy](#memory-strategy)
@@ -228,6 +229,8 @@ Use when organization-level governance matters:
 - `.vscode/mcp.json`: disabled MCP template catalog.
 - `docs/adr/`: durable architecture and workflow decisions.
 - `docs/runbooks/`: operational guidance.
+- `docs/inputs.md`: source-document provenance, routing log, and supported formats.
+- `.agentic/state/`: task-scoped engine state, gitignored and never committed.
 - `evals/`: checklist-driven golden-task harness.
 - `CHANGELOG.md`: executable and behavior-affecting changes.
 - `DOC-CHANGELOG.md`: documentation and workflow text changes.
@@ -285,6 +288,25 @@ Core agents include analyst, tech planner, architecture reviewer, senior softwar
 
 Each agent defines handoff memory, escalation behavior, required inputs, constraints, approach, and output format.
 
+## Agentic Engine
+
+`agentic_engine.py` is the optional deterministic control plane for multi-step delivery. The host agent does the work; the engine decides whether to continue, repair, or escalate.
+
+```text
+init -> approval? -> implement -> verify
+                                  |-- VERIFIED -> review -> done
+                                  |-- NOT_VERIFIED -> repair -> verify
+                                  `-- repeated failure or budget -> blocked
+```
+
+It enforces a declared write set, evidence at every stage, passing checks for `VERIFIED`, reviewer separation, bounded repair attempts, identical-failure detection, and approval gates. State is task-scoped under `.agentic/state/` and gitignored. Requires Python 3.9+.
+
+```bash
+python .github/scripts/agentic_engine.py selftest
+python .github/scripts/agentic_engine.py next --run-id <run-id>
+```
+
+See `docs/runbooks/agentic-engine.md` for the stage contract and blocker reasons, and `TROUBLESHOOTING.md` when a run is blocked.
 ## Hooks And Guardrails
 
 Hook policy lives in `.github/hooks/policy-rules.tsv` and is consumed by Bash and PowerShell pre-tool policy scripts.
@@ -382,6 +404,7 @@ Existing repo adoption:
 - MCP posture checks: `.github/scripts/check-mcp-posture.*`.
 - Markdown checks: `.github/scripts/check-markdown-quality.*`.
 - Eval harness checks: `.github/scripts/check-evals.*` or `evals/run-evals.*`.
+- Agentic engine checks: `.github/scripts/check-agentic-engine.*` and `python .github/scripts/agentic_engine.py selftest`.
 
 `Makefile` wraps the most common runs: `make validate` (umbrella, Bash), `make validate-ps` (umbrella, PowerShell), `make check-all` (every individual check including Markdown quality), and the single-purpose targets `make markdown`, `make hooks`, `make skills`, `make agents`, `make prompts`, `make mcp`, and `make evals`.
 

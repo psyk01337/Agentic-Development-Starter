@@ -12,6 +12,7 @@ This starter is a workflow layer, not an application template. Use it one of two
 - Git
 - VS Code with GitHub Copilot agent mode
 - Bash (Linux/macOS/WSL) or PowerShell (Windows)
+- Python 3.9 or newer for the optional agentic engine
 
 ## Path A — New App (Recommended)
 
@@ -138,10 +139,11 @@ Use Team Mode for application development: core instructions, agents, skills, pr
 
 1. Use `run-engineering-team.prompt.md` for multi-stage work, or `build-feature.prompt.md` for one feature.
 2. For work that may need more than one fix attempt, run it through `.github/scripts/agentic_engine.py`. It loops implement → verify → repair until verified, stops on a repeated identical failure, and escalates when the attempt budget is exhausted.
-3. Review the diff with `code-reviewer`.
-4. Verify with `qa`.
-5. Update `CHANGELOG.md` and `DOC-CHANGELOG.md`.
-6. Commit a small, reviewable change.
+3. If the engine reports a blocked run, stop and escalate the blocker packet. Do not retry manually or raise the attempt limit to force a pass; see `TROUBLESHOOTING.md`.
+4. Review the diff with `code-reviewer`.
+5. Verify with `qa`.
+6. Update `CHANGELOG.md` and `DOC-CHANGELOG.md`.
+7. Commit a small, reviewable change.
 
 ## Keep the Framework Frozen
 
@@ -170,4 +172,5 @@ Use `create-adr.prompt.md` or `architecture-reviewer`.
 - `docs/runbooks/starter-adoption.md` — adoption modes and the clone-as-template details.
 - `docs/runbooks/agentic-dev.md` — daily workflow and guided handoff chains.
 - `docs/runbooks/self-improvement.md` — bounded repository improvement loop.
-- `TROUBLESHOOTING.md` — common issues and fixes.
+- `docs/runbooks/agentic-engine.md` — engine stages, evidence rules, and blocker reasons.
+- `TROUBLESHOOTING.md` — common issues and fixes, including blocked engine runs and Git push authentication.

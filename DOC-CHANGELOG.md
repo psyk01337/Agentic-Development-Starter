@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the engine, ingestion, and push troubleshooting
+
+- Area: README, QUICKSTART, TROUBLESHOOTING
+- Change type: docs, onboarding, reference
+- Summary: adds an Agentic Engine section and TOC entry to the README, lists `docs/inputs.md` and `.agentic/state/` in the folder structure, and adds the engine check to the validation commands. QUICKSTART now requires Python 3.9+, describes blocked-run escalation in the daily loop, and links the engine runbook and troubleshooting guide. TROUBLESHOOTING gains sections for engine failures, document ingestion, and Git push authentication, and corrects the prompt heading names to match the validator.
+- Reason: the repo gained a deterministic engine, document routing, and new prompt contracts, but the user-facing guides did not cover them. The prompt section named headings the validator does not accept.
+- Affected files: README.md, QUICKSTART.md, TROUBLESHOOTING.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entries "2026-10-25 - Fix wall-clock budget precision and the flaky budget test" and "2026-10-25 - Close the fifth agentic engine review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: the troubleshooting sections are operational guidance; the engine runbook remains the canonical contract.
 ### 2026-10-25 - Document the fifth agentic engine hardening
 
 - Area: agentic-engine runbook

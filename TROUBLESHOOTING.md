@@ -107,7 +107,7 @@ chmod +x evals/*.sh
 **Solution**:
 1. Ensure prompt is in `.github/prompts/` directory
 2. File must end with `.prompt.md`
-3. File must contain required sections: Context, Deliverables, Safety Boundaries, Output Format
+3. File must contain required sections: Context To Inspect First, Deliverables, Safety Boundaries, Expected Output
 4. Run validation: `bash .github/scripts/check-prompt-contracts.sh`
 
 ## Hook Policy Issues
@@ -198,6 +198,98 @@ chmod +x evals/*.sh
 3. Use caching for dependencies
 4. Consider splitting large validation into separate jobs
 
+## Agentic Engine Issues
+
+### Engine reports "requires Python 3.9 or newer"
+
+The engine uses Python 3.9 features. Check the interpreter and run the self-tests:
+
+```bash
+python3 --version
+python3 .github/scripts/agentic_engine.py selftest
+```
+
+On Windows, `python` usually works where `python3` does not. Use whichever interpreter resolves to 3.9 or newer.
+
+### A run is BLOCKED
+
+A blocked run is a deliberate stop, not a crash. Read the blocker packet:
+
+```bash
+python .github/scripts/agentic_engine.py report --run-id <run-id>
+```
+
+| Reason | Meaning | Action |
+| --- | --- | --- |
+| `identical-failure` | The same failure signature repeated | Fix the root cause or change the approach, then start a new run |
+| `attempt-budget-exhausted` | `maxRepairAttempts` was reached | Escalate the blocker; do not raise the limit just to pass |
+| `inconclusive` | Verification could not produce evidence | Add a real check or fix the environment |
+| `write-set-violation` | A changed file was outside the declared write set | Re-scope the task or revert the out-of-scope change |
+| `wall-clock-budget-exceeded` | `maxWallClockMinutes` was reached | Split the task or escalate |
+
+Start a new run with a new `--run-id`. `--force` will not replace a blocked run.
+
+### Evidence is rejected
+
+Evidence must be one of:
+
+- a file inside the repository, absolute or relative
+- `cmd:`, `test:`, `commit:`, `diff:`, `trace:`, `screenshot:`, `benchmark:`, or `artifact:` with content after the colon
+- an `http://` or `https://` URL with a host, a valid port, no credentials, and no query string
+
+Use `artifact:` for signed or tokenized links. A directory is not evidence.
+
+### "state is locked by another process"
+
+Another process holds the run lock. Wait for it to finish. If you are certain no process is running that run, remove the stale lock:
+
+```bash
+ls .agentic/state/
+rm .agentic/state/.<run-id>.lock
+```
+
+Do not delete `.agentic/state/<run-id>.json` unless the run is abandoned.
+
+### State file is corrupt or missing fields
+
+The engine validates state on load. If `report` returns `state is missing required field` or `state has an unknown stage`, the file was edited or partially written. Restore it from your editor history or start a new run. `.agentic/state/` is gitignored, so Git cannot recover it.
+
+### `--force` refuses to replace the run
+
+Only a run still at the `implement` stage can be replaced. Use a new `--run-id`; the later stages are preserved on purpose so the audit trail and blocker packet survive.
+
+### Engine self-tests fail
+
+```bash
+python .github/scripts/agentic_engine.py selftest
+bash .github/scripts/check-agentic-engine.sh
+pwsh -NoProfile -File .github/scripts/check-agentic-engine.ps1
+```
+
+The check scripts print the failing test name and traceback.
+
+## Document Ingestion Issues
+
+### A source file cannot be read
+
+Unsupported formats include binary Office or PDF files, scanned images without OCR, encrypted files, and proprietary formats. Convert the source to Markdown or plain text, place it in `docs/inputs/`, and re-run `route-project-inputs.prompt.md` or `ingest-project-docs.prompt.md`.
+
+### A document was routed to the wrong workflow
+
+Review the routing table in `docs/inputs.md`. A PRD or design document is ingested before feature work, a bounded feature specification goes to `build-feature`, and a workflow document goes to `improve-repo`. Correct the row and re-run the router.
+
+## Git Push Issues
+
+### "Permission denied (publickey)" or "could not read Username"
+
+The environment has no authorized GitHub credential. From an interactive terminal:
+
+```powershell
+ssh-add $HOME\.ssh\id_ed25519
+git push origin main
+```
+
+If GitHub rejects the key, add `$HOME\.ssh\id_ed25519.pub` under GitHub, Settings, SSH and GPG keys. For HTTPS, run `git remote set-url origin https://github.com/<owner>/<repo>.git` and let Git Credential Manager prompt. A non-interactive agent session cannot answer that prompt.
 ## Getting Help
 
 If you're still experiencing issues:
