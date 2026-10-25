@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Ignore local vNext and architecture workflow prompts
+
+- Area: repository root, local-only inputs
+- Change type: docs, chore
+- Summary: records that `update-09142026.md` and `update-09262026.md` are local historical update prompts, adds them to `.gitignore`, and removes them from the tracked tree.
+- Reason: they are predecessor planning notes, not starter assets, and should not be shipped with the repository.
+- Affected files: .gitignore, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Ignore local update prompts"
+- Review status: pending-review
+- Discrepancies or follow-up: the files remain on disk and are ignored. Durable decisions from them are already recorded in the existing changelogs, ADRs, and prompts.
+
 ### 2026-10-25 - Make drop-and-route the default app start
 
 - Area: QUICKSTART, README

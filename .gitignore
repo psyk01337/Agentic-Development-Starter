@@ -6,6 +6,8 @@ Thumbs.db
 .forlocal/
 checklist.md
 MIGRATION.md
+update-09142026.md
+update-09262026.md
 
 # Local runtime state and hook audit output
 .github/hooks/logs/

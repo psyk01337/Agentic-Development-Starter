@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Ignore local update prompts
+
+- Area: repository hygiene, .gitignore
+- Change type: chore
+- Summary: adds `update-09142026.md` and `update-09262026.md` to `.gitignore` and removes them from the index; the files remain locally as historical planning notes.
+- Reason: they are predecessor update prompts, not starter assets, and should not be shipped with the repository.
+- Affected files: .gitignore, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Ignore local vNext and architecture workflow prompts"
+- Validation: `bash .github/scripts/check-markdown-quality.sh` passed and `git diff --check` passed after the ignore change.
+- Discrepancies or follow-up: None; the local files remain on disk.
+
 ### 2026-10-25 - Add project input routing
 
 - Area: prompts, docs, module manifest
