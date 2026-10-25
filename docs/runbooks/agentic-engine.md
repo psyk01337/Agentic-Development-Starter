@@ -48,26 +48,38 @@ python .github/scripts/agentic_engine.py report --run-id feature-123
 python .github/scripts/agentic_engine.py selftest
 ```
 
-Exit codes: `0` success, `1` invalid input or transition, `3` blocked or escalated.
+Exit codes: `0` success, `1` invalid input or transition, `3` blocked or
+escalated. `next`, `status`, and `report` all return `3` for a blocked run.
 
 ## Stage Contract
 
 | Stage | Required result |
 | --- | --- |
 | `approval` | Use `approve`, not `record`; the task must declare `requestedBy`, and the approver must differ from it |
-| `implement` | `status: done`, `filesChanged`, `evidence` |
+| `implement` | `status: done`, `implementedBy`, `filesChanged`, `evidence` |
 | `verify` | `result: VERIFIED \| NOT_VERIFIED \| INCONCLUSIVE`, at least one named `check`, `evidence`; `VERIFIED` is refused while any check reports `ok: false` |
-| `repair` | `status: done`, `filesChanged`, `evidence` |
-| `review` | `decision: pass \| needs-revision`, `findings`, `evidence`; `needs-revision` must name at least one finding |
+| `repair` | `status: done`, `implementedBy`, `filesChanged`, `evidence` |
+| `review` | `decision: pass \| needs-revision`, `reviewedBy`, `findings`, `evidence`; `needs-revision` must name at least one finding |
+
+`reviewedBy` must not match any `implementedBy` recorded during the run, so one
+agent cannot implement and approve its own change. Identity is self-declared;
+the engine enforces separation, not authentication.
 
 Every stage requires at least one evidence pointer. A pointer is either a local
-path that must exist, or a reference using one of these schemes:
+file that must exist, or a reference using one of these schemes:
 `http://`, `https://`, `cmd:`, `test:`, `commit:`, `diff:`, `trace:`,
-`screenshot:`, `benchmark:`, `artifact:`.
+`screenshot:`, `benchmark:`, `artifact:`. A scheme must carry content, a
+relative path may not escape the repository root, and a directory is not
+evidence.
 
 The task spec must declare a bounded write set of explicit paths. Wildcards
 (`*`, `?`) and the policy's unbounded indicators (`unknown`, `broad`,
 `wildcard-only`, `tbd`, `not-safely-bounded`) are rejected at `init`.
+`class` must be a policy task class, and `evidenceSurfaces` must use policy
+surface keys.
+
+Write-set comparison normalizes separators and a leading `./`. Case is folded
+only on Windows, so a case variant is a distinct file on Linux.
 
 Example verification result:
 
@@ -95,7 +107,9 @@ The failure signature is always derived from the failing check names and message
 
 Each run is guarded by an advisory lock (`.<run-id>.lock` in the state
 directory). A stale lock older than five minutes is reclaimed. `init --force`
-refuses to replace a completed run so the audit trail is preserved.
+refuses to replace a `done` or `blocked` run so the audit trail and blocker
+packet are preserved; use a new run-id. History keeps the most recent 200
+entries and records `historyTruncated`.
 
 ## Blocked Outcomes
 
@@ -131,8 +145,10 @@ python .github/scripts/agentic_engine.py selftest
 
 It covers the happy path, repair-then-success, identical-failure escalation,
 attempt-budget escalation, `INCONCLUSIVE`, the approval gate, self-approval
-rejection, write-set violation and path normalization, wildcard and unbounded
-write sets, missing evidence, bogus evidence pointers, `VERIFIED` with failing
-checks, `needs-revision` without findings, wall-clock blocking, `--force` on a
-completed run, and state persistence. The umbrella check runs it on every
+rejection, write-set violation and normalization, case-sensitivity, wildcard
+and unbounded write sets, missing evidence, empty schemes, directory and
+traversal evidence, `VERIFIED` with failing checks, `needs-revision` without
+findings, self-review rejection, unknown task class and surface, wall-clock
+blocking, `--force` on completed and blocked runs, report exit codes, the
+history cap, and state persistence. The umbrella check runs it on every
 validation.

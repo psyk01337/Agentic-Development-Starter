@@ -54,6 +54,8 @@ EVIDENCE_SCHEMES = (
 )
 LOCK_STALE_SECONDS = 300
 LOCK_TIMEOUT_SECONDS = 10
+HISTORY_LIMIT = 200
+CASE_INSENSITIVE_PATHS = os.name == "nt"
 APPROVAL_CATEGORY_IDS = (
     "architecture-change",
     "core-governance-change",
@@ -89,6 +91,7 @@ STAGE_INSTRUCTIONS = {
         "requiredResult": {
             "status": "done",
             "summary": "string",
+            "implementedBy": "agent or person",
             "filesChanged": ["path"],
             "evidence": ["pointer"],
         },
@@ -99,6 +102,7 @@ STAGE_INSTRUCTIONS = {
         "requiredResult": {
             "status": "done",
             "summary": "string",
+            "implementedBy": "agent or person",
             "filesChanged": ["path"],
             "evidence": ["pointer"],
         },
@@ -117,6 +121,7 @@ STAGE_INSTRUCTIONS = {
         "action": "Record with: record --run-id <id> --stage review --result <file>",
         "requiredResult": {
             "decision": "pass | needs-revision",
+            "reviewedBy": "agent or person distinct from every implementer",
             "findings": [{"severity": "string", "summary": "string"}],
             "evidence": ["pointer"],
         },
@@ -221,7 +226,12 @@ def save_state(state_dir: Path, state: dict) -> None:
 def append_history(state: dict, **entry) -> None:
     record = {"at": utcnow()}
     record.update(entry)
-    state.setdefault("history", []).append(record)
+    history = state.setdefault("history", [])
+    history.append(record)
+    if len(history) > HISTORY_LIMIT:
+        overflow = len(history) - HISTORY_LIMIT
+        del history[:overflow]
+        state["historyTruncated"] = state.get("historyTruncated", 0) + overflow
 
 
 def failure_signature(result: dict) -> str:
@@ -254,23 +264,42 @@ def validate_evidence(evidence, repo_root: Path) -> list:
     if not isinstance(evidence, list) or not evidence:
         raise EngineError("result must include at least one evidence pointer")
     pointers = []
-    missing = []
+    problems = []
+    resolved_root = repo_root.resolve()
     for item in evidence:
         if not isinstance(item, str) or not item.strip():
             raise EngineError("evidence entries must be non-empty strings")
         pointer = item.strip()
-        pointers.append(pointer)
-        if pointer.lower().startswith(EVIDENCE_SCHEMES):
+        normalized = pointer.lower()
+        matched_scheme = next(
+            (scheme for scheme in EVIDENCE_SCHEMES if normalized.startswith(scheme)), None
+        )
+        if matched_scheme:
+            payload = pointer[len(matched_scheme):].strip()
+            if not payload:
+                problems.append(f"{pointer!r} has no content after the scheme")
+            elif matched_scheme in ("http://", "https://") and "/" not in payload:
+                problems.append(f"{pointer!r} has no host after the scheme")
+            pointers.append(pointer)
             continue
-        candidate = Path(pointer)
-        if not candidate.is_absolute():
-            candidate = repo_root / candidate
-        if not candidate.exists():
-            missing.append(pointer)
-    if missing:
+        raw = Path(pointer)
+        is_absolute = raw.is_absolute()
+        candidate = raw if is_absolute else repo_root / raw
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            problems.append(f"{pointer!r} cannot be resolved")
+            continue
+        if not resolved.exists():
+            problems.append(f"{pointer!r} does not exist")
+        elif not resolved.is_file():
+            problems.append(f"{pointer!r} is not a file")
+        elif not is_absolute and not str(resolved).startswith(str(resolved_root)):
+            problems.append(f"{pointer!r} escapes the repository root")
+        pointers.append(pointer)
+    if problems:
         raise EngineError(
-            "evidence pointers must exist or use a known scheme "
-            f"({', '.join(EVIDENCE_SCHEMES)}): {', '.join(missing)}"
+            "invalid evidence pointers: " + "; ".join(problems)
         )
     return pointers
 
@@ -345,7 +374,7 @@ def block(state: dict, reason: str, detail: str, evidence: list) -> None:
     append_history(state, stage="blocked", action="escalate", reason=reason, detail=detail)
 
 
-def validate_task(task: dict, categories: set) -> dict:
+def validate_task(task: dict, policy: dict) -> dict:
     if not isinstance(task, dict):
         raise EngineError("task must be a JSON object")
     for field in ("taskId", "title"):
@@ -354,7 +383,10 @@ def validate_task(task: dict, categories: set) -> dict:
     criteria = task.get("acceptanceCriteria")
     if not isinstance(criteria, list) or not criteria:
         raise EngineError("task.acceptanceCriteria must be a non-empty list")
+    if not all(isinstance(item, str) and item.strip() for item in criteria):
+        raise EngineError("task.acceptanceCriteria entries must be non-empty strings")
     _validate_write_set(task.get("writeSet"))
+    categories = approval_categories(policy)
     category = task.get("approvalCategory")
     if category is not None and category not in categories:
         raise EngineError(f"task.approvalCategory is not a known category: {category}")
@@ -363,7 +395,20 @@ def validate_task(task: dict, categories: set) -> dict:
         raise EngineError("task.requestedBy is required when task.approvalCategory is set")
     task.setdefault("class", "FEATURE")
     task.setdefault("complexity", "simple")
+    known_classes = {item.get("id") for item in policy.get("taskClasses", []) if isinstance(item, dict)}
+    if known_classes and task["class"] not in known_classes:
+        raise EngineError(f"task.class is not a known task class: {task['class']}")
     task.setdefault("evidenceSurfaces", [])
+    if not isinstance(task["evidenceSurfaces"], list):
+        raise EngineError("task.evidenceSurfaces must be a list")
+    known_surfaces = set(
+        (policy.get("evidenceRequirements", {}) or {}).get("surfaces", {}) or {}
+    )
+    unknown = [surface for surface in task["evidenceSurfaces"] if surface not in known_surfaces]
+    if known_surfaces and unknown:
+        raise EngineError(
+            "task.evidenceSurfaces contains unknown surfaces: " + ", ".join(map(str, unknown))
+        )
     return task
 
 
@@ -402,8 +447,7 @@ def next_payload(state: dict) -> dict:
 def cmd_init(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
     policy = load_policy(repo_root)
-    categories = approval_categories(policy)
-    task = validate_task(read_json_file(args.task), categories)
+    task = validate_task(read_json_file(args.task), policy)
     state_dir = state_dir_for(repo_root, args.state_dir)
     path = state_path(state_dir, args.run_id)
     with run_lock(state_dir, args.run_id):
@@ -411,9 +455,10 @@ def cmd_init(args: argparse.Namespace) -> int:
             raise EngineError(f"state already exists for run-id {args.run_id}; use --force to replace")
         if path.exists() and args.force:
             previous = json.loads(path.read_text(encoding="utf-8"))
-            if previous.get("stage") == "done":
+            if previous.get("stage") in ("done", "blocked"):
                 raise EngineError(
-                    "refusing to replace a completed run; use a new run-id to preserve the audit trail"
+                    f"refusing to replace a {previous.get('stage')} run; "
+                    "use a new run-id to preserve the audit trail"
                 )
         state = {
             "runId": args.run_id,
@@ -426,6 +471,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             "failureSignatures": {},
             "approvals": [],
             "blockingFindings": [],
+            "implementers": [],
             "history": [],
             "createdAt": utcnow(),
             "updatedAt": utcnow(),
@@ -473,7 +519,7 @@ def cmd_report(args: argparse.Namespace) -> int:
     state_dir = state_dir_for(repo_root, args.state_dir)
     state = load_state(state_dir, args.run_id)
     emit(state)
-    return 0
+    return 3 if state["stage"] == "blocked" else 0
 
 
 def _check_budget(state: dict, policy: dict) -> None:
@@ -489,7 +535,10 @@ def _check_budget(state: dict, policy: dict) -> None:
 
 
 def _normalize_path(value: str) -> str:
-    return str(value).strip().replace("\\", "/").removeprefix("./").lower()
+    normalized = str(value).strip().replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized.lower() if CASE_INSENSITIVE_PATHS else normalized
 
 
 def _outside_write_set(files: list, write_set: list) -> list:
@@ -559,6 +608,9 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
     if args.stage in ("implement", "repair"):
         if result.get("status") != "done":
             raise EngineError("implement/repair result must set status to 'done'")
+        implemented_by = result.get("implementedBy")
+        if not isinstance(implemented_by, str) or not implemented_by.strip():
+            raise EngineError("implement/repair result must name implementedBy")
         files = result.get("filesChanged") or []
         if not isinstance(files, list):
             raise EngineError("filesChanged must be a list")
@@ -575,9 +627,19 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
             save_state(state_dir, state)
             emit(next_payload(state))
             return 3
+        implementers = state.setdefault("implementers", [])
+        if implemented_by.strip() not in implementers:
+            implementers.append(implemented_by.strip())
         state["stage"] = "verify"
         state["status"] = "RUNNING"
-        append_history(state, stage=args.stage, action="recorded", files=files, evidence=evidence)
+        append_history(
+            state,
+            stage=args.stage,
+            action="recorded",
+            implementedBy=implemented_by.strip(),
+            files=files,
+            evidence=evidence,
+        )
 
     elif args.stage == "verify":
         verdict = result.get("result")
@@ -624,12 +686,25 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
         decision = result.get("decision")
         if decision not in ("pass", "needs-revision"):
             raise EngineError("review decision must be 'pass' or 'needs-revision'")
+        reviewed_by = result.get("reviewedBy")
+        if not isinstance(reviewed_by, str) or not reviewed_by.strip():
+            raise EngineError("review result must name reviewedBy")
+        implementers = {item.lower() for item in state.get("implementers", [])}
+        if reviewed_by.strip().lower() in implementers:
+            raise EngineError("a reviewer cannot approve work it implemented itself")
         findings = result.get("findings")
         if not isinstance(findings, list):
             raise EngineError("review result must include a findings list")
         if decision == "needs-revision" and not findings:
             raise EngineError("a needs-revision review must name at least one finding")
-        append_history(state, stage="review", action="recorded", decision=decision, evidence=evidence)
+        append_history(
+            state,
+            stage="review",
+            action="recorded",
+            decision=decision,
+            reviewedBy=reviewed_by.strip(),
+            evidence=evidence,
+        )
         if decision == "pass":
             state["stage"] = "done"
             state["status"] = "DONE"
@@ -687,6 +762,13 @@ class EngineSelfTest(unittest.TestCase):
                 "inconclusiveIsNeverSuccess": True,
             },
             "approvalRequiredCategories": [{"id": "identity-security-change", "description": "fixture"}],
+            "taskClasses": [
+                {"id": "FEATURE", "description": "fixture"},
+                {"id": "DOCUMENTATION", "description": "fixture"},
+            ],
+            "evidenceRequirements": {
+                "surfaces": {"api": {"evidence": ["fixture"]}, "ui": {"evidence": ["fixture"]}}
+            },
         }
         (self.root / ".github" / "roles" / "orchestration-policy.json").write_text(
             json.dumps(policy), encoding="utf-8"
@@ -730,7 +812,12 @@ class EngineSelfTest(unittest.TestCase):
     def implement(self) -> tuple[int, dict]:
         return self.record(
             "implement",
-            {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]},
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/a.py"],
+                "evidence": ["diff:HEAD"],
+            },
         )
 
     def verify(self, result: str, checks: list) -> tuple[int, dict]:
@@ -743,7 +830,13 @@ class EngineSelfTest(unittest.TestCase):
         self.assertEqual(self.implement()[1]["stage"], "verify")
         self.assertEqual(self.verify("VERIFIED", [{"name": "pytest", "ok": True}])[1]["stage"], "review")
         code, payload = self.record(
-            "review", {"decision": "pass", "findings": [], "evidence": ["cmd:review"]}
+            "review",
+            {
+                "decision": "pass",
+                "reviewedBy": "reviewer",
+                "findings": [],
+                "evidence": ["cmd:review"],
+            },
         )
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "done")
@@ -758,7 +851,12 @@ class EngineSelfTest(unittest.TestCase):
         self.assertEqual(
             self.record(
                 "repair",
-                {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]},
+                {
+                    "status": "done",
+                    "implementedBy": "engineer",
+                    "filesChanged": ["src/a.py"],
+                    "evidence": ["diff:HEAD"],
+                },
             )[1]["stage"],
             "verify",
         )
@@ -769,7 +867,13 @@ class EngineSelfTest(unittest.TestCase):
         self.implement()
         self.verify("NOT_VERIFIED", [{"name": "pytest", "ok": False, "message": "same"}])
         self.record(
-            "repair", {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]}
+            "repair",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/a.py"],
+                "evidence": ["diff:HEAD"],
+            },
         )
         code, payload = self.verify("NOT_VERIFIED", [{"name": "pytest", "ok": False, "message": "same"}])
         self.assertEqual(code, 3)
@@ -784,7 +888,13 @@ class EngineSelfTest(unittest.TestCase):
             [{"name": "pytest", "ok": False, "message": "same"}],
         )
         self.record(
-            "repair", {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]}
+            "repair",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/a.py"],
+                "evidence": ["diff:HEAD"],
+            },
         )
         result_path = self.root / "spoof.json"
         result_path.write_text(
@@ -811,7 +921,12 @@ class EngineSelfTest(unittest.TestCase):
             self.verify("NOT_VERIFIED", [{"name": f"check-{index}", "ok": False, "message": str(index)}])
             self.record(
                 "repair",
-                {"status": "done", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]},
+                {
+                    "status": "done",
+                    "implementedBy": "engineer",
+                    "filesChanged": ["src/a.py"],
+                    "evidence": ["diff:HEAD"],
+                },
             )
         code, payload = self.verify("NOT_VERIFIED", [{"name": "check-final", "ok": False, "message": "final"}])
         self.assertEqual(code, 3)
@@ -878,7 +993,12 @@ class EngineSelfTest(unittest.TestCase):
         self.init()
         code, payload = self.record(
             "implement",
-            {"status": "done", "filesChanged": ["src/other.py"], "evidence": ["diff:HEAD"]},
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/other.py"],
+                "evidence": ["diff:HEAD"],
+            },
         )
         self.assertEqual(code, 3)
         self.assertEqual(payload["blocker"]["reason"], "write-set-violation")
@@ -887,7 +1007,12 @@ class EngineSelfTest(unittest.TestCase):
         self.init()
         code, _ = self.record(
             "implement",
-            {"status": "done", "filesChanged": ["./src/a.py"], "evidence": ["diff:HEAD"]},
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["./src/a.py"],
+                "evidence": ["diff:HEAD"],
+            },
         )
         self.assertEqual(code, 0)
 
@@ -1013,7 +1138,16 @@ class EngineSelfTest(unittest.TestCase):
                     "--stage",
                     "review",
                     "--result",
-                    str(self.write_result({"decision": "pass", "findings": [], "evidence": []})),
+                    str(
+                        self.write_result(
+                            {
+                                "decision": "pass",
+                                "reviewedBy": "reviewer",
+                                "findings": [],
+                                "evidence": [],
+                            }
+                        )
+                    ),
                     "--repo-root",
                     str(self.root),
                     "--state-dir",
@@ -1035,7 +1169,16 @@ class EngineSelfTest(unittest.TestCase):
                     "--stage",
                     "review",
                     "--result",
-                    str(self.write_result({"decision": "needs-revision", "findings": [], "evidence": ["cmd:r"]})),
+                    str(
+                        self.write_result(
+                            {
+                                "decision": "needs-revision",
+                                "reviewedBy": "reviewer",
+                                "findings": [],
+                                "evidence": ["cmd:r"],
+                            }
+                        )
+                    ),
                     "--repo-root",
                     str(self.root),
                     "--state-dir",
@@ -1059,6 +1202,7 @@ class EngineSelfTest(unittest.TestCase):
                         self.write_result(
                             {
                                 "status": "done",
+                                "implementedBy": "engineer",
                                 "filesChanged": ["src/a.py"],
                                 "evidence": ["/nonexistent/proof.log"],
                             }
@@ -1083,7 +1227,15 @@ class EngineSelfTest(unittest.TestCase):
                     "--stage",
                     "implement",
                     "--result",
-                    str(self.write_result({"status": "done", "filesChanged": []})),
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": [],
+                            }
+                        )
+                    ),
                     "--repo-root",
                     str(self.root),
                     "--state-dir",
@@ -1114,6 +1266,7 @@ class EngineSelfTest(unittest.TestCase):
                         self.write_result(
                             {
                                 "status": "done",
+                                "implementedBy": "engineer",
                                 "filesChanged": ["src/a.py"],
                                 "evidence": ["diff:HEAD"],
                             }
@@ -1134,7 +1287,15 @@ class EngineSelfTest(unittest.TestCase):
         self.init()
         self.implement()
         self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
-        self.record("review", {"decision": "pass", "findings": [], "evidence": ["cmd:review"]})
+        self.record(
+            "review",
+            {
+                "decision": "pass",
+                "reviewedBy": "reviewer",
+                "findings": [],
+                "evidence": ["cmd:review"],
+            },
+        )
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             code = main(
                 [
@@ -1151,6 +1312,273 @@ class EngineSelfTest(unittest.TestCase):
                 ]
             )
         self.assertEqual(code, 1)
+
+    def test_case_variant_path_blocked_on_case_sensitive_system(self) -> None:
+        module = sys.modules[__name__]
+        original = module.CASE_INSENSITIVE_PATHS
+        module.CASE_INSENSITIVE_PATHS = False
+        try:
+            self.init()
+            code, payload = self.record(
+                "implement",
+                {
+                    "status": "done",
+                    "implementedBy": "engineer",
+                    "filesChanged": ["SRC/A.PY"],
+                    "evidence": ["diff:HEAD"],
+                },
+            )
+            self.assertEqual(code, 3)
+            self.assertEqual(payload["blocker"]["reason"], "write-set-violation")
+        finally:
+            module.CASE_INSENSITIVE_PATHS = original
+
+    def test_empty_evidence_scheme_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["cmd:"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_directory_evidence_rejected(self) -> None:
+        self.init()
+        (self.root / "artifacts").mkdir()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["artifacts"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_traversal_evidence_rejected(self) -> None:
+        self.init()
+        outside = self.root.parent / "outside-proof.log"
+        outside.write_text("proof", encoding="utf-8")
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                code = main(
+                    [
+                        "record",
+                        "--run-id",
+                        "r1",
+                        "--stage",
+                        "implement",
+                        "--result",
+                        str(
+                            self.write_result(
+                                {
+                                    "status": "done",
+                                    "implementedBy": "engineer",
+                                    "filesChanged": ["src/a.py"],
+                                    "evidence": [f"../{outside.name}"],
+                                }
+                            )
+                        ),
+                        "--repo-root",
+                        str(self.root),
+                        "--state-dir",
+                        str(self.state_dir),
+                    ]
+                )
+            self.assertEqual(code, 1)
+        finally:
+            outside.unlink()
+
+    def test_self_review_rejected(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "review",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "decision": "pass",
+                                "reviewedBy": "engineer",
+                                "findings": [],
+                                "evidence": ["cmd:review"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_review_requires_reviewer(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "review",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {"decision": "pass", "findings": [], "evidence": ["cmd:review"]}
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_force_cannot_replace_blocked_run(self) -> None:
+        self.init()
+        self.record(
+            "implement",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/other.py"],
+                "evidence": ["diff:HEAD"],
+            },
+        )
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--force",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_report_exit_code_matches_blocked_state(self) -> None:
+        self.init()
+        self.record(
+            "implement",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/other.py"],
+                "evidence": ["diff:HEAD"],
+            },
+        )
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            code = main(
+                [
+                    "report",
+                    "--run-id",
+                    "r1",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 3)
+
+    def test_unknown_task_class_rejected(self) -> None:
+        self.write_task(**{"class": "NOT_A_CLASS"})
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_unknown_evidence_surface_rejected(self) -> None:
+        self.write_task(evidenceSurfaces=["network"])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_history_is_capped(self) -> None:
+        state = {"history": []}
+        for index in range(HISTORY_LIMIT + 25):
+            append_history(state, index=index)
+        self.assertEqual(len(state["history"]), HISTORY_LIMIT)
+        self.assertEqual(state["historyTruncated"], 25)
 
     def test_state_persists(self) -> None:
         self.init()

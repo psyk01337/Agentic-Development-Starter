@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the second agentic engine hardening
+
+- Area: agentic-engine runbook
+- Change type: docs, runbook
+- Summary: documents implementer and reviewer fields, reviewer separation, stricter evidence rules, OS-aware case folding, `--force` restrictions, `report` exit codes, task class and surface validation, and the history cap.
+- Reason: the second QA and review pass changed enforceable behavior.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Close the second agentic engine review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: identity is self-declared; separation is enforced, authentication is not.
+
 ### 2026-10-25 - Document the agentic engine hardening
 
 - Area: agentic-engine runbook

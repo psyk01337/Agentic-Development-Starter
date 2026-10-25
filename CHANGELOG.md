@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Close the second agentic engine review findings
+
+- Area: orchestration engine, tests, runbook
+- Change type: fix, test, docs
+- Summary: addresses the residual findings from the second QA and review pass. Write-set comparison folds case only on Windows, so a case variant is a distinct file on Linux; evidence schemes must carry content, local pointers must be files, and relative paths may not escape the repository root; `init --force` refuses `done` and `blocked` runs; `report` returns `3` for a blocked run; `implement` and `repair` require `implementedBy`, `review` requires `reviewedBy`, and a reviewer cannot match any recorded implementer; `class` and `evidenceSurfaces` are validated against the policy; history is capped at 200 entries with `historyTruncated`. Self-tests grow from 23 to 34.
+- Reason: the second QA pass found a case-folding write-set bypass, content-free evidence schemes, audit loss on `--force`, an inconsistent `report` exit code, and no separation between implementer and reviewer.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the second agentic engine hardening"
+- Validation: `python .github/scripts/agentic_engine.py selftest` passed 34 tests; CLI probes confirm self-review rejection, independent review completion, `--force` refusal on a completed run, and `report` exit codes; both umbrellas passed all 11 checks; `STRAY-NONE`.
+- Discrepancies or follow-up: reviewer and implementer identities are self-declared; the engine enforces separation, not authentication. Case folding follows the host OS, so a case-variant path is accepted on Windows and rejected on Linux.
+
 ### 2026-10-25 - Close the agentic engine QA and review findings
 
 - Area: orchestration engine, tests, runbook
