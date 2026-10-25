@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the agentic engine and bounded repair loop
+
+- Area: runbooks, skills, README, QUICKSTART
+- Change type: docs, runbook
+- Summary: adds the engine runbook and `repair-loop` skill, documents the loop in the engineering team runbook, supervisor skill, supervisor agent, and team prompt, and adds the engine to README, QUICKSTART, the skills runbook, and the runbook index.
+- Reason: make the deterministic loop discoverable, including its stage contract, retry policy, blocker reasons, and exit codes.
+- Affected files: docs/runbooks/agentic-engine.md, docs/runbooks/engineering-team.md, docs/runbooks/skills.md, docs/runbooks/INDEX.md, .github/skills/repair-loop/SKILL.md, .github/skills/supervisor-orchestration/SKILL.md, .github/agents/delegation-supervisor.agent.md, .github/prompts/run-engineering-team.prompt.md, README.md, QUICKSTART.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add the deterministic agentic engine and bounded repair loop"
+- Review status: pending-review
+- Discrepancies or follow-up: the engine enforces the contract when invoked; it cannot prevent a host from ignoring it. Time budget is checked at transitions.
+
 ### 2026-10-25 - Document the domain skills and overlays
 
 - Area: skills, instructions, runbooks

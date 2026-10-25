@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Add the deterministic agentic engine and bounded repair loop
+
+- Area: orchestration engine, policy, skills, runbooks, validators
+- Change type: feature, test, docs
+- Summary: adds `.github/scripts/agentic_engine.py`, a deterministic task-scoped state machine with a bounded implement → verify → repair loop. It enforces write sets, evidence at every stage, approval gates, `maxRepairAttempts`, `maxVerifyRetries`, identical-failure signatures, and `INCONCLUSIVE`-never-success, and emits a blocker packet instead of looping. Adds `retryPolicy` to `orchestration-policy.json`, the `repair-loop` skill, `docs/runbooks/agentic-engine.md`, an example task, and `check-agentic-engine` twins registered in both umbrellas. Manifest `1.16` → `1.17`.
+- Reason: the previous workflow had a single repair pass and no durable loop. Prompt-only retries can repeat the same failure, claim success without evidence, or loop forever. The engine makes those outcomes deterministic.
+- Affected files: .github/scripts/agentic_engine.py, .github/scripts/check-agentic-engine.sh, .github/scripts/check-agentic-engine.ps1, .github/scripts/check-starter-workflow.sh, .github/scripts/check-starter-workflow.ps1, .github/scripts/check-supervisor-orchestration.sh, .github/scripts/check-supervisor-orchestration.ps1, .github/roles/orchestration-policy.json, .github/skills/repair-loop/SKILL.md, .github/skills/supervisor-orchestration/SKILL.md, .github/agents/delegation-supervisor.agent.md, .github/prompts/run-engineering-team.prompt.md, .github/examples/agentic-engine/simple-feature-task.json, .github/starter-modules.json, docs/runbooks/agentic-engine.md, docs/runbooks/engineering-team.md, docs/runbooks/skills.md, docs/runbooks/INDEX.md, README.md, QUICKSTART.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the agentic engine and bounded repair loop"
+- Validation: `python .github/scripts/agentic_engine.py selftest` passed 9 tests; `bash .github/scripts/check-agentic-engine.sh` and `pwsh -NoProfile -File .github/scripts/check-agentic-engine.ps1` passed; both umbrellas run before commit.
+- Discrepancies or follow-up: the engine is a deterministic control plane, not an autonomous LLM runtime. The host agent still performs the work and reports evidence; the engine cannot force a host that ignores it. State is gitignored and task-scoped. The time budget is checked at transitions, not by a background timer.
+
 ### 2026-10-25 - Add domain skills and overlays
 
 - Area: skills, instructions, module manifest

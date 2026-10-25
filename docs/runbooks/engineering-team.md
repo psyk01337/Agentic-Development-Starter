@@ -22,7 +22,7 @@ v1 uses exactly one delegation level. Specialists do not delegate. A nested team
 | Management | `delegation-supervisor` | Task board, routing, delegation, reconciliation |
 | Approval | `orchestration-coordinator` | Human-approved transitions, when the overlay is enabled |
 
-Cross-cutting skills: `problem-structuring`, `adr-authoring`, `qa-test-plan`, `pr-review`, `security-check`, `release-notes`, `decision-trail`, `verification-evidence-loop`, `adversarial-review`, `arena-bakeoff`, `swarm`, `prose-cleanup`, and `session-compactor`.
+Cross-cutting skills: `problem-structuring`, `adr-authoring`, `qa-test-plan`, `pr-review`, `security-check`, `release-notes`, `decision-trail`, `verification-evidence-loop`, `repair-loop`, `adversarial-review`, `arena-bakeoff`, `swarm`, `prose-cleanup`, and `session-compactor`.
 
 ## SDLC Stages
 
@@ -58,6 +58,28 @@ A task without acceptance criteria or a bounded write set is not ready for imple
 Statuses: `PLANNED`, `READY`, `IN_PROGRESS`, `BLOCKED`, `IN_REVIEW`, `VERIFYING`, `DONE`, `DEFERRED`.
 
 Only the supervisor may mark `DONE`, and only after verification evidence satisfies the success predicate. `INCONCLUSIVE` is never success. Keep the board in session or task-scoped state; do not commit a global workflow-state file.
+
+## Bounded Repair Loop
+
+Use the `repair-loop` skill and `.github/scripts/agentic_engine.py` for any task that may need more than one fix attempt:
+
+```text
+init -> implement -> verify -> (VERIFIED -> review -> done)
+                          \-> (NOT_VERIFIED -> repair -> verify)
+                          \-> (identical failure or budget -> blocked)
+```
+
+The engine enforces:
+
+- task-scoped state under `.agentic/state/<run-id>.json`
+- a declared write set; changes outside it are blocked
+- evidence required at every stage
+- `maxRepairAttempts` and `maxVerifyRetries` from `retryPolicy`
+- a failure signature that stops repeated identical failures
+- approval categories before implementation
+- `INCONCLUSIVE` never completing
+
+See `docs/runbooks/agentic-engine.md` for commands and result shapes.
 
 ## Parallel Work
 

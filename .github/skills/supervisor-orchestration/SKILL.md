@@ -20,6 +20,7 @@ Do not use it for human-guided transitions between agents; that is the `approval
 - `.github/AGENTS.md` for the guided handoff contract and ownership map.
 - `docs/runbooks/supervisor-orchestration.md` for the operating model and fallback behavior.
 - `docs/runbooks/engineering-team.md` for the team topology, task board, task assignment contract, and SDLC ceremonies.
+- `.github/skills/repair-loop/SKILL.md` and `docs/runbooks/agentic-engine.md` for the deterministic implement-verify-repair loop.
 
 ## Checklist
 - Confirm the repo has enabled the supervisor orchestration overlay.
@@ -32,6 +33,17 @@ Do not use it for human-guided transitions between agents; that is the `approval
 - Reconcile results, consolidate blocking findings into one repair task, and re-run the affected verification once.
 - Keep a reviewer from approving work it implemented itself.
 - For multi-stage work, build a task board and assign approved specialists by squad using `docs/runbooks/engineering-team.md`.
+- Run write work through the `agentic_engine.py` loop so repairs are bounded and completion requires evidence.
+
+## Repair Loop
+
+Use `repair-loop` and `agentic_engine.py` for any task that may need more than one fix attempt:
+
+- Initialize a task-scoped run with acceptance criteria and a declared write set.
+- Record `implement`, `verify`, `repair`, and `review` results through the engine.
+- Let the engine stop the loop on `VERIFIED`, an identical failure signature, an exhausted attempt budget, or `INCONCLUSIVE`.
+- Escalate the blocker packet instead of retrying manually.
+- Never raise `maxRepairAttempts` to force a pass.
 
 ## Team Management
 

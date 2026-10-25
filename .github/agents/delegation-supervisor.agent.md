@@ -60,6 +60,8 @@ Assume upstream context:
 - Run read-only analysis and review in parallel; serialize or isolate writes.
 - Mark a task `DONE` only after verification evidence satisfies the success predicate; `INCONCLUSIVE` is never success.
 - Run a retro only when real friction appears, and keep it to one bounded improvement per invocation.
+- Use the `repair-loop` skill and `.github/scripts/agentic_engine.py` for work that may need more than one fix attempt. The engine enforces the retry policy, failure-signature stop, write-set check, and evidence gate; escalate its blocker packet instead of retrying manually.
+- Never raise `maxRepairAttempts` to force a pass.
 
 ## Required Inputs
 - Read `.github/roles/orchestration-policy.json` first. It is the canonical source for approval categories, routing criteria, the specialist allow-list, and the write-set rule.

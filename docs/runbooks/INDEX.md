@@ -26,6 +26,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 - **[Approval-Gated Handoffs](approval-gated-handoffs.md)** - Implement approval workflows between agents
 - **[Supervisor Orchestration](supervisor-orchestration.md)** - Run supervised delegation to approved specialist agents
 - **[Engineering Team](engineering-team.md)** - Run a full SDLC task board with the supervisor and specialist squads
+- **[Agentic Engine](agentic-engine.md)** - Drive the deterministic implement-verify-repair loop with bounded retries
 - **[Repo Self-Improvement](self-improvement.md)** - Run one bounded, evidence-based improvement iteration on the starter
 - **[Tool Surface Matrix](tool-surface-matrix.md)** - Compare agent platforms and tool capabilities
 
@@ -50,6 +51,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 | Add approval workflows | [Approval-Gated Handoffs](approval-gated-handoffs.md) |
 | Run supervised delegation | [Supervisor Orchestration](supervisor-orchestration.md) |
 | Run a full SDLC team | [Engineering Team](engineering-team.md) |
+| Run a bounded repair loop | [Agentic Engine](agentic-engine.md) |
 | Improve the starter autonomously | [Repo Self-Improvement](self-improvement.md) |
 | Compare agent platforms | [Tool Surface Matrix](tool-surface-matrix.md) |
 | Integrate Hermes | [Hermes Runtime](hermes-runtime.md) |

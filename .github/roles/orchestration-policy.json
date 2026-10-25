@@ -67,6 +67,19 @@
       "description": "Work that grows beyond the requested slice or the declared write set."
     }
   ],
+  "retryPolicy": {
+    "maxRepairAttempts": 3,
+    "identicalFailureThreshold": 2,
+    "maxVerifyRetries": 1,
+    "maxWallClockMinutes": 120,
+    "escalateOnIdenticalFailure": true,
+    "escalateOnBudgetExhausted": true,
+    "inconclusiveIsNeverSuccess": true,
+    "stateLocation": ".agentic/state/<run-id>.json",
+    "failureSignature": "hash of sorted failing check names and messages, or an explicit failureSignature",
+    "engine": ".github/scripts/agentic_engine.py",
+    "note": "The engine enforces this policy deterministically. A run stops on VERIFIED, an identical failure signature, an exhausted attempt budget, or INCONCLUSIVE after the allowed retries; it never loops forever."
+  },
   "complexityRouting": {
     "defaultWhenUncertain": "complex",
     "complexIfAny": [
@@ -88,7 +101,7 @@
       "token count"
     ],
     "simpleWorkflow": "delegation-supervisor -> implementer -> appropriate validation/review",
-    "complexWorkflow": "delegation-supervisor -> parallel read-only analysis -> consolidated plan -> human approval when required -> implementer -> parallel independent verification -> one consolidated repair pass if needed"
+    "complexWorkflow": "delegation-supervisor -> parallel read-only analysis -> consolidated plan -> human approval when required -> engine loop (implement -> verify -> repair until verified, an identical failure repeats, or the attempt budget is exhausted) -> parallel independent review -> engine completion"
   },
   "taskClasses": [
     { "id": "QUESTION", "description": "Answer a question about the codebase or workflow without changing files." },

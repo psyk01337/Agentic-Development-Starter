@@ -198,6 +198,15 @@ Example prompts:
 - `Use decision-trail to record the decisions from this task with pointers to the validation output.`
 - `Keep a decision trail for this multi-phase change and point each entry at its evidence.`
 
+### `repair-loop`
+
+Use when work must keep iterating until verification passes, but must not loop forever. Drives `agentic_engine.py`: implement → verify → repair, with bounded attempts, failure-signature detection, approval gates, write-set enforcement, and escalation.
+
+Example prompts:
+
+- `Use repair-loop to drive this failing test fix through the engine and stop if the same failure repeats.`
+- `Run the bounded repair loop for this feature and escalate the blocker packet if the attempt budget is exhausted.`
+
 ### `api-scaffold`
 
 Use when a repo has a stable backend pattern and you want a scaffold from a contract or endpoint spec.

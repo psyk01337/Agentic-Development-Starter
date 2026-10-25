@@ -4,7 +4,7 @@ Use this prompt when one request should run through the full SDLC team: discover
 
 ## Context To Inspect First
 
-- `.github/copilot-instructions.md`, `.github/AGENTS.md`, `docs/runbooks/engineering-team.md`, and `.github/skills/supervisor-orchestration/SKILL.md`.
+- `.github/copilot-instructions.md`, `.github/AGENTS.md`, `docs/runbooks/engineering-team.md`, `docs/runbooks/agentic-engine.md`, and `.github/skills/supervisor-orchestration/SKILL.md`.
 - `.github/roles/orchestration-policy.json` for task classes, playbooks, approval categories, the specialist allow-list, and delegation depth.
 - `.github/roles/tool-access.json` for each agent's capability boundary.
 - The project's PRD, architecture, API docs, current code, tests, and validation commands.
@@ -17,8 +17,10 @@ Use this prompt when one request should run through the full SDLC team: discover
 - Build a team plan and task board with task ID, owner, reviewer, scope, acceptance criteria, write set, dependencies, evidence, status, and approval category.
 - Assign only approved specialists and keep exactly one delegation level.
 - Run the SDLC stages in order; use `swarm` for independent slices, `arena-bakeoff` for competing designs, `adversarial-review` for review, and `verification-evidence-loop` for completion.
+- Drive write work through `.github/scripts/agentic_engine.py` instead of an unbounded manual repair loop: `init`, `next`, `record`, `approve`, `status`.
 - Stop at approval categories; serialize unbounded or overlapping writes.
-- Reconcile results into one coherent outcome; consolidate blocking findings into one repair pass.
+- Let the engine stop the loop on `VERIFIED`, an identical failure signature, an exhausted attempt budget, or `INCONCLUSIVE`. Escalate the blocker packet instead of retrying manually.
+- Reconcile results into one coherent outcome; consolidate blocking findings into one repair pass when the engine schedules `repair`.
 - Update both changelogs and record a decision trail.
 - Report team status, evidence, residual risk, and the next action.
 

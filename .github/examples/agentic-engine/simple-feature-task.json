@@ -1,0 +1,18 @@
+{
+  "taskId": "T-EXAMPLE-001",
+  "title": "Add a health-check endpoint",
+  "class": "FEATURE",
+  "complexity": "simple",
+  "acceptanceCriteria": [
+    "GET /health returns 200 with a JSON status field",
+    "A test covers the success path and the unavailable path"
+  ],
+  "writeSet": [
+    "app/api/health.py",
+    "app/tests/test_health.py"
+  ],
+  "approvalCategory": null,
+  "evidenceSurfaces": [
+    "api"
+  ]
+}

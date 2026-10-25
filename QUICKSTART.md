@@ -137,10 +137,11 @@ Use Team Mode for application development: core instructions, agents, skills, pr
 ## The Daily Loop
 
 1. Use `run-engineering-team.prompt.md` for multi-stage work, or `build-feature.prompt.md` for one feature.
-2. Review the diff with `code-reviewer`.
-3. Verify with `qa`.
-4. Update `CHANGELOG.md` and `DOC-CHANGELOG.md`.
-5. Commit a small, reviewable change.
+2. For work that may need more than one fix attempt, run it through `.github/scripts/agentic_engine.py`. It loops implement → verify → repair until verified, stops on a repeated identical failure, and escalates when the attempt budget is exhausted.
+3. Review the diff with `code-reviewer`.
+4. Verify with `qa`.
+5. Update `CHANGELOG.md` and `DOC-CHANGELOG.md`.
+6. Commit a small, reviewable change.
 
 ## Keep the Framework Frozen
 

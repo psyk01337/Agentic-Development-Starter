@@ -1,5 +1,5 @@
 {
-  "version": "1.16",
+  "version": "1.17",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -41,6 +41,9 @@
         ".github/scripts/check-mcp-posture.sh",
         ".github/scripts/check-evals.ps1",
         ".github/scripts/check-evals.sh",
+        ".github/scripts/check-agentic-engine.ps1",
+        ".github/scripts/check-agentic-engine.sh",
+        ".github/scripts/agentic_engine.py",
         "docs/adr/0000-template.md",
         "docs/inputs.md",
         "docs/runbooks/adopting-existing-github.md",
@@ -379,15 +382,18 @@
         ".github/skills/prose-cleanup/SKILL.md",
         ".github/skills/session-compactor/SKILL.md",
         ".github/skills/decision-trail/SKILL.md",
+        ".github/skills/repair-loop/SKILL.md",
         ".github/roles/orchestration-policy.json",
         ".github/schema/delegation-plan.schema.json",
         ".github/examples/supervisor-orchestration/complex-feature-delegation-plan.json",
         ".github/schema/delegation-result.schema.json",
         ".github/examples/supervisor-orchestration/simple-bugfix-delegation-result.json",
+        ".github/examples/agentic-engine/simple-feature-task.json",
         ".github/scripts/check-supervisor-orchestration.ps1",
         ".github/scripts/check-supervisor-orchestration.sh",
         "docs/runbooks/supervisor-orchestration.md",
         "docs/runbooks/engineering-team.md",
+        "docs/runbooks/agentic-engine.md",
         "docs/adr/0003-supervisor-orchestration-overlay.md"
       ]
     },

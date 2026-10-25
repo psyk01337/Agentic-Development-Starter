@@ -104,7 +104,7 @@ The starter earns its keep only when the repo stays the source of truth and the 
 
 ### 1. Run every task as a loop
 
-1. **Frame.** If you dropped one or more planning documents in `docs/inputs/`, run `route-project-inputs.prompt.md`; it classifies every file and routes it to `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo`. For a multi-stage project, use `run-engineering-team.prompt.md`; the supervisor builds a task board and assigns approved specialists by squad. If the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
+1. **Frame.** If you dropped one or more planning documents in `docs/inputs/`, run `route-project-inputs.prompt.md`; it classifies every file and routes it to `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo`. For a multi-stage project, use `run-engineering-team.prompt.md`; the supervisor builds a task board and assigns approved specialists by squad. Write work can run through `agentic_engine.py`, which loops implement → verify → repair until verified or escalates on a repeated failure or exhausted attempt budget. If the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
 2. **Route.** Choose the smallest surface that fits the task, using the surface table below.
 3. **Deliver.** Use `build-feature.prompt.md` for one feature end-to-end, or invoke `senior-software-engineer` directly; use `tdd-vitest` only in repos that actually run Vitest.
 4. **Verify.** Run the smallest relevant validation. Add `code-reviewer` and `qa` for anything user-facing, and `security-reviewer` when the change touches secrets, auth, command execution, hooks, MCP, memory, or dependency trust.
@@ -250,6 +250,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 - End-to-end feature delivery through plan, implementation, review, and QA.
 - Project input routing for one or more dropped Markdown files (`route-project-inputs.prompt.md`).
 - Engineering-team orchestration for full SDLC delivery (`run-engineering-team.prompt.md`, supervisor overlay).
+- Deterministic implement-verify-repair loop with bounded retries (`.github/scripts/agentic_engine.py`, `repair-loop` skill).
 - Project document ingestion for PRDs, design briefs, architecture notes, and API contracts (`ingest-project-docs.prompt.md`, run in the downstream project repo).
 - Small feature planning.
 - Small diff implementation.

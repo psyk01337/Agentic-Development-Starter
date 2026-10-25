@@ -15,6 +15,7 @@ scripts=(
   ".github/scripts/check-mcp-posture.sh"
   ".github/scripts/check-markdown-quality.sh"
   ".github/scripts/check-evals.sh"
+  ".github/scripts/check-agentic-engine.sh"
 )
 
 total_start=$(date +%s)
