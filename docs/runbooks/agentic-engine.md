@@ -4,6 +4,8 @@ The agentic engine is the deterministic control plane for multi-step delivery. I
 
 It does not call a model. It does not run your tests. It enforces the contract around them.
 
+Requires Python 3.9 or newer. The engine exits with a clear message on older interpreters.
+
 ## Why It Exists
 
 Prompt-only loops degrade in predictable ways: the agent retries the same failing action, declares success without evidence, or loops forever. The engine makes those outcomes impossible to reach silently:
@@ -66,11 +68,12 @@ agent cannot implement and approve its own change. Identity is self-declared;
 the engine enforces separation, not authentication.
 
 Every stage requires at least one evidence pointer. A pointer is either a local
-file that must exist, or a reference using one of these schemes:
+file inside the repository, or a reference using one of these schemes:
 `http://`, `https://`, `cmd:`, `test:`, `commit:`, `diff:`, `trace:`,
-`screenshot:`, `benchmark:`, `artifact:`. A scheme must carry content, a
-relative path may not escape the repository root, and a directory is not
-evidence.
+`screenshot:`, `benchmark:`, `artifact:`. A scheme must carry content, a URL
+must have a host, and a directory is not evidence. Local paths, absolute or
+relative, must resolve inside the repository root; use an `artifact:`,
+`screenshot:`, `trace:`, or `benchmark:` scheme for anything outside it.
 
 The task spec must declare a bounded write set of explicit paths. Wildcards
 (`*`, `?`) and the policy's unbounded indicators (`unknown`, `broad`,
@@ -107,9 +110,10 @@ The failure signature is always derived from the failing check names and message
 
 Each run is guarded by an advisory lock (`.<run-id>.lock` in the state
 directory). A stale lock older than five minutes is reclaimed. `init --force`
-refuses to replace a `done` or `blocked` run so the audit trail and blocker
-packet are preserved; use a new run-id. History keeps the most recent 200
-entries and records `historyTruncated`.
+only replaces a run still at the `implement` stage; any later stage, including
+`verify`, `review`, `done`, and `blocked`, keeps its audit trail and requires a
+new run-id. History keeps the most recent 200 entries and records
+`historyTruncated`.
 
 ## Blocked Outcomes
 

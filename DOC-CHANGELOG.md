@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the third agentic engine hardening
+
+- Area: agentic-engine runbook
+- Change type: docs, runbook
+- Summary: documents the Python 3.9 requirement, repository-bounded evidence with scheme fallback for out-of-repo artifacts, host-required URLs, `--force` limited to the `implement` stage, and the implementer list exposed at review.
+- Reason: the third QA and review pass changed enforceable behavior.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Close the third agentic engine review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: out-of-repo evidence must use a scheme; identities remain self-declared.
+
 ### 2026-10-25 - Document the second agentic engine hardening
 
 - Area: agentic-engine runbook

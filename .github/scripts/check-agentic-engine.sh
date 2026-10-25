@@ -58,8 +58,9 @@ then
   FAILED=1
 fi
 
-if ! python3 "${REPO_ROOT}/.github/scripts/agentic_engine.py" selftest >/dev/null 2>&1; then
+if ! selftest_output="$(python3 "${REPO_ROOT}/.github/scripts/agentic_engine.py" selftest 2>&1)"; then
   report_error "agentic_engine.py selftest failed"
+  printf '%s\n' "${selftest_output}" >&2
 fi
 
 if [[ ! -f "${REPO_ROOT}/.github/examples/agentic-engine/simple-feature-task.json" ]]; then

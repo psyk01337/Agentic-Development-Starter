@@ -29,6 +29,10 @@ import time
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
+
+if sys.version_info < (3, 9):
+    raise SystemExit("agentic_engine.py requires Python 3.9 or newer")
 
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 UNBOUNDED_WRITE_SET_ENTRIES = {
@@ -278,13 +282,14 @@ def validate_evidence(evidence, repo_root: Path) -> list:
             payload = pointer[len(matched_scheme):].strip()
             if not payload:
                 problems.append(f"{pointer!r} has no content after the scheme")
-            elif matched_scheme in ("http://", "https://") and "/" not in payload:
-                problems.append(f"{pointer!r} has no host after the scheme")
+            elif matched_scheme in ("http://", "https://"):
+                parsed = urlparse(pointer)
+                if not parsed.netloc:
+                    problems.append(f"{pointer!r} has no host after the scheme")
             pointers.append(pointer)
             continue
         raw = Path(pointer)
-        is_absolute = raw.is_absolute()
-        candidate = raw if is_absolute else repo_root / raw
+        candidate = raw if raw.is_absolute() else repo_root / raw
         try:
             resolved = candidate.resolve()
         except OSError:
@@ -294,8 +299,11 @@ def validate_evidence(evidence, repo_root: Path) -> list:
             problems.append(f"{pointer!r} does not exist")
         elif not resolved.is_file():
             problems.append(f"{pointer!r} is not a file")
-        elif not is_absolute and not str(resolved).startswith(str(resolved_root)):
-            problems.append(f"{pointer!r} escapes the repository root")
+        elif not resolved.is_relative_to(resolved_root):
+            problems.append(
+                f"{pointer!r} is outside the repository root; "
+                "use an artifact:, screenshot:, trace:, or benchmark: scheme instead"
+            )
         pointers.append(pointer)
     if problems:
         raise EngineError(
@@ -441,6 +449,10 @@ def next_payload(state: dict) -> dict:
         payload["approvalCategory"] = state["task"].get("approvalCategory")
     if stage in ("implement", "repair"):
         payload["blockingFindings"] = state.get("blockingFindings", [])
+        payload["implementers"] = state.get("implementers", [])
+    if stage == "review":
+        payload["implementers"] = state.get("implementers", [])
+        payload["note"] = "reviewedBy must not match any implementer"
     return payload
 
 
@@ -455,9 +467,9 @@ def cmd_init(args: argparse.Namespace) -> int:
             raise EngineError(f"state already exists for run-id {args.run_id}; use --force to replace")
         if path.exists() and args.force:
             previous = json.loads(path.read_text(encoding="utf-8"))
-            if previous.get("stage") in ("done", "blocked"):
+            if previous.get("stage") != "implement":
                 raise EngineError(
-                    f"refusing to replace a {previous.get('stage')} run; "
+                    f"refusing to replace a run at stage {previous.get('stage')}; "
                     "use a new run-id to preserve the audit trail"
                 )
         state = {
@@ -505,8 +517,10 @@ def cmd_status(args: argparse.Namespace) -> int:
             "verifyAttempts": state.get("verifyAttempts", 0),
             "failureSignatures": state.get("failureSignatures", {}),
             "approvals": state.get("approvals", []),
+            "implementers": state.get("implementers", []),
             "blocker": state.get("blocker"),
             "historyLength": len(state.get("history", [])),
+            "historyTruncated": state.get("historyTruncated", 0),
             "createdAt": state.get("createdAt"),
             "updatedAt": state.get("updatedAt"),
         }
@@ -526,12 +540,11 @@ def _check_budget(state: dict, policy: dict) -> None:
     limits = retry_policy(policy)
     limit = limits.get("maxWallClockMinutes")
     if isinstance(limit, (int, float)) and limit > 0 and minutes_elapsed(state) > limit:
-        block(
-            state,
-            "wall-clock-budget-exceeded",
-            f"run exceeded the {limit}-minute wall-clock budget",
-            state.get("lastEvidence", []),
+        detail = (
+            f"run exceeded the {limit}-minute wall-clock budget "
+            f"during stage {state.get('stage', '?')} after {state.get('attempt', 0)} attempt(s)"
         )
+        block(state, "wall-clock-budget-exceeded", detail, state.get("lastEvidence", []))
 
 
 def _normalize_path(value: str) -> str:
@@ -630,6 +643,7 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
         implementers = state.setdefault("implementers", [])
         if implemented_by.strip() not in implementers:
             implementers.append(implemented_by.strip())
+        state["lastStage"] = args.stage
         state["stage"] = "verify"
         state["status"] = "RUNNING"
         append_history(
@@ -657,6 +671,7 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
                 + ", ".join(str(check.get("name")) for check in failing)
             )
         append_history(state, stage="verify", action="recorded", result=verdict, evidence=evidence)
+        state["lastStage"] = "verify"
         if verdict == "VERIFIED":
             state["stage"] = "review"
             state["status"] = "RUNNING"
@@ -1579,6 +1594,159 @@ class EngineSelfTest(unittest.TestCase):
             append_history(state, index=index)
         self.assertEqual(len(state["history"]), HISTORY_LIMIT)
         self.assertEqual(state["historyTruncated"], 25)
+
+    def test_sibling_prefix_traversal_rejected(self) -> None:
+        sibling = self.root.parent / (self.root.name + "evil")
+        sibling.mkdir()
+        (sibling / "proof.log").write_text("proof", encoding="utf-8")
+        try:
+            self.init()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                code = main(
+                    [
+                        "record",
+                        "--run-id",
+                        "r1",
+                        "--stage",
+                        "implement",
+                        "--result",
+                        str(
+                            self.write_result(
+                                {
+                                    "status": "done",
+                                    "implementedBy": "engineer",
+                                    "filesChanged": ["src/a.py"],
+                                    "evidence": [f"../{sibling.name}/proof.log"],
+                                }
+                            )
+                        ),
+                        "--repo-root",
+                        str(self.root),
+                        "--state-dir",
+                        str(self.state_dir),
+                    ]
+                )
+            self.assertEqual(code, 1)
+        finally:
+            shutil.rmtree(sibling, ignore_errors=True)
+
+    def test_absolute_evidence_outside_repo_rejected(self) -> None:
+        outside = self.root.parent / "outside-absolute-proof.log"
+        outside.write_text("proof", encoding="utf-8")
+        try:
+            self.init()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                code = main(
+                    [
+                        "record",
+                        "--run-id",
+                        "r1",
+                        "--stage",
+                        "implement",
+                        "--result",
+                        str(
+                            self.write_result(
+                                {
+                                    "status": "done",
+                                    "implementedBy": "engineer",
+                                    "filesChanged": ["src/a.py"],
+                                    "evidence": [str(outside)],
+                                }
+                            )
+                        ),
+                        "--repo-root",
+                        str(self.root),
+                        "--state-dir",
+                        str(self.state_dir),
+                    ]
+                )
+            self.assertEqual(code, 1)
+        finally:
+            outside.unlink()
+
+    def test_absolute_evidence_inside_repo_accepted(self) -> None:
+        (self.root / "proof.log").write_text("proof", encoding="utf-8")
+        self.init()
+        code, _ = self.record(
+            "implement",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/a.py"],
+                "evidence": [str(self.root / "proof.log")],
+            },
+        )
+        self.assertEqual(code, 0)
+
+    def test_url_without_path_accepted(self) -> None:
+        self.init()
+        code, _ = self.record(
+            "implement",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/a.py"],
+                "evidence": ["http://example.com"],
+            },
+        )
+        self.assertEqual(code, 0)
+
+    def test_hostless_url_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["http:///"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_review_stage_surfaces_implementers(self) -> None:
+        self.init()
+        self.implement()
+        _, payload = self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.assertEqual(payload["stage"], "review")
+        self.assertEqual(payload["implementers"], ["engineer"])
+
+    def test_force_refused_at_review_stage(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--force",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
 
     def test_state_persists(self) -> None:
         self.init()

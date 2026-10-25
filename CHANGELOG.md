@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Close the third agentic engine review findings
+
+- Area: orchestration engine, check scripts, runbook
+- Change type: fix, test, docs
+- Summary: replaces the string-prefix containment check with `Path.is_relative_to`, so a sibling directory sharing the repository path prefix no longer passes. URL evidence is parsed with `urlparse` and requires a host, so `http://example.com` is accepted and `http:///` is rejected. Local evidence, absolute or relative, must resolve inside the repository root; out-of-repo evidence uses a scheme. `next` and `status` expose `implementers`, `report` shows `historyTruncated`, `init --force` refuses any run past `implement`, the budget blocker names the stage and attempt count, selftest failures print their output, and the engine declares Python 3.9+. Self-tests grow from 34 to 41.
+- Reason: the third QA pass found a containment bypass on sibling prefixes and a URL check that inverted both outcomes.
+- Affected files: .github/scripts/agentic_engine.py, .github/scripts/check-agentic-engine.sh, .github/scripts/check-agentic-engine.ps1, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the third agentic engine hardening"
+- Validation: `python .github/scripts/agentic_engine.py selftest` passed 41 tests; probes confirm sibling-prefix and absolute-outside evidence are rejected, absolute-inside and `http://example.com` are accepted, and `http:///` is rejected; both umbrellas passed all 11 checks; `STRAY-NONE`.
+- Discrepancies or follow-up: out-of-repository evidence now requires an `artifact:`, `screenshot:`, `trace:`, or `benchmark:` scheme. Reviewer and implementer identities remain self-declared.
+
 ### 2026-10-25 - Close the second agentic engine review findings
 
 - Area: orchestration engine, tests, runbook

@@ -68,9 +68,10 @@ if ($null -eq $python) {
   exit 1
 }
 
-& $python.Source $engine selftest *> $null
+$selftestOutput = & $python.Source $engine selftest 2>&1
 if ($LASTEXITCODE -ne 0) {
   Write-Error "agentic_engine.py selftest failed"
+  Write-Host ($selftestOutput -join "`n")
   exit 1
 }
 
