@@ -1,5 +1,5 @@
 {
-  "version": "1.14",
+  "version": "1.16",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -122,7 +122,8 @@
         ".github/prompts/improve-repo.prompt.md",
         ".github/prompts/build-feature.prompt.md",
         ".github/prompts/ingest-project-docs.prompt.md",
-        ".github/prompts/route-project-inputs.prompt.md"
+        ".github/prompts/route-project-inputs.prompt.md",
+        ".github/prompts/run-engineering-team.prompt.md"
       ]
     },
     {
@@ -186,7 +187,8 @@
       "when": "Repositories with JavaScript or TypeScript UI code",
       "files": [
         ".github/instructions/frontend.instructions.md",
-        ".github/skills/ui-scaffold/SKILL.md"
+        ".github/skills/ui-scaffold/SKILL.md",
+        ".github/skills/web-quality/SKILL.md"
       ]
     },
     {
@@ -385,6 +387,7 @@
         ".github/scripts/check-supervisor-orchestration.ps1",
         ".github/scripts/check-supervisor-orchestration.sh",
         "docs/runbooks/supervisor-orchestration.md",
+        "docs/runbooks/engineering-team.md",
         "docs/adr/0003-supervisor-orchestration-overlay.md"
       ]
     },
@@ -441,6 +444,7 @@
         ".github/instructions/game-performance.instructions.md",
         ".github/instructions/game-assets-pipeline.instructions.md",
         ".github/skills/game-perf-triage/SKILL.md",
+        ".github/skills/game-design/SKILL.md",
         ".github/prompts/design-game-system.prompt.md",
         ".github/prompts/implement-game-mechanic.prompt.md",
         ".github/prompts/profile-game-performance.prompt.md",
@@ -467,6 +471,36 @@
       "when": "Repositories that build games in Go and want Go-specific engine, concurrency, and packaging rules",
       "files": [
         ".github/instructions/go.gamedev.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-embedded",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories with embedded firmware, MCU or SoC targets, or hardware bring-up work",
+      "files": [
+        ".github/instructions/embedded.instructions.md",
+        ".github/skills/embedded-bringup/SKILL.md"
+      ]
+    },
+    {
+      "id": "overlay-reverse-engineering",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories doing authorized binary, firmware, or protocol reverse engineering",
+      "files": [
+        ".github/instructions/reverse-engineering.instructions.md",
+        ".github/skills/binary-analysis/SKILL.md"
+      ]
+    },
+    {
+      "id": "overlay-networking",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories working on network configuration, packet analysis, or connectivity troubleshooting",
+      "files": [
+        ".github/instructions/networking.instructions.md",
+        ".github/skills/network-troubleshooting/SKILL.md"
       ]
     }
   ]

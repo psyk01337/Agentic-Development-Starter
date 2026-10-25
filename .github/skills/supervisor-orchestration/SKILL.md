@@ -19,6 +19,7 @@ Do not use it for human-guided transitions between agents; that is the `approval
 - `.github/roles/tool-access.json` for each agent's capability boundary.
 - `.github/AGENTS.md` for the guided handoff contract and ownership map.
 - `docs/runbooks/supervisor-orchestration.md` for the operating model and fallback behavior.
+- `docs/runbooks/engineering-team.md` for the team topology, task board, task assignment contract, and SDLC ceremonies.
 
 ## Checklist
 - Confirm the repo has enabled the supervisor orchestration overlay.
@@ -30,6 +31,17 @@ Do not use it for human-guided transitions between agents; that is the `approval
 - Run parallel delegations only for read-only analysis or review, or for provably disjoint declared write sets.
 - Reconcile results, consolidate blocking findings into one repair task, and re-run the affected verification once.
 - Keep a reviewer from approving work it implemented itself.
+- For multi-stage work, build a task board and assign approved specialists by squad using `docs/runbooks/engineering-team.md`.
+
+## Team Management
+
+When the task spans multiple SDLC stages or squads, use `docs/runbooks/engineering-team.md`:
+
+- Build a task board with objective, owner, reviewer, acceptance criteria, write set, dependencies, evidence, and status.
+- Assign approved specialists by squad and keep exactly one delegation level.
+- Run read-only analysis and review in parallel; serialize or isolate writes.
+- Use `swarm` for independent slices and `arena-bakeoff` for design alternatives.
+- Mark `DONE` only after verification evidence; `INCONCLUSIVE` is never success.
 
 ## Fallback
 If the runtime cannot delegate subagents, produce a guided delegation plan instead of implying delegation occurred. Each entry states the target agent, objective, context, write set where applicable, acceptance criteria, expected return format, and execution order.

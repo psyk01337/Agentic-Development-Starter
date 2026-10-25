@@ -51,6 +51,7 @@ required_files=(
   ".github/scripts/check-supervisor-orchestration.ps1"
   ".github/scripts/check-supervisor-orchestration.sh"
   "docs/runbooks/supervisor-orchestration.md"
+  "docs/runbooks/engineering-team.md"
   "docs/adr/0003-supervisor-orchestration-overlay.md"
 )
 

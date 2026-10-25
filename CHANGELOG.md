@@ -24,6 +24,28 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Add domain skills and overlays
+
+- Area: skills, instructions, module manifest
+- Change type: feature, docs
+- Summary: adds five domain skills (`embedded-bringup`, `binary-analysis`, `network-troubleshooting`, `web-quality`, `game-design`) and three instruction overlays (`embedded.instructions.md`, `reverse-engineering.instructions.md`, `networking.instructions.md`). Registers new `overlay-embedded`, `overlay-reverse-engineering`, and `overlay-networking` modules, and adds `web-quality` and `game-design` to the existing UI and game overlays. Manifest `1.15` → `1.16`; README, skills runbook, starter composition, and existing-repo adoption docs are updated.
+- Reason: the starter lacked vital guidance for embedded, reverse engineering, networking, web quality, and game design work.
+- Affected files: .github/skills/embedded-bringup/SKILL.md, .github/skills/binary-analysis/SKILL.md, .github/skills/network-troubleshooting/SKILL.md, .github/skills/web-quality/SKILL.md, .github/skills/game-design/SKILL.md, .github/instructions/embedded.instructions.md, .github/instructions/reverse-engineering.instructions.md, .github/instructions/networking.instructions.md, .github/starter-modules.json, README.md, docs/runbooks/skills.md, docs/runbooks/starter-composition.md, docs/runbooks/adopting-existing-github.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the domain skills and overlays"
+- Validation: `bash .github/scripts/check-starter-skills.sh` and `pwsh -NoProfile -File .github/scripts/check-starter-skills.ps1` passed; `bash .github/scripts/check-starter-manifest.sh` passed; `bash .github/scripts/check-markdown-quality.sh` passed; `bash .github/scripts/check-starter-workflow.sh` passed all ten checks in 74s, and `pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1` passed all ten checks. `STRAY-NONE`.
+- Discrepancies or follow-up: domain overlays are optional and default-disabled. Reverse engineering requires authorization and isolation; binary samples and captures must stay out of the repository. The instruction overlays are path-scoped and do not apply to unrelated code.
+
+### 2026-10-25 - Add the engineering team operating layer
+
+- Area: agents, skills, prompts, runbooks, module manifest
+- Change type: feature, docs
+- Summary: adds `docs/runbooks/engineering-team.md` and `.github/prompts/run-engineering-team.prompt.md`; extends `.github/AGENTS.md` with the engineering team topology and task assignment contract; extends the supervisor skill and `delegation-supervisor` agent with team management, task boards, and SDLC ceremonies; registers the runbook in the supervisor overlay and the prompt in `workflow-prompts`; manifest `1.14` → `1.15`; adds the runbook to the supervisor validator required files in both twins.
+- Reason: the user wants the repo to operate like a full SDLC engineering department, with the supervisor managing specialist squads and assigning tasks under the existing one-level delegation policy.
+- Affected files: docs/runbooks/engineering-team.md, .github/prompts/run-engineering-team.prompt.md, .github/AGENTS.md, .github/agents/delegation-supervisor.agent.md, .github/skills/supervisor-orchestration/SKILL.md, .github/starter-modules.json, .github/scripts/check-supervisor-orchestration.sh, .github/scripts/check-supervisor-orchestration.ps1, README.md, QUICKSTART.md, docs/runbooks/agentic-dev.md, docs/runbooks/INDEX.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the engineering team operating layer"
+- Validation: pending; run `bash .github/scripts/check-prompt-contracts.sh`, `bash .github/scripts/check-markdown-quality.sh`, `bash .github/scripts/check-starter-manifest.sh`, and both umbrellas.
+- Discrepancies or follow-up: v1 keeps exactly one delegation level; nested team leads require an ADR, policy change, validator updates, and security review. The task board is session or task-scoped, not a committed workflow-state file. No new skill directory was added; the existing supervisor skill is extended.
+
 ### 2026-10-25 - Ignore local update prompts
 
 - Area: repository hygiene, .gitignore

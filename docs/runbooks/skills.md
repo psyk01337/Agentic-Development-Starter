@@ -229,6 +229,53 @@ Example prompts:
 - `Triage the memory growth across scene transitions.`
 - `We load everything at boot and first load is slow; triage it.`
 
+## Domain Skills
+
+### `embedded-bringup`
+
+Use when firmware, a board, a peripheral, or an RTOS task needs bring-up or debugging on real or emulated hardware. Forces target, memory, timing, recovery, and on-target evidence discipline.
+
+Example prompts:
+
+- `Use embedded-bringup to get this new board booting and prove the toolchain and flash path work.`
+- `The firmware hangs after reset; use embedded-bringup to find the failing layer before changing application code.`
+
+### `binary-analysis`
+
+Use only for authorized reverse engineering, interoperability, vulnerability research, or malware analysis. Requires scope confirmation, isolation, evidence preservation, and sanitized artifacts.
+
+Example prompts:
+
+- `Use binary-analysis to triage this firmware image and identify its architecture, boot chain, and network indicators.`
+- `Reverse engineer this protocol under the authorized scope and separate confirmed facts from hypotheses.`
+
+### `network-troubleshooting`
+
+Use when connectivity, latency, throughput, DNS, TLS, routing, firewall, or packet loss is failing. Prefer read-only diagnostics and packet-level evidence.
+
+Example prompts:
+
+- `Use network-troubleshooting to isolate where this intermittent timeout occurs.`
+- `Capture and explain the packet loss between the client and the load balancer.`
+
+### `web-quality`
+
+Use when a web page or UI needs an accessibility, Core Web Vitals, responsiveness, forms, SEO, or browser-compatibility audit. Requires measured before-and-after evidence.
+
+Example prompts:
+
+- `Use web-quality to audit this checkout page for accessibility and Core Web Vitals.`
+- `Check keyboard navigation, focus, and form errors in this dialog.`
+
+### `game-design`
+
+Use when defining a mechanic, core loop, progression, economy, level, onboarding, or playtest. Requires design intent, a playable slice, and evidence from real players where possible.
+
+Example prompts:
+
+- `Use game-design to define the core combat loop and progression for this game.`
+- `The first level feels unfair; diagnose readability and difficulty, then propose the smallest playtest.`
+
 ## Consistency Check
 
 Use the starter skill checks to confirm the manifest and skill directories stay aligned:

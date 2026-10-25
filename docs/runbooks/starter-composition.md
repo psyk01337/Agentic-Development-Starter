@@ -40,6 +40,7 @@ Add or keep:
 
 - `.github/instructions/frontend.instructions.md`
 - `.github/skills/ui-scaffold/SKILL.md`
+- `.github/skills/web-quality/SKILL.md` for accessibility, performance, responsiveness, forms, and browser-compatibility audits
 - `.github/agents/tdd-vitest.agent.md` when Vitest is the real test runner
 
 If the repo uses React, also add:
@@ -121,6 +122,33 @@ If the repo uses MariaDB, also add:
 
 Keep database-specific rules in their own overlays so each database can be enabled independently, and keep them additive to the general backend overlay.
 
+### Embedded systems repos
+
+Add:
+
+- `.github/instructions/embedded.instructions.md`
+- `.github/skills/embedded-bringup/SKILL.md`
+
+Use these for firmware, board bring-up, RTOS work, drivers, and hardware-in-the-loop testing. Confirm the target, memory and timing budgets, and a recovery path before flashing.
+
+### Reverse engineering repos
+
+Add:
+
+- `.github/instructions/reverse-engineering.instructions.md`
+- `.github/skills/binary-analysis/SKILL.md`
+
+Use these only for authorized analysis. Keep samples and captures out of the repository and sanitize every artifact before sharing.
+
+### Networking repos
+
+Add:
+
+- `.github/instructions/networking.instructions.md`
+- `.github/skills/network-troubleshooting/SKILL.md`
+
+Use these for network configuration, packet analysis, and connectivity troubleshooting. Prefer read-only diagnostics and sanitized captures.
+
 ### Other stacks
 
 Use the core modules first, then add new overlays only after the repo has stable conventions worth encoding.
@@ -132,6 +160,7 @@ Add or keep the engine-agnostic game overlays:
 - `.github/instructions/gameplay-systems.instructions.md`
 - `.github/instructions/game-performance.instructions.md`
 - `.github/instructions/game-assets-pipeline.instructions.md`
+- `.github/skills/game-design/SKILL.md` for mechanics, core loops, progression, economy, levels, onboarding, and playtesting
 
 For a browser game, add exactly one Phaser overlay matching the installed major version:
 

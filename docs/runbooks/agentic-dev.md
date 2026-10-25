@@ -12,6 +12,12 @@ This runbook describes the daily operating model once the starter has been compo
 
 ## 1a) Common Guided Chains
 
+### Engineering team flow
+
+1. Use `run-engineering-team.prompt.md` for a multi-stage project or feature.
+2. The supervisor builds a task board, assigns approved specialists by squad, and keeps one delegation level.
+3. Verify with `qa`; mark work done only after evidence satisfies the success predicate.
+
 ### Project input routing
 
 1. Drop one or more Markdown files in `docs/inputs/`.

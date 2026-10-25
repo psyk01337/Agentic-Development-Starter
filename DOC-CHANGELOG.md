@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the domain skills and overlays
+
+- Area: skills, instructions, runbooks
+- Change type: docs, runbook
+- Summary: documents the five new domain skills and three instruction overlays in README, the skills runbook, starter composition, and existing-repo adoption guidance.
+- Reason: make the new domain coverage discoverable and set the enablement and safety boundaries.
+- Affected files: README.md, docs/runbooks/skills.md, docs/runbooks/starter-composition.md, docs/runbooks/adopting-existing-github.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add domain skills and overlays"
+- Review status: pending-review
+- Discrepancies or follow-up: the domain overlays are optional. Reverse engineering and binary analysis require authorization, isolation, and sanitized artifacts; samples must not be committed.
+
+### 2026-10-25 - Document the engineering team operating layer
+
+- Area: runbooks, prompts, AGENTS.md
+- Change type: docs, runbook
+- Summary: adds the engineering team runbook and prompt, documents the team topology and task assignment contract in `AGENTS.md`, extends the supervisor skill and agent with team management, and adds the team flow to README, QUICKSTART, and the `agentic-dev` runbook.
+- Reason: make the full SDLC team model discoverable and usable without changing the one-level delegation policy.
+- Affected files: docs/runbooks/engineering-team.md, .github/prompts/run-engineering-team.prompt.md, .github/AGENTS.md, .github/agents/delegation-supervisor.agent.md, .github/skills/supervisor-orchestration/SKILL.md, README.md, QUICKSTART.md, docs/runbooks/agentic-dev.md, docs/runbooks/INDEX.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add the engineering team operating layer"
+- Review status: pending-review
+- Discrepancies or follow-up: nested team leads are deferred; v1 keeps exactly one delegation level. The task board is session or task-scoped, not a committed workflow-state file.
+
 ### 2026-10-25 - Ignore local vNext and architecture workflow prompts
 
 - Area: repository root, local-only inputs

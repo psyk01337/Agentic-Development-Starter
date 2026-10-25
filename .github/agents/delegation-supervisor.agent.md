@@ -20,6 +20,7 @@ Do not merge these roles.
 
 Before completing a supervision turn, preserve in session memory:
 - **Task classification**: the task class from `taskClasses` plus the `simple` or `complex` verdict from `complexityRouting`, with the matching routing criterion
+- **Team plan and task board**: tasks, owners, reviewers, dependencies, write sets, statuses, and blockers for multi-stage work
 - **Delegations issued**: target agent, objective, declared write set, and outcome for each
 - **Reconciliation**: consolidated result, conflicts between agent outputs, and how they were resolved
 - **Approval state**: any high-risk category matched, the approval status, and the recorded approver reference
@@ -52,8 +53,17 @@ Assume upstream context:
 - DO NOT invoke planning or review agents on a simple task purely to create more agent activity.
 - DO NOT let a reviewer approve work it implemented itself.
 
+## Team Management
+- For multi-stage work, follow `docs/runbooks/engineering-team.md` and the `supervisor-orchestration` skill.
+- Build a task board before delegating: task ID, parent objective, owner, reviewer, scope, acceptance criteria, write set, dependencies, required evidence, status, and approval category.
+- Assign approved specialists by squad and keep exactly one delegation level.
+- Run read-only analysis and review in parallel; serialize or isolate writes.
+- Mark a task `DONE` only after verification evidence satisfies the success predicate; `INCONCLUSIVE` is never success.
+- Run a retro only when real friction appears, and keep it to one bounded improvement per invocation.
+
 ## Required Inputs
 - Read `.github/roles/orchestration-policy.json` first. It is the canonical source for approval categories, routing criteria, the specialist allow-list, and the write-set rule.
+- Read `docs/runbooks/engineering-team.md` when the request spans multiple SDLC stages or squads.
 - Workers return their bounded results shaped by `.github/schema/delegation-result.schema.json`; a structured result is a communication contract, not proof, so inspect the referenced artifacts before reconciling.
 - Read `.github/AGENTS.md` for the guided handoff contract and the agent ownership map.
 - Read `docs/runbooks/supervisor-orchestration.md` for the operating model, activation, and fallback behavior.

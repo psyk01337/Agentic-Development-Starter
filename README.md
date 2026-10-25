@@ -69,7 +69,7 @@ Start with [QUICKSTART.md](QUICKSTART.md) for the 10-minute path to a working ap
 2. Drop any PRD, design brief, architecture note, API contract, or feature spec into `docs/inputs/`.
 3. Run `route-project-inputs.prompt.md`. It classifies every file and runs `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo` in order. If you have no documents, run `initialize-new-project` directly.
 4. Add application code under `app/`.
-5. Run `build-feature.prompt.md` for the first vertical slice.
+5. Run `build-feature.prompt.md` for the first vertical slice. For a multi-stage project, use `run-engineering-team.prompt.md` instead.
 6. Run the starter validation and your application's own tests before merging.
 
 For an existing app, use `docs/runbooks/adopting-existing-github.md` instead.
@@ -104,7 +104,7 @@ The starter earns its keep only when the repo stays the source of truth and the 
 
 ### 1. Run every task as a loop
 
-1. **Frame.** If you dropped one or more planning documents in `docs/inputs/`, run `route-project-inputs.prompt.md`; it classifies every file and routes it to `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo`. If the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
+1. **Frame.** If you dropped one or more planning documents in `docs/inputs/`, run `route-project-inputs.prompt.md`; it classifies every file and routes it to `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo`. For a multi-stage project, use `run-engineering-team.prompt.md`; the supervisor builds a task board and assigns approved specialists by squad. If the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
 2. **Route.** Choose the smallest surface that fits the task, using the surface table below.
 3. **Deliver.** Use `build-feature.prompt.md` for one feature end-to-end, or invoke `senior-software-engineer` directly; use `tdd-vitest` only in repos that actually run Vitest.
 4. **Verify.** Run the smallest relevant validation. Add `code-reviewer` and `qa` for anything user-facing, and `security-reviewer` when the change touches secrets, auth, command execution, hooks, MCP, memory, or dependency trust.
@@ -240,7 +240,7 @@ Core modules cover baseline instructions, security, memory strategy, governance,
 
 Optional modules cover prompt workflows, skills, evals, editor templates, and MCP templates.
 
-Overlay modules cover stack-specific guidance (frontend, backend, PHP/Laravel ecosystem, database, CI workflow, and game development overlays), Vitest TDD, approval-gated orchestration, supervisor orchestration, Hermes runtime integration, and Honcho durable memory integration.
+Overlay modules cover stack- and domain-specific guidance (frontend, backend, PHP/Laravel ecosystem, database, CI workflow, embedded, reverse engineering, networking, and game development overlays), Vitest TDD, approval-gated orchestration, supervisor orchestration, Hermes runtime integration, and Honcho durable memory integration.
 
 ## Prompts
 
@@ -249,6 +249,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 - Existing repo onboarding.
 - End-to-end feature delivery through plan, implementation, review, and QA.
 - Project input routing for one or more dropped Markdown files (`route-project-inputs.prompt.md`).
+- Engineering-team orchestration for full SDLC delivery (`run-engineering-team.prompt.md`, supervisor overlay).
 - Project document ingestion for PRDs, design briefs, architecture notes, and API contracts (`ingest-project-docs.prompt.md`, run in the downstream project repo).
 - Small feature planning.
 - Small diff implementation.
@@ -273,7 +274,7 @@ Skills are bounded multi-step playbooks. Use them when the workflow is repeatabl
 
 Included workflow skills cover ADR authoring, bug triage, PR review, QA test plans, security checks, release notes, session compaction, memory curation, repo onboarding, CI failure debugging, migration planning, tool-surface audits, and problem structuring.
 
-Stack overlays include API and UI scaffold skills, plus `game-perf-triage` for game frame-time, memory, and load-time diagnosis. Approval-gated handoffs are an optional overlay skill.
+Stack overlays include API and UI scaffold skills, plus `game-perf-triage` for game frame-time, memory, and load-time diagnosis. Domain skills include `embedded-bringup`, `binary-analysis` for authorized reverse engineering, `network-troubleshooting`, `web-quality`, and `game-design`. Approval-gated handoffs are an optional overlay skill.
 
 ## Agents
 

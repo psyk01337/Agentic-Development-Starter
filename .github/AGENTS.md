@@ -15,6 +15,39 @@ This repository uses repo-native custom agents for recurring roles. The starter 
 
 Shared role intent lives in `.github/roles/tool-access.json`. Use that file when deciding whether to add a new agent or when tightening tool boundaries across the starter. The file includes a `toolDefinitions` section explaining each capability and an `agentCapabilityMatrix` section with per-agent tool access details and scope notes.
 
+## Engineering Team Topology
+
+For multi-stage work, use `delegation-supervisor` as the engineering manager and tech lead. It owns the task board, assigns bounded tasks to approved specialists, reconciles results, and declares completion only after verification evidence.
+
+| Squad | Agents | Owns |
+| --- | --- | --- |
+| Discovery | `analyst`, `tech-planner` | Requirements, research, options, design, ADR |
+| Architecture | `architecture-reviewer` | Boundaries, contracts, architecture fit |
+| Implementation | `senior-software-engineer`, `tdd-vitest` | Code, tests, focused delivery |
+| Quality and Security | `code-reviewer`, `qa`, `security-reviewer` | Review, verification, security |
+| Delivery | `documentation-maintainer`, `process-improvement` | Docs, changelogs, release notes, retro |
+| Management | `delegation-supervisor` | Task board, routing, delegation, reconciliation |
+| Approval | `orchestration-coordinator` | Human-approved transitions, when the overlay is enabled |
+
+v1 uses exactly one delegation level. Specialists do not delegate. This topology applies when `overlay-supervisor-orchestration` is enabled; otherwise use the guided handoff chains. See `docs/runbooks/engineering-team.md` for SDLC stages, task board statuses, ceremonies, and escalation. Use `run-engineering-team.prompt.md` as the single entry point for a multi-stage project or feature.
+
+## Task Assignment Contract
+
+Every delegated task states:
+
+- Task ID and parent objective
+- Owner and reviewer
+- Scope and out-of-scope
+- Acceptance criteria
+- Declared write set
+- Dependencies and parallel safety
+- Required evidence
+- Stop conditions
+- Return format shaped by `delegation-result.schema.json`
+- Approval category, if any
+
+A task without acceptance criteria or a bounded write set is not ready for implementation.
+
 ## Guided Handoff Contract
 
 Every agent should end its output with these fields:

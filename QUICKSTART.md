@@ -74,6 +74,8 @@ Goals: <goal 1>, <goal 2>, <goal 3>.
 
 If you want a rollback point, commit the untouched starter before running either prompt.
 
+**For a multi-stage project:** use `run-engineering-team.prompt.md`. The supervisor builds a task board and assigns approved discovery, architecture, implementation, review, QA, security, and documentation specialists while keeping one delegation level. This requires the supervisor overlay; if it is disabled, the prompt produces a guided plan instead.
+
 ### 4. Create the application directory
 
 PowerShell:
@@ -134,7 +136,7 @@ Use Team Mode for application development: core instructions, agents, skills, pr
 
 ## The Daily Loop
 
-1. Use `build-feature.prompt.md` for one feature.
+1. Use `run-engineering-team.prompt.md` for multi-stage work, or `build-feature.prompt.md` for one feature.
 2. Review the diff with `code-reviewer`.
 3. Verify with `qa`.
 4. Update `CHANGELOG.md` and `DOC-CHANGELOG.md`.
