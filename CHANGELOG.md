@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Close the fourth agentic engine review findings
+
+- Area: orchestration engine, repository hygiene, runbook
+- Change type: fix, test, docs
+- Summary: rejects malformed URLs and evidence URLs that embed credentials; catches `ValueError` from `urlparse` and path resolution; reports corrupt state and an invalid state directory as `[ERROR]` lines instead of tracebacks; catches `(OSError, ValueError)` at the CLI boundary; adds `__pycache__/` and `*.pyc` to `.gitignore`; documents the input-error contract. Self-tests grow from 41 to 46.
+- Reason: the fourth QA pass showed tracebacks on malformed IPv6 URLs and NUL paths, accepted URL credentials, tracebacks on corrupt state and an invalid state directory, and an unignored Python bytecode directory.
+- Affected files: .github/scripts/agentic_engine.py, .gitignore, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the fourth agentic engine hardening"
+- Validation: `python .github/scripts/agentic_engine.py selftest` passed 46 tests; probes confirm malformed URL, credentials, and NUL paths are rejected with `[ERROR]`, corrupt state reports `[ERROR]`, and `__pycache__` is ignored; both umbrellas passed all 11 checks; `STRAY-NONE`.
+- Discrepancies or follow-up: credential detection covers URL userinfo only; signed query strings are still accepted as evidence pointers and should be avoided by the operator.
+
 ### 2026-10-25 - Close the third agentic engine review findings
 
 - Area: orchestration engine, check scripts, runbook

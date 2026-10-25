@@ -12,3 +12,7 @@ update-09262026.md
 # Local runtime state and hook audit output
 .github/hooks/logs/
 .agentic/state/
+
+# Python bytecode
+__pycache__/
+*.pyc

@@ -215,11 +215,23 @@ def read_json_file(path_value: str) -> dict:
     return payload
 
 
+def read_state_file(path: Path) -> dict:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise EngineError(f"state file is not valid JSON: {path} ({exc})") from exc
+    except OSError as exc:
+        raise EngineError(f"state file cannot be read: {path} ({exc})") from exc
+    if not isinstance(payload, dict):
+        raise EngineError(f"state file must contain a JSON object: {path}")
+    return payload
+
+
 def load_state(state_dir: Path, run_id: str) -> dict:
     path = state_path(state_dir, run_id)
     if not path.is_file():
         raise EngineError(f"no state for run-id {run_id} in {state_dir}")
-    return json.loads(path.read_text(encoding="utf-8"))
+    return read_state_file(path)
 
 
 def save_state(state_dir: Path, state: dict) -> None:
@@ -283,23 +295,32 @@ def validate_evidence(evidence, repo_root: Path) -> list:
             if not payload:
                 problems.append(f"{pointer!r} has no content after the scheme")
             elif matched_scheme in ("http://", "https://"):
-                parsed = urlparse(pointer)
+                try:
+                    parsed = urlparse(pointer)
+                except ValueError as exc:
+                    problems.append(f"{pointer!r} is not a valid URL: {exc}")
+                    continue
                 if not parsed.netloc:
                     problems.append(f"{pointer!r} has no host after the scheme")
+                elif parsed.username is not None or parsed.password is not None:
+                    problems.append(f"{pointer!r} must not embed credentials")
             pointers.append(pointer)
             continue
         raw = Path(pointer)
         candidate = raw if raw.is_absolute() else repo_root / raw
         try:
             resolved = candidate.resolve()
-        except OSError:
-            problems.append(f"{pointer!r} cannot be resolved")
+            exists = resolved.exists()
+            is_file = resolved.is_file()
+            contained = resolved.is_relative_to(resolved_root)
+        except (OSError, ValueError) as exc:
+            problems.append(f"{pointer!r} cannot be resolved: {exc}")
             continue
-        if not resolved.exists():
+        if not exists:
             problems.append(f"{pointer!r} does not exist")
-        elif not resolved.is_file():
+        elif not is_file:
             problems.append(f"{pointer!r} is not a file")
-        elif not resolved.is_relative_to(resolved_root):
+        elif not contained:
             problems.append(
                 f"{pointer!r} is outside the repository root; "
                 "use an artifact:, screenshot:, trace:, or benchmark: scheme instead"
@@ -328,7 +349,12 @@ def _validate_write_set(write_set) -> None:
 @contextlib.contextmanager
 def run_lock(state_dir: Path, run_id: str):
     """Advisory per-run lock so concurrent records cannot lose updates."""
-    state_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        state_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise EngineError(f"state directory cannot be created: {state_dir} ({exc})") from exc
+    if not state_dir.is_dir():
+        raise EngineError(f"state path is not a directory: {state_dir}")
     lock_path = state_dir / f".{run_id}.lock"
     deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
     while True:
@@ -466,7 +492,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         if path.exists() and not args.force:
             raise EngineError(f"state already exists for run-id {args.run_id}; use --force to replace")
         if path.exists() and args.force:
-            previous = json.loads(path.read_text(encoding="utf-8"))
+            previous = read_state_file(path)
             if previous.get("stage") != "implement":
                 raise EngineError(
                     f"refusing to replace a run at stage {previous.get('stage')}; "
@@ -1748,6 +1774,134 @@ class EngineSelfTest(unittest.TestCase):
             )
         self.assertEqual(code, 1)
 
+    def test_malformed_url_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["http://[::1"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_url_credentials_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["http://user:pass@example.com"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_nul_path_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["bad\x00path.log"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_corrupt_state_reports_error(self) -> None:
+        self.init()
+        state_file = self.state_dir / "r1.json"
+        state_file.write_text("not json", encoding="utf-8")
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(buffer):
+            code = main(
+                [
+                    "status",
+                    "--run-id",
+                    "r1",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+        self.assertIn("[ERROR]", buffer.getvalue())
+
+    def test_state_dir_as_file_reports_error(self) -> None:
+        blocker = self.root / "state-file"
+        blocker.write_text("x", encoding="utf-8")
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(buffer):
+            code = main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(blocker),
+                ]
+            )
+        self.assertEqual(code, 1)
+        self.assertIn("[ERROR]", buffer.getvalue())
+
     def test_state_persists(self) -> None:
         self.init()
         code, payload = self.run_cli(["status", "--run-id", "r1"])
@@ -1820,6 +1974,9 @@ def main(argv: list | None = None) -> int:
         return args.func(args)
     except EngineError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError) as exc:
+        print(f"[ERROR] {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
 

@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the fourth agentic engine hardening
+
+- Area: agentic-engine runbook, repository hygiene
+- Change type: docs, runbook
+- Summary: documents the credential-free URL rule, the closed input-error contract, and the expanded self-test inventory; records the Python bytecode ignore rule.
+- Reason: the fourth QA and review pass changed enforceable behavior and error output.
+- Affected files: docs/runbooks/agentic-engine.md, .gitignore, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Close the fourth agentic engine review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: signed query strings are not rejected; operators should avoid them in evidence pointers.
+
 ### 2026-10-25 - Document the third agentic engine hardening
 
 - Area: agentic-engine runbook
