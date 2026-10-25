@@ -63,11 +63,17 @@ This repository is not Hermes Agent. Hermes is a stateful runtime. This starter 
 
 ## Quick Start
 
-1. Read `.github/copilot-instructions.md`.
-2. Choose an adoption mode in `docs/runbooks/starter-adoption.md`.
-3. Review `.github/starter-modules.json` to see core, optional, and overlay assets.
-4. Keep MCP, durable memory, and high-risk automation disabled until reviewed.
-5. Run starter validation before merging workflow changes.
+Start with [QUICKSTART.md](QUICKSTART.md) for the 10-minute path to a working app.
+
+1. Clone the starter as your project root, detach the starter history, and run `git init`.
+2. Open the project in VS Code and run the `initialize-new-project` prompt with your stack and goals.
+3. Add application code under `app/`.
+4. Run `build-feature.prompt.md` for the first vertical slice.
+5. Run the starter validation and your application's own tests before merging.
+
+For an existing app, use `docs/runbooks/adopting-existing-github.md` instead.
+
+Keep MCP servers, durable memory, and high-risk automation disabled until reviewed. Do not keep improving the starter while building the app; use `improve-repo.prompt.md` only on real friction.
 
 Validation commands:
 
@@ -76,12 +82,12 @@ bash .github/scripts/check-starter-workflow.sh
 ```
 
 ```powershell
-.github/scripts/check-starter-workflow.ps1
+pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1
 ```
 
 ## Start Here
 
-Read these five files, in this order, before your first change:
+Start with [QUICKSTART.md](QUICKSTART.md) for the fastest path to a working app, then read these five files in order before your first change:
 
 1. `.github/copilot-instructions.md` — the always-on baseline that every session inherits.
 2. `.github/AGENTS.md` — the specialist roles, the guided handoff contract, and the delegation triggers.
@@ -97,9 +103,9 @@ The starter earns its keep only when the repo stays the source of truth and the 
 
 ### 1. Run every task as a loop
 
-1. **Frame.** If the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
+1. **Frame.** If you have a PRD, design brief, or API contract, run `ingest-project-docs.prompt.md` first; if the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
 2. **Route.** Choose the smallest surface that fits the task, using the surface table below.
-3. **Deliver.** Use `senior-software-engineer`, or `tdd-vitest` only in repos that actually run Vitest.
+3. **Deliver.** Use `build-feature.prompt.md` for one feature end-to-end, or invoke `senior-software-engineer` directly; use `tdd-vitest` only in repos that actually run Vitest.
 4. **Verify.** Run the smallest relevant validation. Add `code-reviewer` and `qa` for anything user-facing, and `security-reviewer` when the change touches secrets, auth, command execution, hooks, MCP, memory, or dependency trust.
 5. **Record.** `CHANGELOG.md` for executable behavior, `DOC-CHANGELOG.md` for docs, and an ADR for durable decisions.
 6. **Validate.** Workflow-asset edits are not finished until the starter checks pass.
@@ -240,6 +246,8 @@ Overlay modules cover stack-specific guidance (frontend, backend, PHP/Laravel ec
 Prompt files are repeatable one-off tasks, not always-on rules. They live under `.github/prompts/` and include:
 
 - Existing repo onboarding.
+- End-to-end feature delivery through plan, implementation, review, and QA.
+- Project document ingestion for PRDs, design briefs, architecture notes, and API contracts (`ingest-project-docs.prompt.md`, run in the downstream project repo).
 - Small feature planning.
 - Small diff implementation.
 - Bug fixing with hypothesis and regression test.
@@ -252,6 +260,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 - CI failure debugging.
 - Problem structuring.
 - Hook policy rule updates.
+- Repo self-improvement loop (one bounded iteration at a time).
 - Game system design, mechanic implementation, performance profiling, and build preparation.
 
 Each prompt states what context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and expected output.
@@ -310,7 +319,7 @@ Both overlays are disabled by default and documented in `docs/runbooks/hermes-ru
 
 ## Evaluation Harness
 
-`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, Laravel components, gameplay mechanics, game performance triage, security review, docs/changelog updates, CI debugging, and problem structuring.
+`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, Laravel components, gameplay mechanics, game performance triage, security review, docs/changelog updates, CI debugging, problem structuring, document ingestion, and decision trails.
 
 Structure checks:
 
@@ -344,10 +353,11 @@ Unstructured problem:
 
 Workflow improvement:
 
-1. Use `process-improvement` with explicit approval.
+1. Use `process-improvement` with explicit approval, or run `improve-repo.prompt.md` for one bounded iteration.
 2. Update instructions, prompts, skills, agents, runbooks, or validators.
 3. Update changelogs.
 4. Run starter validation.
+5. Follow `docs/runbooks/self-improvement.md` for the loop contract and stop conditions.
 
 Existing repo adoption:
 

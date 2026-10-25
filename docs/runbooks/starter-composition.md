@@ -133,9 +133,16 @@ Add or keep the engine-agnostic game overlays:
 - `.github/instructions/game-performance.instructions.md`
 - `.github/instructions/game-assets-pipeline.instructions.md`
 
-If the repo builds browser games with Phaser, also add:
+For a browser game, add exactly one Phaser overlay matching the installed major version:
 
-- `.github/instructions/phaser.instructions.md`
+- `.github/instructions/phaser.instructions.md` for Phaser 3
+- `.github/instructions/js.phaser4.instructions.md` for Phaser 4
+
+Do not enable both; they declare the same `applyTo` scope.
+
+For a Go game, also add:
+
+- `.github/instructions/go.gamedev.instructions.md`
 
 Keep engine-agnostic gameplay, determinism, performance, and asset rules in the engine-agnostic overlays, and keep engine-specific rules (scene lifecycle, loader, scale manager, physics options) in the engine overlay.
 Scope game overlays by path such as `app/game/**` rather than by file extension, so they never attach to non-game TypeScript or JavaScript. Inside `app/game/`, the engine overlay takes precedence over the frontend or React overlay.

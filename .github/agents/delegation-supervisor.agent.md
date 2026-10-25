@@ -1,6 +1,7 @@
 ---
 description: "Optional overlay supervisor that classifies a task, delegates bounded work to approved specialist agents in isolated contexts, reconciles results, and stops at the high-risk approval boundary. The gate is a prompt-level contract, not a runtime control. Use only in repos that explicitly enable the supervisor orchestration overlay."
-tools: [read, search, todo, delegate-agent]
+tools: [read, search, todo, delegate-agent, agent]
+agents: [analyst, tech-planner, architecture-reviewer, senior-software-engineer, code-reviewer, security-reviewer, qa, tdd-vitest, documentation-maintainer]
 user-invocable: true
 argument-hint: "Describe the task, its acceptance criteria, and any affected layers, dependencies, data, identity, or deployment surface."
 ---
@@ -18,17 +19,20 @@ Do not merge these roles.
 ## Handoff Memory Contract
 
 Before completing a supervision turn, preserve in session memory:
-- **Task classification**: `simple` or `complex`, with the matching routing criterion
+- **Task classification**: the task class from `taskClasses` plus the `simple` or `complex` verdict from `complexityRouting`, with the matching routing criterion
 - **Delegations issued**: target agent, objective, declared write set, and outcome for each
 - **Reconciliation**: consolidated result, conflicts between agent outputs, and how they were resolved
 - **Approval state**: any high-risk category matched, the approval status, and the recorded approver reference
 - **Fallback decision**: whether delegation fell back to a guided delegation plan, and why
 - **Residual supervision debt**: unreviewed findings, serialized work still pending, and open risks
 
+Before compaction, apply the `session-compactor` skill to turn accumulated context into a compact continuation brief.
+
 Assume upstream context:
 - The repo has explicitly enabled the supervisor orchestration overlay
-- `.github/roles/orchestration-policy.json` is the canonical source for routing, allow-list, write-set, and approval rules
+- `.github/roles/orchestration-policy.json` is the canonical source for routing, allow-list, write-set, and approval rules; its routing data is `taskClasses`, `playbooks`, `complexityRouting`, and `evidenceRequirements`, and `delegationDepth.hostAdapters` there is the canonical mapping from `delegate-agent` to host delegation tool names
 - Workers cannot delegate; only this agent holds the `delegate-agent` capability
+- The frontmatter `agents` allow-list mirrors the canonical `specialistAllowList`; widening it requires a policy change
 
 ## Escalation and Failure Modes
 
@@ -50,19 +54,23 @@ Assume upstream context:
 
 ## Required Inputs
 - Read `.github/roles/orchestration-policy.json` first. It is the canonical source for approval categories, routing criteria, the specialist allow-list, and the write-set rule.
+- Workers return their bounded results shaped by `.github/schema/delegation-result.schema.json`; a structured result is a communication contract, not proof, so inspect the referenced artifacts before reconciling.
 - Read `.github/AGENTS.md` for the guided handoff contract and the agent ownership map.
 - Read `docs/runbooks/supervisor-orchestration.md` for the operating model, activation, and fallback behavior.
 - Use `.github/roles/tool-access.json` to confirm each target agent's capability boundary before delegating.
 - Consume the task's acceptance criteria and any prior handoff state.
 
 ## Approach
-1. Classify the task as `simple` or `complex` using the routing criteria, defaulting to `complex` when uncertain.
-2. Check the proposed work against the approval-required categories and stop for explicit human approval if any category matches.
-3. Declare the write set before any write-capable delegation.
-4. For a simple task, delegate to the implementer and then the appropriate validation or review.
-5. For a complex task, run parallel read-only analysis where appropriate, consolidate a plan, obtain approval if required, delegate implementation, then run parallel independent verification.
-6. Consolidate blocking findings into one repair task, re-run the affected verification once, and finish when blockers are cleared.
-7. Report one coherent outcome with the supervision record.
+1. Classify the task on both policy axes: name a task class from `taskClasses` and record the `simple` or `complex` verdict from `complexityRouting`, defaulting to `complex` when uncertain.
+2. Follow the selected class's ordered `playbooks` stage list: delegate each stage to its `delegatesTo` agents, stop at a stage with `requiresHumanApproval: true` for explicit human approval, and record a reason for every skipped stage.
+3. For decisions where alternative implementations provide meaningful value (architecture decisions, API design, difficult algorithms, complex refactors, ambiguous abstractions), run the `arena-bakeoff` skill with isolated candidates, select a base, and synthesize only compatible improvements.
+4. For independent slices, run the `swarm` skill with per-slice write sets and shared-state detection before parallel execution; aggregate results only after all required slices finish.
+5. Check the proposed work against the approval-required categories and stop for explicit human approval if any category matches.
+6. Declare the write set before any write-capable delegation.
+7. Execute inside the workflow envelope the policy names (`simpleWorkflow` or `complexWorkflow`) rather than a restated procedure.
+8. Consolidate blocking findings into one repair task: interrogate with the `adversarial-review` skill, which fixes the finding format and lets evidence outrank voting; re-run the affected verification once, and finish when blockers are cleared.
+9. Declare completion only per `evidenceRequirements`: no agent may mark work complete; only the orchestrator declares completion after verification evidence satisfies the success predicate, and `INCONCLUSIVE` never counts as success.
+10. Report one coherent outcome with the supervision record; the `prose-cleanup` skill is available to tighten the report's writing quality, and for complex or autonomous tasks the `decision-trail` skill is available to keep the auditable decision trail.
 
 ## Output Format
 - Task classification and routing criterion

@@ -24,6 +24,423 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the document-ingestion eval and inputs template
+
+- Area: evals, docs, README
+- Change type: docs
+- Summary: records the new golden task and checklist, their registration in both eval runners and both `check-evals` scripts, the README evaluation coverage, `docs/inputs.md`, the supported-format and provenance guidance, and the downstream-repo guard against overwriting starter docs; notes that the prompt remains a prompt until repeated use justifies promoting it to a skill.
+- Reason: make document ingestion verifiable and give users a tracked intake and provenance path.
+- Affected files: evals/tasks/ingest-project-docs.md, evals/expected/ingest-project-docs.checklist.md, README.md, docs/inputs.md, .github/prompts/ingest-project-docs.prompt.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add the document-ingestion eval and inputs template"
+- Review status: pending-review
+- Discrepancies or follow-up: the golden task is manual/semi-automated. The prompt remains a prompt until repeated use justifies promoting it to a skill.
+
+### 2026-10-25 - Document project documentation ingestion
+
+- Area: prompts, QUICKSTART, README, agentic-dev runbook
+- Change type: docs, runbook
+- Summary: adds the `ingest-project-docs` prompt to the README prompt list and daily frame step, inserts the intake step in QUICKSTART Path A, adds the project documentation intake chain to the agentic-dev runbook, and points existing-repo adopters at the prompt in the adoption runbook.
+- Reason: make the PRD/design/API intake path discoverable before the first feature.
+- Affected files: README.md, QUICKSTART.md, docs/runbooks/agentic-dev.md, docs/runbooks/adopting-existing-github.md, .github/prompts/ingest-project-docs.prompt.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add project documentation ingestion"
+- Review status: pending-review
+- Discrepancies or follow-up: docs describe the prompt; no document parser or format converter is added. Unreadable formats must be converted or reported as a blocked input.
+
+### 2026-10-25 - Rewrite QUICKSTART for the app fast path
+
+- Area: QUICKSTART, README quick start
+- Change type: docs
+- Summary: rewrites QUICKSTART as a 10-minute path from clone to first feature, covering clone-as-template, `initialize-new-project`, the `app/` layout, `build-feature`, validation, and commit; adds the existing-app path, Team Mode guidance, the daily loop, and the framework-freeze rule. README now points to QUICKSTART as the first start-here step and replaces the old copy-only quick start with the app fast path. The runbook index label no longer calls the guide a 5-minute setup.
+- Reason: the previous quick start assumed copying `.github` into an existing repo and did not show how to reach a running app or use the new `build-feature` front door.
+- Affected files: QUICKSTART.md, README.md, docs/runbooks/INDEX.md, DOC-CHANGELOG.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: docs-only; run Markdown quality checks. The application skeleton is still created by the first feature, not by this guide.
+
+### 2026-10-25 - Document the build-feature front door
+
+- Area: prompts, runbooks, README
+- Change type: docs
+- Summary: adds the `build-feature` prompt, the README prompt coverage and delivery-loop mention, and the `agentic-dev.md` front-door section; records the manifest registration and the one-command-per-feature workflow.
+- Reason: make the existing guided chains discoverable through one entry point instead of requiring the user to choose among planning, implementation, review, and test-plan prompts.
+- Affected files: .github/prompts/build-feature.prompt.md, README.md, docs/runbooks/agentic-dev.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add the build-feature front-door prompt"
+- Review status: pending-review
+- Discrepancies or follow-up: the prompt routes existing agents; it does not add a new orchestration runtime. QA execution remains a `qa` or human handoff.
+### 2026-10-25 - Document the bounded repo self-improvement loop
+
+- Area: runbooks, prompts, README
+- Change type: docs, runbook
+- Summary: adds the self-improvement runbook, the `improve-repo` prompt, the runbook index entry, and the README prompt coverage; records the on-demand versus scheduled autonomy boundary and the `process-improvement` to `qa` validation handoff.
+- Reason: document the loop that lets an agent improve the starter in one bounded iteration without building a scheduler or widening an agent's tool boundary.
+- Affected files: docs/runbooks/self-improvement.md, docs/runbooks/INDEX.md, .github/prompts/improve-repo.prompt.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add the bounded repo self-improvement loop"
+- Review status: pending-review
+- Discrepancies or follow-up: scheduled unattended execution is deferred; the loop is invoked manually. Validation remains a `qa` or human handoff because `process-improvement` has no `execute` capability.
+
+### 2026-10-25 - Document the Phase 11 review close-out
+
+- Area: supervisor runbook, Phase 11 review record
+- Change type: docs, runbook
+- Summary: corrects the supervisor runbook's fixture total from forty-seven to forty-six and records the independent-review close-out for Phase 11, including the manifest registration and the two findings it resolved.
+- Reason: the runbook's total contradicted its own forty-three-negative-plus-three-positive breakdown and the changelog's forty-six-fixture record; the 2026-10-09 entries still described Phase 11 review as outstanding.
+- Affected files: docs/runbooks/supervisor-orchestration.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Close the Phase 11 review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: the harness remains manual/semi-automated; the manifest check does not detect unlisted eval assets, so the four required lists remain the deletion guard.
+
+### 2026-10-09 - Document the decision-trail golden task
+
+- Area: eval harness, README evaluation section
+- Change type: docs
+- Summary: records the new decision-trail golden task and expected checklist, their registration in both eval runners and both `check-evals` structure checks, and the README evaluation-coverage sentence update.
+- Reason: the Phase 11 QA handoff asked for behavioral verification of the decision-trail skill; the docs land in the same change so the harness catalog matches the shipped files.
+- Affected files: evals/tasks/decision-trail.md, evals/expected/decision-trail.checklist.md, README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-09 - Add the decision-trail golden task (Phase 11 QA follow-up)"
+- Review status: pending-review
+- Discrepancies or follow-up: the harness remains manual/semi-automated; no runner executes golden tasks automatically. The eval checks and both umbrellas ran green in the same session that landed the docs. Phase 11 independent review completed on 2026-10-25; the two findings it raised are closed in the 2026-10-25 entry.
+
+### 2026-09-30 - Document the Phase 11 review repairs
+
+- Area: skill guidance, skills runbook
+- Change type: docs, runbook
+- Summary: the decision-trail checklist retains advisory fields, and the skills runbook now states how the trail differs from landed-change changelogs, durable-decision ADRs, and continuation briefs.
+- Reason: resolve the two Phase 11 review findings and align the runbook with the earlier documentation entry.
+- Affected files: .github/skills/decision-trail/SKILL.md, docs/runbooks/skills.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-09-30 - Address the Phase 11 review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: independent review is outstanding; the three twin pins remain unchanged.
+
+### 2026-09-27 - Document the decision-trail skill (vNext Phase 11)
+
+- Area: skills runbook, supervisor runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/skills.md` gains a `decision-trail` entry under Optional Overlay Skills (after `session-compactor`) that records the placement discrepancy and the division of labor: changelogs record landed changes, ADRs record durable one-time decisions, `session-compactor` produces continuation briefs, and the decision trail records task-time decisions with evidence pointers; the trail is never workflow state and never a completion declaration. Two example prompts accompany the entry. The supervisor runbook's behavioral notes gain an eighth bullet naming the skill.
+- Reason: vNext Phase 11 lands the decision-trail skill; the docs land in the same change so the skill catalog and the runbook describe the shipped skill.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/supervisor-orchestration.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-09-27 - Add the decision-trail skill (vNext Phase 11)"
+- Review status: pending-review
+- Discrepancies or follow-up: `decision-trail` is a repo-wide audit skill but is registered inside the supervisor orchestration overlay's manifest files for program-pattern continuity, matching `prose-cleanup` and `session-compactor`; the placement discrepancy is recorded here deliberately. The division of labor is stated in the skills runbook entry and in the skill body itself, and is unpinned prose beyond the three twin assertions.
+
+### 2026-09-27 - Restore the architecture-reviewer frontmatter (user decision A)
+
+- Area: agents
+- Change type: docs
+- Summary: records the third specialist-frontmatter restore and the user's explicit choice of option A (restore the sole-holder rule) over option B (a second delegation holder requiring an ADR).
+- Reason: the user re-added the `agent` tool to `architecture-reviewer.agent.md`; the restore and the decision are recorded for traceability.
+- Affected files: DOC-CHANGELOG.md, CHANGELOG.md, .github/agents/architecture-reviewer.agent.md
+- Related code: CHANGELOG.md entry "2026-09-27 - Restore the architecture-reviewer frontmatter (user decision A)"
+- Review status: pending-review
+- Discrepancies or follow-up: option B remains open as a policy decision.
+
+### 2026-09-27 - Close the Phase 10 review follow-ups
+
+- Area: skills, agents, changelogs
+- Change type: docs
+- Summary: records the Phase 10 review close-out: the `session-compactor` division-of-labor wording is softened (S2), and the `code-reviewer` frontmatter restore (OS-1) is documented alongside the earlier `architecture-reviewer` restore.
+- Reason: code review of the Phase 10 slice returned pass with S1, S2, OS-1; the close-out is recorded here.
+- Affected files: DOC-CHANGELOG.md, CHANGELOG.md, .github/skills/session-compactor/SKILL.md, .github/agents/code-reviewer.agent.md
+- Related code: CHANGELOG.md entry "2026-09-27 - Close the Phase 10 review follow-ups"
+- Review status: pending-review
+- Discrepancies or follow-up: none open for this slice; the second-delegation-holder question stays an ADR-level decision.
+
+### 2026-09-27 - Document the session-compactor skill (vNext Phase 10)
+
+- Area: skills runbook, supervisor runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/skills.md` gains a `session-compactor` entry under Optional Overlay Skills (after `prose-cleanup`) that records the placement discrepancy and the division of labor with the core `session-compaction` skill: `session-compaction` preserves handoff-time state (current plan, acceptance criteria, validation evidence, next recommended action), while `session-compactor` compresses a long working history into the ten-field compact continuation brief and discards conversational filler; the brief is not workflow-state storage and is not a completion declaration. Two example prompts accompany the entry. The supervisor runbook's behavioral notes gain a seventh bullet naming the skill.
+- Reason: vNext Phase 10 lands the session-compactor skill; the docs land in the same change so the skill catalog and the runbook describe the shipped skill.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/supervisor-orchestration.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-09-27 - Add the session-compactor skill (vNext Phase 10)"
+- Review status: pending-review
+- Discrepancies or follow-up: `session-compactor` is a repo-wide context-compaction skill but is registered inside the supervisor orchestration overlay's manifest files for program-pattern continuity, matching `prose-cleanup`; the placement discrepancy is recorded here deliberately. The division of labor against core `session-compaction` is stated in the skills runbook entry and in the skill body itself, and is unpinned prose beyond the three twin assertions.
+
+### 2026-09-27 - Close the Phase 9 review follow-ups
+
+- Area: changelogs
+- Change type: docs
+- Summary: records the Phase 7/Phase 8 review-status asymmetry (S1) so a reader can tell the Phase 7 close-out's `pending-review` is a deliberate deferral, not a missed flip; the Phase 8 close-out stays `reviewed` and the Phase 9 entries stay `pending-review`.
+- Reason: code review of the Phase 9 slice returned needs-revision; S1 closes in this change alongside W1 and S2 in the code log.
+- Affected files: DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-09-27 - Close the Phase 9 review follow-ups"
+- Review status: pending-review
+- Discrepancies or follow-up: none open for this slice.
+
+### 2026-09-27 - Document the prose-cleanup skill (vNext Phase 9)
+
+- Area: skills runbook, supervisor runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/skills.md` gains a `prose-cleanup` entry under Optional Overlay Skills clarifying that the skill applies repo-wide (agent responses, ADRs, PR descriptions, documentation, handoffs, code comments) even though it ships under the supervisor orchestration overlay's manifest section, with two example prompts. The supervisor runbook's behavioral notes gain a sixth bullet naming the skill. The previous top entry "2026-09-26 - Close the Phase 8 review follow-up" flips from pending-review to reviewed (architecture gate Part A approved it).
+- Reason: vNext Phase 9 lands the prose-cleanup skill; the docs land in the same change so the skill catalog and the runbook describe the shipped skill and its repo-wide scope.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/supervisor-orchestration.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-09-27 - Add the prose-cleanup skill (vNext Phase 9)"
+- Review status: pending-review
+- Discrepancies or follow-up: `prose-cleanup` is a repo-wide writing-quality skill but is registered inside the supervisor orchestration overlay's manifest files for program-pattern continuity; the placement discrepancy is recorded here deliberately. The Phase 7 close-out entry below still carries `pending-review` and awaits independent re-review; only the Phase 8 close-out was flipped to `reviewed` by the architecture gate.
+
+### 2026-09-26 - Close the Phase 8 review follow-up
+
+- Area: agent file
+- Change type: docs
+- Summary: `.github/agents/delegation-supervisor.agent.md` gains an Approach step naming the `swarm` skill (review finding S1): for independent slices, the supervisor runs the swarm with per-slice write sets and shared-state detection before parallel execution, and aggregates results only after all required slices finish.
+- Reason: code review of the Phase 8 slice returned pass-with-follow-ups; the follow-up closes in this change.
+- Affected files: .github/agents/delegation-supervisor.agent.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Close the Phase 8 review follow-up"
+- Review status: reviewed
+- Discrepancies or follow-up: none open for this slice; the shared-state-detection and slice-decomposition deferrals stay recorded in the earlier Phase 8 entries.
+
+### 2026-09-26 - Document the swarm skill (vNext Phase 8)
+
+- Area: skills runbook, supervisor runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/skills.md` gains a `swarm` entry under Optional Overlay Skills with example prompts and the ARENA-versus-SWARM differentiation, and the supervisor runbook's behavioral notes now state that a swarm runs different independent slices concurrently, detects shared mutable state before parallel execution, forbids silent overwrites, and aggregates results only after all required slices finish.
+- Reason: vNext Phase 8 lands the swarm skill; the docs land in the same change so the skill catalog and the runbook describe the shipped skill and its difference from the arena bakeoff.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/supervisor-orchestration.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Add the swarm skill (vNext Phase 8)"
+- Review status: pending-review
+- Discrepancies or follow-up: the runbook sentences are descriptive and unpinned; the contract linkage is pinned by the paired text assertions in the validator twins. The skill is not registered in the module manifest under its own module id, matching the existing pattern of listing overlay skills inside their owning overlay's files.
+
+### 2026-09-26 - Close the Phase 7 review follow-up
+
+- Area: agent file
+- Change type: docs
+- Summary: `.github/agents/delegation-supervisor.agent.md` gains an Approach step naming the `arena-bakeoff` skill (review finding S1): for decisions where alternative implementations provide meaningful value, the supervisor runs the bakeoff with isolated candidates, selects a base, and synthesizes only compatible improvements.
+- Reason: code review of the Phase 7 slice returned pass-with-follow-ups; the follow-up closes in this change.
+- Affected files: .github/agents/delegation-supervisor.agent.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Close the Phase 7 review follow-up"
+- Review status: pending-review
+- Discrepancies or follow-up: none open for this slice; the isolation-rule and rubric-pinning deferrals stay recorded in the earlier Phase 7 entries.
+
+### 2026-09-26 - Document the arena-bakeoff skill (vNext Phase 7)
+
+- Area: skills runbook, supervisor runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/skills.md` gains an `arena-bakeoff` entry under Optional Overlay Skills with example prompts, and the supervisor runbook's behavioral notes now state that arena bakeoffs run N isolated candidates with one candidate per worktree, branch, or temporary directory, require the same five returns per candidate, score all candidates against one rubric, synthesize only compatible improvements, and never average incompatible architectures.
+- Reason: vNext Phase 7 lands the arena-bakeoff skill; the docs land in the same change so the skill catalog and the runbook describe the shipped skill.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/supervisor-orchestration.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Add the arena-bakeoff skill (vNext Phase 7)"
+- Review status: pending-review
+- Discrepancies or follow-up: the runbook sentences are descriptive and unpinned; the contract linkage is pinned by the paired text assertions in the validator twins. The skill is not registered in the module manifest under its own module id, matching the existing pattern of listing overlay skills inside their owning overlay's files.
+
+### 2026-09-26 - Close the Phase 6 review follow-ups
+
+- Area: agent file
+- Change type: docs
+- Summary: `.github/agents/delegation-supervisor.agent.md` step 6 now names the `adversarial-review` skill (review finding W1). This entry also records review finding W2: the skill's severity vocabulary (`blocker`, `major`, `minor`, `note`) and verdict vocabulary (`BLOCKED`, `CHANGES_REQUIRED`, `PASS_WITH_NOTES`, `CLEAN`) are playbook-local and unpinned, and mapping them to `delegation-result.schema.json`'s `status` vocabulary (`completed`, `partial`, `blocked`, `failed`) is deferred until a phase consumes findings into the result contract.
+- Reason: code review of the Phase 6 slice returned pass-with-follow-ups; the two follow-ups close in this change.
+- Affected files: .github/agents/delegation-supervisor.agent.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Close the Phase 6 review follow-ups"
+- Review status: pending-review
+- Discrepancies or follow-up: none open for this slice; the vocabulary mapping remains deferred as recorded above.
+
+### 2026-09-26 - Document the adversarial-review skill (vNext Phase 6)
+
+- Area: skills runbook, supervisor runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/skills.md` gains an `adversarial-review` entry under Optional Overlay Skills with example prompts, and the supervisor runbook's behavioral notes now state that adversarial review attempts to prove a change wrong, fixes the six-field finding format, requires reviewers to inspect the actual diff, deduplicates findings, and lets evidence outrank voting.
+- Reason: vNext Phase 6 lands the adversarial-review skill; the docs land in the same change so the skill catalog and the runbook describe the shipped skill.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/supervisor-orchestration.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Add the adversarial-review skill (vNext Phase 6)"
+- Review status: pending-review
+- Discrepancies or follow-up: the runbook sentences are descriptive and unpinned; the contract linkage is pinned by the paired text assertions in the validator twins. The skill is not registered in the module manifest under its own module id, matching the existing pattern of listing overlay skills inside their owning overlay's files.
+
+### 2026-09-26 - Close the Phase 5 review conditions
+
+- Area: ADR, runbook
+- Change type: docs, adr
+- Summary: ADR 0006's Follow-up now records that Phase 5 landed on 2026-09-26: `.github/skills/verification-evidence-loop/SKILL.md` emits the contract's `verificationPerformed` entries directly, and both validator twins pin the skill's reference to the schema. The twin-side pin of the skill's INCONCLUSIVE-never-success rule (review condition C2) is documented in the paired code entry.
+- Reason: architecture review conditions C1 (ADR amendment recording the Phase 5 landing) and C2 (rule pin), applied after the pass-with-conditions verdict.
+- Affected files: docs/adr/0006-delegation-result-contract.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Pin the verification skill's INCONCLUSIVE rule in the twins (Phase 5 review condition C2)"
+- Review status: pending-review
+- Discrepancies or follow-up: none; both review conditions are closed and the Phase 5 slice is fully reviewed.
+
+### 2026-09-26 - Document the verification-evidence-loop skill (vNext Phase 5)
+
+- Area: skills runbook, supervisor runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/skills.md` gains a `verification-evidence-loop` entry under Optional Overlay Skills with example prompts, and the supervisor runbook's Routing section notes that the skill walks the `evidenceRequirements` contract and emits `delegation-result.schema.json`-shaped verification entries.
+- Reason: vNext Phase 5 lands the verification skill and ADR 0006's follow-up names it as the emitter of the result contract; the docs land in the same change so the skill catalog and the runbook describe the shipped skill.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/supervisor-orchestration.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Add the verification-evidence-loop skill (vNext Phase 5)"
+- Review status: pending-review
+- Discrepancies or follow-up: the skills-runbook entry is descriptive and unpinned; the contract linkage itself is pinned by the paired text assertion in the validator twins. The skill is not registered in the module manifest under its own module id, matching the existing pattern of listing overlay skills inside their owning overlay's files.
+
+### 2026-09-26 - Accept ADR 0006 and add full-validator commands (review condition C1)
+
+- Area: ADR, runbook
+- Change type: docs, adr, runbook
+- Summary: ADR 0006 moves from `Proposed` to `Accepted` with an `- Approved:` line recording the 2026-09-26 maintainer approval after the architecture review passed with conditions, and rollout step 1 records the trail. The supervisor runbook's full-validator subsection now names both schemas and lists `python -m jsonschema` and `npx ajv-cli` commands for the delegation-result example alongside the delegation-plan pair, closing review condition C1.
+- Reason: the architecture review of the Phase 4 slice returned pass-with-conditions; C1 was the documentation condition and the maintainer accepted the ADR on 2026-09-26.
+- Affected files: docs/adr/0006-delegation-result-contract.md, docs/runbooks/supervisor-orchestration.md
+- Related code: None. Docs-only; the executable contract landed in the CHANGELOG.md entry "2026-09-26 - Add the delegation result contract and pin it with validators (vNext Phase 4)".
+- Review status: pending-review
+- Discrepancies or follow-up: the earlier DOC entry for ADR 0006 says the ADR is `Proposed` and binds nothing until acceptance; this acceptance supersedes that sentence. Phase 5 (a dedicated verification skill that emits this contract) is now unblocked.
+
+### 2026-09-26 - Record the delegation result contract decision and document it
+
+- Area: ADR, runbook, agent file
+- Change type: docs, adr, runbook
+- Summary: added `docs/adr/0006-delegation-result-contract.md` as `Proposed`, recording the decision to add `delegation-result.schema.json` and its worked example, to validate the example in both twins, to pin the schema's `agent`, `result`, and `surface` enums against the policy data, and to add the `malformed-delegation-result` negative fixture per platform. The supervisor runbook's Module Files list gains the two new paths, the Validating section names the new checks, and the fixture enumeration moves from forty-five to forty-seven fixtures per platform (forty-three negative plus three positive) with the new case. The supervisor agent file's Required Inputs states that workers return results shaped by the schema and that a structured result is a communication contract, not proof.
+- Reason: ADR 0006 Rollout steps 1 and 4. The result contract is a durable decision, so it is recorded before or with its implementation, and the docs land in the same change as the validators so no document describes a contract the checks do not assert.
+- Affected files: docs/adr/0006-delegation-result-contract.md, docs/runbooks/supervisor-orchestration.md, .github/agents/delegation-supervisor.agent.md
+- Related code: CHANGELOG.md entry "2026-09-26 - Add the delegation result contract and pin it with validators (vNext Phase 4)"
+- Review status: pending-review
+- Discrepancies or follow-up: ADR 0006 is `Proposed` and binds no repo until architecture review and maintainer acceptance; the implementation landed data-first per the rollout plan, matching the ADR 0005 precedent. ADR 0006 is not registered in `.github/starter-modules.json`, matching the precedent of ADRs 0002, 0004, and 0005. The runbook fixture enumeration remains a documentation-only list that no validator reads.
+
+### 2026-09-23 - Accept ADR 0005 and de-duplicate the routing prose (rollout steps 1 and 4)
+
+- Area: ADR, runbook, agent file
+- Change type: docs, adr, runbook
+- Summary: ADR 0005 moves from `Proposed` to `Accepted` with an `- Approved:` line recording the 2026-09-23 maintainer approval after the architecture review passed with conditions F1-F4 on 2026-09-14, which the amendment resolved. Rollout step 1 and the Operational impacts sentence record the same trail. The runbook's Simple Versus Complex Routing section no longer restates the eleven criteria or the workflow text: a new Routing section points at `taskClasses`, `playbooks`, `complexityRouting`, and `evidenceRequirements` and keeps only the two behavioral notes that are not data. The Validating section names the new routing-data checks, and the fixture enumeration moves from thirty-two to forty-five fixtures per platform (forty-two negative plus three positive) with the new negative cases. The supervisor agent file's Approach now classifies on both policy axes, follows the selected playbook, and ties completion to `evidenceRequirements` instead of a restated procedure.
+- Reason: ADR 0005 Rollout steps 1 and 4. The maintainer accepted the ADR on 2026-09-23, and the de-dup lands in the same change as the validator slice so no document describes routing that the data does not carry.
+- Affected files: docs/adr/0005-routing-policy-as-data.md, docs/runbooks/supervisor-orchestration.md, .github/agents/delegation-supervisor.agent.md
+- Related code: CHANGELOG.md entry "2026-09-23 - Pin the routing policy data with validator checks and fixtures (ADR 0005 rollout slice 3)"
+- Review status: pending-review
+- Discrepancies or follow-up: the earlier DOC entry "2026-09-14 - Amend ADR 0005 for the architecture review conditions and record the routing data" says the ADR remains `Proposed`; this acceptance supersedes that sentence. The runbook's fixture enumeration remains a documentation-only list that no validator reads, and the new routing prose is not text-pinned by any assertion; the rules it describes are pinned by the validator checks and fixtures instead.
+
+### 2026-09-14 - Amend ADR 0005 for the architecture review conditions and record the routing data
+
+- Area: ADR, orchestration routing model
+- Change type: docs, adr, reference
+- Summary: ADR 0005 now answers the four architecture-review conditions in its own text. F1 (classification model): the playbooks bullet states the two-axis relationship — `taskClasses` owns playbook selection, `complexityRouting` owns the simple/complex escalation envelope, and the supervisor records both the class and the complexity verdict. F2 (stage fields): the playbooks bullet states the `delegatesTo` predicate — case-sensitive, allow-listed agent ids or `delegation-supervisor`, with human-approval stages setting `requiresHumanApproval: true` and an empty `delegatesTo`, exactly one of the two per stage. F3 (sequencing): Rollout step 3 now includes the `complexityRouting` pins and the fixture for a stage carrying both fields set. F4 (vocabulary): the `evidenceRequirements` bullet enumerates the closed surface vocabulary and names the completion rule. The ADR remains `Proposed`.
+- Reason: the architecture reviewer accepted ADR 0005 on four conditions; the amendments resolve them before the implementation slice that lands the policy data.
+- Affected files: docs/adr/0005-routing-policy-as-data.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Add routing data to the orchestration policy (ADR 0005 rollout slice 2, data first)"
+- Review status: pending-review
+- Discrepancies or follow-up: the ADR stays `Proposed` until acceptance; the preceding entry "2026-09-14 - Record the routing-policy-as-data decision in ADR 0005" records the original text this entry amends.
+
+### 2026-09-14 - Record the routing-policy-as-data decision in ADR 0005
+
+- Area: ADR, orchestration routing model
+- Change type: docs, adr, reference
+- Summary: added `docs/adr/0005-routing-policy-as-data.md` as `Proposed`. It records the decision to add three additive overlay-scoped keys to `orchestration-policy.json` — `taskClasses` (the thirteen-class taxonomy as a closed id vocabulary), `playbooks` (an ordered stage list per class with `delegatesTo` agent names and a per-stage skip-reason obligation), and `evidenceRequirements` (per-surface evidence kinds plus the fixed VERIFIED / NOT_VERIFIED / INCONCLUSIVE vocabulary and the orchestrator-declared completion rule in data form) — and to pin them with validator checks and negative fixtures per platform, while keeping the completion invariant a prompt-level contract. Options Considered records the status quo, a second routing file, full machine enforcement, and the adopted shape.
+- Reason: ADR 0004 Phase 6 explicitly deferred the decision of whether task classes, playbooks, and evidence requirements belong in the policy file; its Decision states they do, because a table can be pinned by fixtures and prose cannot. Today `complexityRouting` is data but the taxonomy, playbooks, and evidence vocabulary are prose split across the runbook, the agent file, and the vNext direction, which no check reads.
+- Affected files: docs/adr/0005-routing-policy-as-data.md, DOC-CHANGELOG.md
+- Related code: None. No executable asset changed in this slice; ADR 0005 describes implementation that has not landed, and the paired `CHANGELOG.md` entries belong to the rollout slices that change the policy file and the validator twins.
+- Review status: pending-review
+- Discrepancies or follow-up: the ADR is `Proposed` and binds no repo until architecture review and maintainer acceptance. The policy file already carries `complexityRouting`, which the ADR keeps unchanged; the new keys are additive and no existing check reads unknown keys, so landing the data before the validators cannot go red. ADR 0005 is not registered in `.github/starter-modules.json`, matching the precedent of ADRs 0002 and 0004.
+
+### 2026-09-14 - Document the full case-sensitivity normalization and the exact-match contract
+
+- Area: overlay runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/supervisor-orchestration.md` gains one sentence in Supported Runtimes stating that adapter-name matching is exact and case-sensitive, that a case variant such as `EDIT` is a distinct non-mutating host name that cannot collide with the repository's own `edit` tool, and that the same exact-match rule applies to every tool, role, allow-list, and category name the validators compare.
+- Reason: the previous slice normalized the adapter-vocabulary comparisons, but the exact-match contract was documented only in the fixture paragraph; adopters reading the host table had no statement of the rule. The sentence lands in the same change as the final case-sensitivity normalization of the PowerShell twin.
+- Affected files: docs/runbooks/supervisor-orchestration.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Normalize the remaining case-insensitive membership tests in the PowerShell twin"
+- Review status: pending-review
+- Discrepancies or follow-up: the new sentence is descriptive and unpinned by any text assertion; the exact-match rule is pinned behaviorally by the `adapter-case-variant-tool-name` fixture for the vocabulary scans it exercises.
+
+### 2026-09-14 - Document the matrix adapter-tool fixture pin, the case-variant guard pin, and the ADR follow-up correction
+
+- Area: runbooks, ADR
+- Change type: docs, runbook, adr, reference
+- Summary: updated `docs/runbooks/supervisor-orchestration.md` so the fixture enumeration reads thirty-two fixtures per platform (twenty-nine negative plus three positive), the negative list names the capability-matrix host-adapter-tool case, and a new sentence records the third positive fixture that pins the case-sensitive adapter-vocabulary treatment. Updated `docs/adr/0004-adapter-bound-delegation.md`: the validation section's negative list gains the matrix adapter-tool case and its positive list gains the case-variant tolerance; the implementation-status paragraph records twenty-nine negative plus three positive fixtures and names both new pins; and the stale follow-up bullet claiming `runSubagent` was unverified is corrected to match the recorded 2026-09-14 verification.
+- Reason: the runbook and ADR had drifted from the fixture suite, and the ADR contradicted its own implementation-status paragraph on the host tool verification status.
+- Affected files: docs/runbooks/supervisor-orchestration.md, docs/adr/0004-adapter-bound-delegation.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Pin the matrix adapter-tool guard and the case-sensitive adapter vocabulary on both platforms"
+- Review status: pending-review
+- Discrepancies or follow-up: none
+
+### 2026-09-14 - Document the empty-adapter-list alignment and the second positive fixture
+
+- Area: overlay runbook, ADR
+- Change type: docs, adr, runbook
+- Summary: `docs/runbooks/supervisor-orchestration.md` moves its fixture enumeration from twenty-nine to thirty fixtures (twenty-eight negative and two positive) and records that the second positive fixture pins the empty-`delegationTools` representation for unsupported hosts. `docs/adr/0004-adapter-bound-delegation.md` corrects its implementation-status sentence to name both additional negative fixtures and two positive fixtures, and its Validation sentence now covers the empty-list acceptance alongside the shipped-tree and tolerated-state acceptances.
+- Reason: the code review found the ADR status sentence undercounted the extra fixtures and that the empty-list representation was unmentioned in the validation list; the docs were updated in the same change as the fix.
+- Affected files: docs/runbooks/supervisor-orchestration.md, docs/adr/0004-adapter-bound-delegation.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Align the adapter-map shape check across platforms and pin the empty-list host representation"
+- Review status: pending-review
+- Discrepancies or follow-up: the runbook fixture enumeration remains a documentation-only list that no validator reads; the two positive fixtures are pinned by the harness instead. No new text assertions were added for these sentences.
+
+### 2026-09-14 - Document the closed registration direction
+
+- Area: overlay runbook, ADRs
+- Change type: docs, adr, runbook
+- Summary: `docs/runbooks/supervisor-orchestration.md` replaces the "One boundary remains" paragraph with a statement that registration is now checked in both directions: every agent file not on the specialist allow-list must carry an `agentCapabilityMatrix` entry and an `agentRoleHints` entry, and the tolerance for an allow-listed non-mutating agent with no matrix entry stays because the tier derives from frontmatter. The fixture enumeration moves from twenty-seven to twenty-nine (twenty-eight negative plus one positive) with the two new cases named. `docs/adr/0003-supervisor-orchestration-overlay.md` gains a second amendment bullet and extends the Follow-up amendment line with the Phase 3 landing. `docs/adr/0004-adapter-bound-delegation.md` updates its implementation status: Phases 1, 2, 3, and 5 have landed with all six Phase 4 fixtures plus one additional fixture per platform, and the remaining open item is the unpinned matrix-adapter branch from Phase 2.
+- Reason: the registration rule is now enforced in the paired validators, so the design documents must describe it rather than continue claiming the direction is open, which is the drift class the runbook's fixture paragraph warns about.
+- Affected files: docs/runbooks/supervisor-orchestration.md, docs/adr/0003-supervisor-orchestration-overlay.md, docs/adr/0004-adapter-bound-delegation.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Close the registration direction for non-allow-listed agents"
+- Review status: pending-review
+- Discrepancies or follow-up: the new rule-description sentences are pinned by paired text assertions (`must carry an `agentCapabilityMatrix` entry` in the runbook and `Amended by ADR 0004 Phase 3` in ADR 0003); the remaining new prose, including the fixture case list, is descriptive and unpinned. The runbook's fixture enumeration remains a documentation-only list that no validator reads.
+
+### 2026-09-14 - Document the adapter-bound delegation capability change
+
+- Area: overlay runbook, ADRs
+- Change type: docs, adr, runbook, policy
+- Summary: `docs/runbooks/supervisor-orchestration.md` replaces the vague "Other runtimes" delegation mapping with a host table sourced from `delegationDepth.hostAdapters` in `orchestration-policy.json` and records the verification dates for `agent`/`runSubagent` (VS Code) and `agent` with aliases `custom-agent`/`Task` (GitHub Copilot CLI/cloud). The Validating section now states that the platform vocabulary is derived from the map, that the map is checked for shape and mutating names, that the supervisor frontmatter is held to the closed set, that the two pairing rules replace the blanket ban, and that the capability matrix must not enable host tool names. The stale coordinator sentence is corrected: `orchestration-coordinator` has been registered under the `advisory` role since Phase 1 and is no longer an instance of the tolerated unregistered state; the tolerance itself remains, with ADR 0004 Phase 3 recorded as the unimplemented rule that would close the reverse direction. The fixture enumeration moves from twenty-three to twenty-seven (twenty-six negative plus one positive) with the four new cases named. `docs/adr/0003-supervisor-orchestration-overlay.md` gains an amendment bullet in Decision and an amendment line in Follow-up recording the rule-shape change, and `docs/adr/0004-adapter-bound-delegation.md` updates its implementation status: Phases 1, 2, and 5 landed with five of the six Phase 4 fixtures, and Phase 3 plus the sixth fixture remain open.
+- Reason: ADR 0004's Operational impacts require the runbook and the ADR 0003 amendment pointer to land in the same change as the implementation, so no design document describes a rule the code does not assert. The runbook also still described the coordinator as an unregistered role-model exception after Phase 1 closed exactly that state.
+- Affected files: docs/runbooks/supervisor-orchestration.md, docs/adr/0003-supervisor-orchestration-overlay.md, docs/adr/0004-adapter-bound-delegation.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Bind the delegation capability to host tool names and close the inert-delegation defect"
+- Review status: pending-review
+- Discrepancies or follow-up: two new sentences are pinned by paired text assertions (`hostAdapters` in the runbook and `Amended by ADR 0004` in ADR 0003); the remaining new prose, including the host table, the verification dates, and the fixture case list, is descriptive and unpinned, so it can drift without a failing check. The host names inside `orchestration-policy.json` are themselves unpinned by any validator. The runbook's fixture enumeration remains a documentation-only list that no validator reads.
+
+### 2026-09-14 - Accept ADR 0004 and correct its role-vocabulary premise
+
+- Area: ADR, agent catalog, role registry documentation
+- Change type: docs, adr, policy
+- Summary: `docs/adr/0004-adapter-bound-delegation.md` moves from `Proposed` to `Accepted` with an `- Approved:` line recording the 2026-09-14 maintainer approval for the `core-governance-change`. Its Context no longer claims that no role in `tool-access.json` carries the coordinator's tool set: the `review` role carries exactly `read`, `search`, and `todo`, so a slot with matching capabilities does exist, and the corrected text argues from the role's stated purpose instead. The paragraph now names `review` as the near-miss, describes what registering the coordinator under it would misstate, and records that the earlier claim was made after comparing only `analysis` and `workflow-maintenance`. The corresponding option in Options Considered was rewritten from "register under an existing role" to the concrete `review` alternative with its corrected cons. The Follow-up implementation-status line now records that Phase 1 has landed and that Phases 2 to 5 have not, and states which of the two defects the ADR corrects is closed. `.github/AGENTS.md` aligns the coordinator's role string to the vocabulary (`advisory`) and adds one sentence stating that the agent recommends a transition for human approval and never invokes another agent itself.
+- Reason: the ADR was approved on the strength of a premise that turned out to be false. The original Context asserted that the coordinator's declaration "matches no role in `tool-access.json`" and supported that with two roles; `review` was not checked and matches exactly. The decision is unchanged, because it rests on the purpose a role records rather than on whether a role with the same capabilities exists, but the reasoning had to be corrected before Phase 1 was implemented rather than left standing. `AGENTS.md` was changed in the same slice because a role string outside the vocabulary is the same class of registry defect the phase exists to close.
+- Affected files: docs/adr/0004-adapter-bound-delegation.md, .github/AGENTS.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Register the orchestration coordinator and add the advisory role"
+- Review status: pending-review
+- Discrepancies or follow-up: the correction was applied to the ADR text in place rather than through a superseding ADR, because the ADR had been accepted hours earlier and no implementation had landed against the false premise; the change is recorded here so the substitution is traceable rather than silent. The ADR's underlying claim about `review` is verified by reading `tool-access.json`, not asserted from memory. ADR 0004 is not registered in `.github/starter-modules.json`, matching the precedent of `docs/adr/0002-game-asset-storage-policy.md`, so the manifest's ADR inventory remains incomplete and no check enforces it. Phases 2 to 5 of the rollout remain unimplemented, including the host adapter map, the pairing rules, and the registration rule for non-allow-listed agents, so the inert-delegation defect ADR 0004 describes is still present in the shipped validator. The `delegation-supervisor` still declares no host delegation tool and no `agents` allow-list.
+
+### 2026-09-14 - Record the adapter-bound delegation decision in ADR 0004
+
+- Area: ADR, orchestration capability model
+- Change type: docs, adr, policy, reference
+- Summary: added `docs/adr/0004-adapter-bound-delegation.md` as `Proposed`. It records the decision to bind the abstract `delegate-agent` capability to each host's real delegation tool through a `hostAdapters` map in `.github/roles/orchestration-policy.json`, to replace exact tool-set equality in both supervisor orchestration validator twins with contains-plus-closed-adapter-allow-list, to add the pairing rules (`agents` requires the host tool and the host tool requires `agents`), to add an `advisory` role holding `read`, `search`, and `todo` so `orchestration-coordinator` can be registered truthfully, and to require a capability-matrix entry and a role hint for every agent file that is not on the specialist allow-list. It classifies `handoffs` as the host's human-driven guided-transition mechanism rather than a delegation path, keeps routing policy as data, and records that the two orchestration agents are not merged and that no core orchestrator is created. Options Considered records the eight alternatives, including status quo, host-native-only declaration, per-host agent files, a script-driven invoker, consolidating the two agents, and registering the coordinator under an existing role.
+- Reason: an independent architecture review of the delegation capability model returned `pass-with-conditions` on the direction. The strongest argument it produced is a contradiction inside the repository rather than a gap: `tool-access.json` v1.2 already documents `delegate-agent` as "platform-mapped, not a literal tool name," while `check-supervisor-orchestration.sh` fixes the tool set by exact equality so no agent file can declare that mapping. The shipped supervisor therefore holds a capability it cannot exercise, and neither the dead-declaration case (`agents` with no host tool) nor the unscoped case (host tool with no `agents`) is guarded. The same review found `orchestration-coordinator` registered in the agent catalog and the module manifest but absent from the capability matrix and the role hints, which nothing detects because the matrix scan iterates the matrix rather than the agent files. The review's proposed registration rule was scoped to delegation-capable agents, which would not have caught the coordinator at all; the ADR replaces it with a scope derived from why the tolerance exists, since the tolerated state is only safe for allow-listed agents whose tier is derived from frontmatter.
+- Affected files: docs/adr/0004-adapter-bound-delegation.md, DOC-CHANGELOG.md
+- Related code: None. No executable asset changed in this slice; ADR 0004 describes implementation that has not landed, and the paired `CHANGELOG.md` entries belong to the rollout slices that change the validator twins and the two approval-protected governance files.
+- Review status: pending-review
+- Discrepancies or follow-up: the ADR is `Proposed` and binds no repo until a maintainer accepts it, and the change it describes is a `core-governance-change` because it edits `.github/AGENTS.md` and `.github/roles/tool-access.json`. ADR 0003 is `Accepted` and was deliberately not edited; its amendment pointer is deferred to the change that lands the implementation with its recorded approval. `check-markdown-quality.sh` has not been run against the new file, which carries no local Markdown links and no trailing whitespace by inspection, and neither workflow entry point has been executed for this slice. ADR 0004 is not registered in `.github/starter-modules.json`, matching the precedent of `docs/adr/0002-game-asset-storage-policy.md`, which is also unlisted, so the manifest's ADR inventory remains incomplete and is not enforced by any check. Two further repo-truth items observed while gathering evidence for the review are unchanged by this slice: the top `CHANGELOG.md` entry for the block-form frontmatter change still reads `Validation: Not run` while the session's terminal history shows `check-starter-workflow.sh` and `check-supervisor-orchestration.ps1` both exiting 0, so one of the two is stale; and the `orchestration-coordinator` registration decision, NB-2, NB-3, and the SEC findings remain open.
+
+### 2026-09-14 - Record block-form frontmatter support in ADR 0003 and the supervisor runbook
+
+- Area: overlay ADR, runbooks
+- Change type: docs, policy, reference
+- Summary: ADR 0003's Decision section and the supervisor overlay runbook's sole-holder paragraph now state that both `tools` and `agents` are read in the inline array form and in the block list form, so reformatting a declaration cannot move it outside the scan. The ADR's Validation section notes that the platform-delegation and allow-list cases cover both forms. The runbook's fixture enumeration is corrected from twenty-one fixtures (twenty negative and one positive) to twenty-three (twenty-two negative and one positive), with the two block-form cases added to the case list.
+- Reason: the paired validators were extended in the same change to parse block lists, and both documents describe what those validators assert. Leaving them unedited would have left the design documents claiming narrower coverage than the code provides, which is the drift class the runbook's own fixture paragraph warns about and the same reason the previous entry in this pair was written.
+- Affected files: docs/adr/0003-supervisor-orchestration-overlay.md, docs/runbooks/supervisor-orchestration.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Read block-style frontmatter in the supervisor sole-holder scan"
+- Review status: pending-review
+- Discrepancies or follow-up: neither document was executed against; `check-markdown-quality.sh` and the paired overlay validators still need to run, since Markdown quality scans these files for trailing whitespace and broken local links. The new sentences are descriptive rather than load-bearing and are not pinned by `assert_file_contains`, so they can drift silently; the rules they describe are pinned by the fixtures instead. The fixture count and case list in the runbook remain a documentation-only list that no validator reads.
+
+### 2026-09-14 - Record the extended sole-holder invariant in ADR 0003 and the supervisor runbook
+
+- Area: overlay ADR, runbooks
+- Change type: docs, policy, reference
+- Summary: `docs/adr/0003-supervisor-orchestration-overlay.md` now states in its Decision section that the sole-holder restriction applies over the host's own delegation vocabulary, not only over the repository's abstract `delegate-agent` capability: an agent file other than `delegation-supervisor` may not declare a platform delegation tool in its `tools` list or declare an `agents` allow-list, and a supervisor `agents` allow-list must stay within the canonical `specialistAllowList`. The ADR's Validation section enumerates the three new negative-fixture cases. `docs/runbooks/supervisor-orchestration.md` describes the same rule in its sole-holder paragraph, and its fixture enumeration is corrected from eighteen fixtures (seventeen negative and one positive) to twenty-one (twenty negative and one positive), with the three new cases named in the case list.
+- Reason: the paired validators were extended in the same change, and both the ADR and the runbook describe what those validators assert. Leaving them unedited would have left the design documents claiming a narrower rule than the code enforces, which is the drift class the runbook's own fixture paragraph warns about.
+- Affected files: docs/adr/0003-supervisor-orchestration-overlay.md, docs/runbooks/supervisor-orchestration.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Close the platform-vocabulary gap in the supervisor sole-holder invariant"
+- Review status: pending-review
+- Discrepancies or follow-up: `check-markdown-quality.sh` ran green against these edits as part of the ten-check umbrella run recorded in the related `CHANGELOG.md` entry, so the edited documents carry no trailing whitespace or broken local links, and the overlay validator's text assertions on both files still pass. The extended rule is pinned by the three new negative fixtures rather than by new `assert_file_contains` text assertions, so the ADR and runbook sentences describing it are unpinned in the sense that no check reads them. The fixture count and case list in the runbook remain a documentation-only list that no validator reads, so that drift class still applies.
+
+### 2026-09-14 - Correct the VS Code handoff and subagent rows in the tool-surface matrix
+
+- Area: runbooks, architecture reference, overlay ADR
+- Change type: docs, policy, reference
+- Summary: `docs/runbooks/tool-surface-matrix.md` no longer understates VS Code. The `Handoffs` row changes the VS Code column from `Repo convention` to `Direct` and names the supported sub-fields (`label`, `agent`, `prompt`, `send`); the `Delegate subagent` row now names the `agent` tool plus an `agents:` allow-list and records that nested delegation is off by default. Six Platform Notes bullets were added under `GitHub Copilot VS Code Agent Mode` covering the `handoffs` and `agents` verification with its revision date; the nesting default, `chat.subagents.allowInvocationsFromSubagents`, `disable-model-invocation`, and `user-invocable`; agent-scoped `hooks` being Preview behind `chat.useCustomAgentHooks`; subagent statelessness and the absence of todo and clarifying-question tools; host-level approval controls; and the deliberate omission of `model` and `handoffs.model`. `docs/runbooks/supervisor-orchestration.md` now names the concrete VS Code mechanism and adds a probe procedure for the hook-inheritance precondition: enable a `PreToolUse` hook that records its invocation, delegate one read-only task to a non-mutating tier member, and check `.github/hooks/logs/agent-audit.log` between the `SubagentStart` and `SubagentStop` events. `docs/adr/0003-supervisor-orchestration-overlay.md` scopes the non-mutating tier's `todo` entry: `todo` is not a mutating capability and is unavailable in subagent context, so the withholding property rests on the absence of `edit` and `execute`.
+- Reason: the VS Code custom-agents and hooks documentation was read directly to settle the host-capability question that blocked the orchestration vNext review. It confirms `handoffs` and `agents` as documented frontmatter, which makes the matrix's `Repo convention` entry for VS Code incorrect, and it adds `SubagentStart` and `SubagentStop` events that the hook-inheritance precondition did not previously have a probe method for. The tier predicate's inclusion of `todo` was a latent inaccuracy that no check could catch: the tier in the shipped allow-list is `architecture-reviewer`, `code-reviewer`, and `security-reviewer`, and each declares `todo` in both its frontmatter and its `agentCapabilityMatrix` entry.
+- Affected files: docs/runbooks/tool-surface-matrix.md, docs/runbooks/supervisor-orchestration.md, docs/adr/0003-supervisor-orchestration-overlay.md
+- Related code: None
+- Review status: pending-review
+- Discrepancies or follow-up: validation is static verification only. No terminal tool was available in this session, so `check-markdown-quality.sh` and both workflow entry points were not executed; the edits were verified by inspection and contain no trailing whitespace or new local links. The Copilot CLI cell for `Delegate subagent` stays `Unsupported` because GitHub's documentation was not read, so that claim remains an unverified omission rather than a checked fact. The governance gap this review identified is deliberately not addressed here: `check-supervisor-orchestration.sh` and its PowerShell twin match the literal capability name `delegate-agent`, while the platform expresses delegation as the `agent` tool and an `agents:` frontmatter key, neither of which any check inspects. Closing that gap is a `core-governance-change` requiring both validator twins, new negative fixtures per platform, and a recorded approval. The matrix rows and the runbook's runtime-mapping paragraph remain unpinned by any validator, so they can drift again silently.
+
+### 2026-09-14 - Document the game overlay registration and version-matched Phaser overlays
+
+- Area: runbooks, architecture reference
+- Change type: docs, runbook, reference
+- Summary: recorded the two game overlays that were previously unregistered. `docs/runbooks/game-dev.md` now states that Phaser and Go game toolkits are the supported engine overlays, requires exactly one version-matched Phaser overlay rather than both, and replaces the open "Phaser-only or siblings" decision with the current sibling set. `docs/runbooks/starter-composition.md` mirrors the one-Phaser-overlay rule and adds the Go overlay, and `docs/runbooks/adopting-existing-github.md` extends its game overlay row the same way. `docs/ARCHITECTURE.md` gains the `overlay-game-go` node and its edge to `overlay-game-core`.
+- Reason: `.github/instructions/js.phaser4.instructions.md` and `.github/instructions/go.gamedev.instructions.md` were populated and are now registered in `.github/starter-modules.json`, but the documents that tell an adopter which overlays to compose did not mention them. The two Phaser overlays declare an identical `applyTo` scope, so leaving the choice implicit would have let an adopter enable both and attach two engine overlays to the same files.
+- Affected files: docs/ARCHITECTURE.md, docs/runbooks/game-dev.md, docs/runbooks/starter-composition.md, docs/runbooks/adopting-existing-github.md
+- Related code: CHANGELOG.md entry "2026-09-14 - Close Tier 1 starter debt: eval coverage, game overlay registration, and local-state ignores"
+- Review status: pending-review
+- Discrepancies or follow-up: the engine overlay eval tasks still name the overlay generically, for example `.github/instructions/phaser.instructions.md`, so no eval pins the version-matched Phaser choice or the Go overlay. Neither workflow entry point was executed in this session, so Markdown link and whitespace integrity for the four edited documents is unverified until the checks run. `docs/adr/0002-game-asset-storage-policy.md` remains `Proposed`. The `orchestration-coordinator` registration decision and the remaining Tier 2 items are still open.
+
 ### 2026-09-12 - Add a usage guide to the README
 
 - Area: README (repo landing guide)

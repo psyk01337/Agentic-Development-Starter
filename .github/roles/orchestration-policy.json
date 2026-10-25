@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "description": "Canonical machine-readable policy for the supervisor orchestration overlay: delegation depth, specialist allow-list, task routing, write-set discipline, and high-risk approval boundaries.",
   "appliesTo": "overlay-supervisor-orchestration",
   "canonical": true,
@@ -10,7 +10,17 @@
     "onlySupervisorMayDelegate": true,
     "workersMayDelegate": false,
     "supervisorRole": "orchestration",
-    "capability": "delegate-agent"
+    "capability": "delegate-agent",
+    "hostAdapters": {
+      "vscode-copilot": {
+        "delegationTools": ["agent", "runSubagent"],
+        "note": "Verified against VS Code documentation on 2026-09-14: the subagents guide requires the `runSubagent` or `agent` tool in `tools`, and the custom-agents guide documents the `agents` allow-list paired with the `agent` tool."
+      },
+      "github-copilot": {
+        "delegationTools": ["agent"],
+        "note": "Verified against the GitHub Copilot custom-agents configuration reference on 2026-09-14: the `agent` tool alias invokes another custom agent; compatible aliases are `custom-agent` and `Task`."
+      }
+    }
   },
   "specialistAllowList": [
     "analyst",
@@ -79,6 +89,143 @@
     ],
     "simpleWorkflow": "delegation-supervisor -> implementer -> appropriate validation/review",
     "complexWorkflow": "delegation-supervisor -> parallel read-only analysis -> consolidated plan -> human approval when required -> implementer -> parallel independent verification -> one consolidated repair pass if needed"
+  },
+  "taskClasses": [
+    { "id": "QUESTION", "description": "Answer a question about the codebase or workflow without changing files." },
+    { "id": "INVESTIGATION", "description": "Investigate a symptom or area and report findings with root-cause hypotheses." },
+    { "id": "BUG_FIX", "description": "Reproduce, root-cause, and fix a localized defect with regression coverage." },
+    { "id": "FEATURE", "description": "Add a new capability through understand, plan, implement, and verify." },
+    { "id": "REFACTOR", "description": "Restructure existing behavior without changing observable contracts." },
+    { "id": "ARCHITECTURE", "description": "Change layers, boundaries, or public contracts." },
+    { "id": "SECURITY", "description": "Change authentication, authorization, secrets, permissions, or trust boundaries." },
+    { "id": "PERFORMANCE", "description": "Improve measured resource behavior against a stated budget." },
+    { "id": "TESTING", "description": "Add or repair tests or the test harness itself." },
+    { "id": "DOCUMENTATION", "description": "Update docs, runbooks, ADRs, and changelogs." },
+    { "id": "MIGRATION", "description": "Move data, schema, dependencies, or platforms." },
+    { "id": "INFRASTRUCTURE", "description": "Change deployment, CI/CD, or runtime configuration." },
+    { "id": "UNKNOWN_COMPLEX", "description": "A problem that needs decomposition before a playbook can be selected." }
+  ],
+  "playbooks": {
+    "QUESTION": [
+      { "id": "understand", "name": "Understand the question", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "answer", "name": "Produce the answer", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "INVESTIGATION": [
+      { "id": "investigate", "name": "Gather evidence", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "report", "name": "Report findings and hypotheses", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "BUG_FIX": [
+      { "id": "reproduce", "name": "Reproduce the failure", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "investigate", "name": "Investigate the failure", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "root-cause", "name": "Confirm the root cause", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "implement", "name": "Implement the fix", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "test", "name": "Test and add regression coverage", "delegatesTo": ["senior-software-engineer", "tdd-vitest"], "skipRequiresReason": true },
+      { "id": "verify-real-behavior", "name": "Verify real behavior", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review the change", "delegatesTo": ["code-reviewer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "FEATURE": [
+      { "id": "understand", "name": "Understand the request", "delegatesTo": ["analyst", "tech-planner"], "skipRequiresReason": true },
+      { "id": "plan", "name": "Plan the feature", "delegatesTo": ["tech-planner"], "skipRequiresReason": true },
+      { "id": "implement", "name": "Implement the feature", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "test", "name": "Test the feature", "delegatesTo": ["senior-software-engineer", "tdd-vitest"], "skipRequiresReason": true },
+      { "id": "verify", "name": "Verify against the success predicate", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review the change", "delegatesTo": ["code-reviewer", "architecture-reviewer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "REFACTOR": [
+      { "id": "understand", "name": "Understand the current behavior", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "plan", "name": "Plan the refactor", "delegatesTo": ["tech-planner"], "skipRequiresReason": true },
+      { "id": "implement", "name": "Restructure the code", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "test", "name": "Test unchanged contracts", "delegatesTo": ["senior-software-engineer", "tdd-vitest"], "skipRequiresReason": true },
+      { "id": "verify", "name": "Verify observable behavior", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review the change", "delegatesTo": ["code-reviewer", "architecture-reviewer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "ARCHITECTURE": [
+      { "id": "investigate", "name": "Investigate the problem", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "design", "name": "Design the change", "delegatesTo": ["architecture-reviewer"], "skipRequiresReason": true },
+      { "id": "record-adr", "name": "Record the decision", "delegatesTo": ["architecture-reviewer"], "skipRequiresReason": true },
+      { "id": "approve", "name": "Human approval checkpoint", "requiresHumanApproval": true, "delegatesTo": [], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "SECURITY": [
+      { "id": "investigate", "name": "Investigate the security surface", "delegatesTo": ["security-reviewer"], "skipRequiresReason": true },
+      { "id": "assess", "name": "Assess risk and mitigations", "delegatesTo": ["security-reviewer"], "skipRequiresReason": true },
+      { "id": "approve", "name": "Human approval checkpoint", "requiresHumanApproval": true, "delegatesTo": [], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "PERFORMANCE": [
+      { "id": "measure-baseline", "name": "Measure the baseline", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "triage", "name": "Classify the bottleneck", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "implement", "name": "Implement the smallest fix", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "re-measure", "name": "Re-measure with the same method", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review the change", "delegatesTo": ["code-reviewer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "TESTING": [
+      { "id": "plan", "name": "Plan the test change", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "implement", "name": "Implement the tests", "delegatesTo": ["tdd-vitest"], "skipRequiresReason": true },
+      { "id": "run", "name": "Run the tests", "delegatesTo": ["tdd-vitest"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review coverage and quality", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "DOCUMENTATION": [
+      { "id": "update", "name": "Update the documentation", "delegatesTo": ["documentation-maintainer"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review doc alignment", "delegatesTo": ["documentation-maintainer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "MIGRATION": [
+      { "id": "plan", "name": "Plan the migration", "delegatesTo": ["tech-planner"], "skipRequiresReason": true },
+      { "id": "approve", "name": "Human approval checkpoint", "requiresHumanApproval": true, "delegatesTo": [], "skipRequiresReason": true },
+      { "id": "execute", "name": "Execute the migration", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "verify", "name": "Verify the migration", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review the change", "delegatesTo": ["code-reviewer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "INFRASTRUCTURE": [
+      { "id": "plan", "name": "Plan the change", "delegatesTo": ["tech-planner"], "skipRequiresReason": true },
+      { "id": "approve", "name": "Human approval checkpoint", "requiresHumanApproval": true, "delegatesTo": [], "skipRequiresReason": true },
+      { "id": "execute", "name": "Execute the change", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "verify", "name": "Verify the change", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review the change", "delegatesTo": ["code-reviewer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ],
+    "UNKNOWN_COMPLEX": [
+      { "id": "investigate", "name": "Investigate the problem", "delegatesTo": ["analyst"], "skipRequiresReason": true },
+      { "id": "design-playbook", "name": "Design the playbook", "delegatesTo": ["tech-planner"], "skipRequiresReason": true },
+      { "id": "execute", "name": "Execute the work", "delegatesTo": ["senior-software-engineer"], "skipRequiresReason": true },
+      { "id": "verify", "name": "Verify the outcome", "delegatesTo": ["qa"], "skipRequiresReason": true },
+      { "id": "review", "name": "Review the change", "delegatesTo": ["code-reviewer"], "skipRequiresReason": true },
+      { "id": "complete", "name": "Declare completion", "delegatesTo": ["delegation-supervisor"], "skipRequiresReason": true }
+    ]
+  },
+  "evidenceRequirements": {
+    "resultVocabulary": ["VERIFIED", "NOT_VERIFIED", "INCONCLUSIVE"],
+    "inconclusiveNeverSuccess": true,
+    "completionRule": "orchestrator-declared-after-verification-evidence",
+    "surfaces": {
+      "ui": {
+        "evidence": ["run-the-real-ui", "interact-with-the-changed-behavior", "inspect-resulting-state", "capture-screenshot-or-browser-evidence-when-supported"]
+      },
+      "api": {
+        "evidence": ["execute-the-endpoint", "verify-status", "verify-response", "exercise-important-negative-cases"]
+      },
+      "database": {
+        "evidence": ["apply-migration-to-disposable-data", "insert-or-migrate", "read-back-resulting-state", "verify-schema-and-data-constraints"]
+      },
+      "cli": {
+        "evidence": ["run-the-command", "inspect-exit-code", "inspect-stdout-stderr", "exercise-dry-run-and-error-behavior"]
+      },
+      "configuration": {
+        "evidence": ["load-with-the-real-parser", "read-resulting-values-back"]
+      },
+      "library": {
+        "evidence": ["test-the-public-interface", "validate-behavior-through-callers"]
+      }
+    }
   },
   "writeSet": {
     "requiredBeforeWriteDelegation": true,

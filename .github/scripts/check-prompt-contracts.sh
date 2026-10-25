@@ -27,7 +27,7 @@ for relative_path in "${required_prompts[@]}"; do
   fi
 
   for heading in "Context To Inspect First" "Deliverables" "Safety Boundaries" "Expected Output"; do
-    if ! tr -d '\r' < "${full_path}" | grep -Eq "^## ${heading}$"; then
+    if ! tr -d '\r' < "${full_path}" | grep -E "^## ${heading}$" >/dev/null; then
       report_error "Prompt is missing heading '${heading}': ${relative_path}"
     fi
   done

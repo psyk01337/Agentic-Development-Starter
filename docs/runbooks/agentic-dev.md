@@ -12,6 +12,16 @@ This runbook describes the daily operating model once the starter has been compo
 
 ## 1a) Common Guided Chains
 
+### Project documentation intake
+
+1. Use `ingest-project-docs.prompt.md` with the PRD, design brief, architecture note, or API contract.
+2. Review the traceability table, gap analysis, and open questions.
+3. Use `build-feature.prompt.md` for the first slice.
+
+### Feature delivery front door
+
+Use `build-feature.prompt.md` when you want one entry point for a feature: it restates acceptance criteria, chooses the smallest vertical slice, implements with `senior-software-engineer`, hands review to `code-reviewer`, hands verification to `qa`, and updates the changelogs. Use the chains below when you need to drive each stage manually.
+
 ### Simple fix
 
 1. Start with `senior-software-engineer`.

@@ -26,9 +26,9 @@ Legend:
 | Skills | Direct VS Code customization | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Runtime convention |
 | Prompt files | Direct VS Code customization | Repo convention | Repo convention | Repo convention | Repo convention | Direct or repo convention | Repo convention | Runtime convention |
 | Custom agents | Direct VS Code customization | Repo convention | Unsupported or repo convention | Repo convention | Repo convention | Direct or repo convention | Repo convention | Runtime convention |
-| Delegate subagent | Direct (agent/runSubagent) | Unknown | Unsupported | Repo convention | Repo convention | Unknown | Unknown | Runtime tool |
+| Delegate subagent | Direct (`agent` tool plus an `agents:` allow-list; nested delegation off by default) | Unknown | Unsupported | Repo convention | Repo convention | Unknown | Unknown | Runtime tool |
 | Memory | Session memory plus optional providers | Platform-dependent | Session only or external | Tool-dependent | Tool-dependent | Tool-dependent | Tool-dependent | Runtime memory plus optional providers |
-| Handoffs | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Runtime plus repo convention |
+| Handoffs | Direct (`handoffs` frontmatter: `label`, `agent`, `prompt`, `send`) | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Repo convention | Runtime plus repo convention |
 
 ## Platform Notes
 
@@ -37,6 +37,12 @@ Legend:
 - Best fit for this starter's `.github/prompts`, `.github/instructions`, `.github/agents`, and `.github/skills` assets.
 - MCP servers must remain disabled until reviewed.
 - Hook policy still needs runtime/editor support or CI validation to enforce outside the local agent loop.
+- Custom agents support `handoffs` for guided transitions and `agents` for declaring which agents the `agent` tool may invoke as subagents. Verified against the VS Code custom-agents documentation, revision dated 2026-09-09, on 2026-09-14.
+- Recursive delegation is off by default and requires `chat.subagents.allowInvocationsFromSubagents`. `disable-model-invocation: true` prevents an agent from being invoked as a subagent, and `user-invocable: false` hides an agent from the picker while leaving subagent use available.
+- Agent-scoped `hooks` frontmatter is Preview and requires `chat.useCustomAgentHooks`; agent-scoped hooks run in addition to workspace and user hooks.
+- Subagent runs are stateless and have no todo or clarifying-question tools.
+- Host-level approval controls exist independently of repo policy: permission levels, tool approval, URL approval, and terminal sandboxing.
+- `model` and `handoffs.model` are supported frontmatter fields. This starter deliberately sets neither; model selection is out of scope for its workflow assets.
 
 ### GitHub Copilot Cloud Agent
 

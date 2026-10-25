@@ -105,6 +105,7 @@ graph LR
         OST[overlay-static-prototype]
         OGC[overlay-game-core]
         OGP[overlay-game-phaser]
+        OGG[overlay-game-go]
         OSO[overlay-supervisor-orchestration]
     end
 
@@ -142,6 +143,7 @@ graph LR
     OST --> CG
     OGC --> CG
     OGP --> OGC
+    OGG --> OGC
 ```
 
 ## Validation Workflow

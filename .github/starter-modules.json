@@ -1,5 +1,5 @@
 {
-  "version": "1.7",
+  "version": "1.13",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -42,6 +42,7 @@
         ".github/scripts/check-evals.ps1",
         ".github/scripts/check-evals.sh",
         "docs/adr/0000-template.md",
+        "docs/inputs.md",
         "docs/runbooks/adopting-existing-github.md",
         "docs/runbooks/agentic-dev.md",
         "docs/runbooks/memory-strategy.md",
@@ -117,7 +118,10 @@
         ".github/prompts/structure-technical-problem.prompt.md",
         ".github/prompts/initialize-new-project.prompt.md",
         ".github/prompts/fix-bug.prompt.md",
-        ".github/prompts/add-policy-rule.prompt.md"
+        ".github/prompts/add-policy-rule.prompt.md",
+        ".github/prompts/improve-repo.prompt.md",
+        ".github/prompts/build-feature.prompt.md",
+        ".github/prompts/ingest-project-docs.prompt.md"
       ]
     },
     {
@@ -158,6 +162,8 @@
         "evals/tasks/laravel-component.md",
         "evals/tasks/gameplay-mechanic.md",
         "evals/tasks/game-perf-triage.md",
+        "evals/tasks/decision-trail.md",
+        "evals/tasks/ingest-project-docs.md",
         "evals/expected/simple-bugfix.checklist.md",
         "evals/expected/add-api-endpoint.checklist.md",
         "evals/expected/frontend-component.checklist.md",
@@ -166,6 +172,8 @@
         "evals/expected/laravel-component.checklist.md",
         "evals/expected/gameplay-mechanic.checklist.md",
         "evals/expected/game-perf-triage.checklist.md",
+        "evals/expected/decision-trail.checklist.md",
+        "evals/expected/ingest-project-docs.checklist.md",
         "evals/run-evals.sh",
         "evals/run-evals.ps1"
       ]
@@ -361,9 +369,18 @@
       "files": [
         ".github/agents/delegation-supervisor.agent.md",
         ".github/skills/supervisor-orchestration/SKILL.md",
+        ".github/skills/verification-evidence-loop/SKILL.md",
+        ".github/skills/adversarial-review/SKILL.md",
+        ".github/skills/arena-bakeoff/SKILL.md",
+        ".github/skills/swarm/SKILL.md",
+        ".github/skills/prose-cleanup/SKILL.md",
+        ".github/skills/session-compactor/SKILL.md",
+        ".github/skills/decision-trail/SKILL.md",
         ".github/roles/orchestration-policy.json",
         ".github/schema/delegation-plan.schema.json",
         ".github/examples/supervisor-orchestration/complex-feature-delegation-plan.json",
+        ".github/schema/delegation-result.schema.json",
+        ".github/examples/supervisor-orchestration/simple-bugfix-delegation-result.json",
         ".github/scripts/check-supervisor-orchestration.ps1",
         ".github/scripts/check-supervisor-orchestration.sh",
         "docs/runbooks/supervisor-orchestration.md",
@@ -438,7 +455,17 @@
       "defaultEnabled": false,
       "when": "Repositories that build browser games with Phaser",
       "files": [
-        ".github/instructions/phaser.instructions.md"
+        ".github/instructions/phaser.instructions.md",
+        ".github/instructions/js.phaser4.instructions.md"
+      ]
+    },
+    {
+      "id": "overlay-game-go",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that build games in Go and want Go-specific engine, concurrency, and packaging rules",
+      "files": [
+        ".github/instructions/go.gamedev.instructions.md"
       ]
     }
   ]

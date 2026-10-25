@@ -1,5 +1,5 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "description": "Shared tool-access roles for custom agents in this starter with per-tool and per-agent capability matrix.",
   "toolDefinitions": {
     "read": {
@@ -94,6 +94,14 @@
         "todo"
       ],
       "intent": "Update workflow assets such as agents, skills, instructions, and runbooks. Does not run terminal commands; scoped to repo customization files only."
+    },
+    "advisory": {
+      "tools": [
+        "read",
+        "search",
+        "todo"
+      ],
+      "intent": "Recommend a transition for a human to approve without invoking an agent or changing state. Inspects workflow state, checks whether an approval precondition is satisfied, and drafts the transition a person must confirm."
     },
     "orchestration": {
       "tools": [
@@ -226,6 +234,17 @@
         "todo": true
       }
     },
+    "orchestration-coordinator": {
+      "role": "advisory",
+      "scope": "Overlay-only approval-gated transition recommendation, approval state checks, and fallback to the guided handoff path",
+      "tools": {
+        "read": true,
+        "search": true,
+        "execute": false,
+        "edit": false,
+        "todo": true
+      }
+    },
     "delegation-supervisor": {
       "role": "orchestration",
       "scope": "Overlay-only task classification, bounded delegation to approved specialist agents, result reconciliation, and a high-risk approval gate that is a prompt-level contract, not enforcement",
@@ -251,6 +270,7 @@
     "process-improvement": "workflow-maintenance",
     "tech-planner": "planning",
     "tdd-vitest": "implementation",
+    "orchestration-coordinator": "advisory",
     "delegation-supervisor": "orchestration"
   }
 }

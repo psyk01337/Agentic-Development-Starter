@@ -100,7 +100,8 @@ Each agent file also defines a `## Handoff Memory Contract` section that specifi
 
 - File: `.github/agents/orchestration-coordinator.agent.md`
 - Use for: optional approval-gated orchestration in repos that explicitly opt into the orchestration overlay.
-- Role: overlay workflow coordinator
+- Role: `advisory`
+- Recommends a transition for human approval and never invokes another agent itself. See `docs/runbooks/approval-gated-handoffs.md`.
 
 ### `delegation-supervisor`
 

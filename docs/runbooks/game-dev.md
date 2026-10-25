@@ -2,7 +2,7 @@
 
 Use this runbook when composing the starter for a browser game repository, or when working inside game code under `app/game/`.
 
-The first supported engine is Phaser. The engine-agnostic overlays apply to any engine; the engine overlay is what changes.
+The supported engine overlays are Phaser and Go game toolkits. The engine-agnostic overlays apply to any engine; the engine overlay is what changes.
 
 ## 1) Compose The Game Overlays
 
@@ -12,9 +12,16 @@ Add or keep the engine-agnostic game overlays:
 - `.github/instructions/game-performance.instructions.md`
 - `.github/instructions/game-assets-pipeline.instructions.md`
 
-If the repo uses Phaser, also add:
+For a browser game, add exactly one Phaser overlay matching the installed major version:
 
-- `.github/instructions/phaser.instructions.md`
+- `.github/instructions/phaser.instructions.md` for Phaser 3
+- `.github/instructions/js.phaser4.instructions.md` for Phaser 4
+
+Do not enable both. The two Phaser overlays declare the same `applyTo` scope, so enabling both attaches two engine overlays to the same files.
+
+For a Go game, also add:
+
+- `.github/instructions/go.gamedev.instructions.md`
 
 Keep engine-agnostic game rules in the engine-agnostic overlays, and keep engine-specific rules (scene lifecycle, loader, scale manager, physics options) in the engine overlay. See [Starter Composition](starter-composition.md) for the general overlay rules.
 
@@ -87,7 +94,7 @@ When a task edits game instructions, prompts, skills, or this runbook, run the s
 Record these in an ADR under `docs/adr/` when they are settled, because each affects every game repo adopting the starter:
 
 - Asset storage and large-file policy for masters. The current proposal is recorded in `docs/adr/0002-game-asset-storage-policy.md` and is `Proposed`, not yet binding.
-- Whether the engine overlay stays Phaser-only or gains siblings for other engines.
+- Engine overlay coverage. Phaser (version-matched) and Go game toolkits are the current siblings; record an ADR before adding further engines.
 - Any change to the fixed-timestep or save-versioning contract.
 
 ## When Not To Use These Overlays

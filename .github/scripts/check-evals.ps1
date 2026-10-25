@@ -25,6 +25,9 @@ $requiredFiles = @(
   "evals/tasks/laravel-component.md",
   "evals/tasks/gameplay-mechanic.md",
   "evals/tasks/game-perf-triage.md",
+  "evals/tasks/problem-structuring.md",
+  "evals/tasks/decision-trail.md",
+  "evals/tasks/ingest-project-docs.md",
   "evals/expected/simple-bugfix.checklist.md",
   "evals/expected/add-api-endpoint.checklist.md",
   "evals/expected/frontend-component.checklist.md",
@@ -32,6 +35,9 @@ $requiredFiles = @(
   "evals/expected/laravel-component.checklist.md",
   "evals/expected/gameplay-mechanic.checklist.md",
   "evals/expected/game-perf-triage.checklist.md",
+  "evals/expected/problem-structuring.checklist.md",
+  "evals/expected/decision-trail.checklist.md",
+  "evals/expected/ingest-project-docs.checklist.md",
   "evals/run-evals.sh",
   "evals/run-evals.ps1"
 )

@@ -22,6 +22,8 @@ The overlay only adds supervised delegation for repos that explicitly opt in.
 - `.github/roles/orchestration-policy.json`
 - `.github/schema/delegation-plan.schema.json`
 - `.github/examples/supervisor-orchestration/complex-feature-delegation-plan.json`
+- `.github/schema/delegation-result.schema.json`
+- `.github/examples/supervisor-orchestration/simple-bugfix-delegation-result.json`
 - `.github/scripts/check-supervisor-orchestration.ps1`
 - `.github/scripts/check-supervisor-orchestration.sh`
 - `docs/runbooks/supervisor-orchestration.md`
@@ -102,51 +104,26 @@ User -> Supervisor -> Agent -> Agent   (not allowed)
 
 Workers must return results to the supervisor rather than invoking other agents. Only the `orchestration` role holds the `delegate-agent` capability.
 
-## Simple Versus Complex Routing
+## Routing: Task Classes, Playbooks, and Complexity
 
-The supervisor classifies every task before delegating. The canonical criteria live in `.github/roles/orchestration-policy.json`; the summary below explains them.
+The supervisor classifies every task before delegating, on two axes that both live in `.github/roles/orchestration-policy.json` and nowhere else:
 
-A task is **complex** if any of the following is true:
+- `taskClasses` owns playbook selection. The class ids are a closed thirteen-class taxonomy, and each id maps to an ordered stage list under `playbooks`. Every stage names its `delegatesTo` agents from the specialist allow-list or the literal `delegation-supervisor`; a stage that requires human approval sets `requiresHumanApproval: true` with an empty `delegatesTo`, and every skipped stage must record an explicit reason (`skipRequiresReason`).
+- `complexityRouting` owns the simple/complex escalation envelope: the `complexIfAny` criteria, the `notBasedOn` exclusions, the `defaultWhenUncertain` fallback, and the `simpleWorkflow` and `complexWorkflow` strings.
+- `evidenceRequirements` owns the completion contract: the fixed result vocabulary `VERIFIED` / `NOT_VERIFIED` / `INCONCLUSIVE`, the completion rule `orchestrator-declared-after-verification-evidence`, and the per-surface evidence kinds. No agent may mark work complete; only the orchestrator declares completion, and only after verification evidence satisfies the success predicate. `INCONCLUSIVE` never counts as success (`inconclusiveNeverSuccess`). The `verification-evidence-loop` skill walks this contract and emits `delegation-result.schema.json`-shaped verification entries.
 
-1. It changes more than one architectural layer or independently owned subsystem.
-2. It requires an architecture or public-contract decision.
-3. It adds, removes, or materially changes a dependency, framework, runtime, build tool, or infrastructure component.
-4. It requires a database or schema migration or a data transformation.
-5. It changes authentication, authorization, secrets, permissions, identity, security controls, or trust boundaries.
-6. It changes deployment, production infrastructure, networking, CI/CD, release behavior, or runtime configuration.
-7. It modifies starter or core governance assets such as `AGENTS.md`, `tool-access.json`, agent policy, module composition, validators, or architecture contracts.
-8. It contains multiple independent implementation workstreams.
-9. Acceptance criteria are incomplete, conflicting, or require technical design.
-10. It crosses a mandatory human-approval boundary.
-11. A sufficiently bounded implementation scope or write set cannot be established.
+This runbook does not restate the criteria, the workflow text, or the playbooks: they are data in the policy file, and both validators pin them, so a restatement here could only drift. The supervisor records both the task class and the complexity verdict with its routing criterion.
 
-If none apply, the task is **simple**. When uncertain, classify it as **complex**. Do not classify by file count, prompt size, or token count.
+Behavioral notes that are not data:
 
-### Simple workflow
-
-```text
-delegation-supervisor -> implementer -> appropriate validation/review -> done
-```
-
-Do not invoke planning or review agents on a simple task merely to create more agent activity.
-
-### Complex workflow
-
-```text
-delegation-supervisor
-  -> parallel read-only analysis where appropriate
-       analyst, tech-planner, security-reviewer when security-relevant
-  -> consolidated plan
-  -> human approval when required
-  -> senior-software-engineer
-  -> parallel independent verification
-       code-reviewer, security-reviewer when relevant, qa
-  -> one consolidated repair task if blocking findings exist
-  -> re-run affected verification
-  -> done when blockers are cleared
-```
-
-A reviewer must not approve work it implemented itself.
+- Do not invoke planning or review agents on a simple task merely to create more agent activity.
+- A reviewer must not approve work it implemented itself.
+- Adversarial review attempts to prove a change wrong rather than polish it: the `adversarial-review` skill fixes the review-stage finding format (`SEVERITY`, `LOCATION`, `CLAIM`, `EVIDENCE`, `FAILURE_SCENARIO`, `RECOMMENDED_ACTION`), requires reviewers to inspect the actual diff, deduplicates findings, and lets evidence outrank voting.
+- Arena bakeoffs run N isolated candidates and never average incompatible architectures: the `arena-bakeoff` skill gives each candidate its own worktree, branch, or temporary directory, requires the same five returns per candidate, scores all candidates against one rubric, and synthesizes only compatible improvements.
+- Swarm runs different independent slices concurrently, unlike an arena bakeoff which competes on the same problem: the `swarm` skill detects shared mutable state before parallel execution, forbids parallel agents from silently overwriting each other's work, and aggregates results only after all required slices finish.
+- Prose cleanup is repo-wide rather than orchestration-only: the `prose-cleanup` skill tightens agent responses, ADRs, PR descriptions, documentation, handoffs, and code comments by removing canned filler and restatement while preserving technical detail.
+- Context compaction is separate from prose cleanup: the `session-compactor` skill transforms accumulated engineering context into a compact continuation brief before compaction, preserving only the ten fields (current objective, locked decisions, important constraints, relevant architecture, files changed, known failures, verified facts, unresolved questions, current phase, and next actions), discarding conversational filler, and never discarding unresolved risk or evidence necessary to continue safely.
+- Decision trails are audit records, not workflow state: the `decision-trail` skill keeps per-decision entries for complex or autonomous tasks with suggested fields (timestamp, phase, decision, reason, evidence, result) and evidence as pointers, creates no artifacts for trivial changes, and never counts as completion evidence on its own.
 
 ## Approval Boundaries
 
@@ -203,14 +180,20 @@ Two narrow facts are machine-checked rather than left to review: `delegation-pla
 
 ## Supported Runtimes
 
-`delegate-agent` is a runtime-neutral capability name, not a literal tool name. The overlay maps it to whatever delegation primitive the host provides:
+`delegate-agent` is a runtime-neutral capability name, not a literal tool name. The overlay maps it to the delegation primitive each host provides through `delegationDepth.hostAdapters` in `.github/roles/orchestration-policy.json`, which is the canonical source for the delegation vocabulary:
 
-| Platform | Delegation mapping |
-| --- | --- |
-| VS Code agent mode | `agent` / `runSubagent` |
-| Other runtimes | Their own subagent or worker delegation primitive, when one exists |
+| Host | Delegation tool names | Verification |
+| --- | --- | --- |
+| VS Code / GitHub Copilot | `agent`, `runSubagent` | Verified against VS Code documentation on 2026-09-14 |
+| GitHub Copilot CLI / cloud | `agent` (aliases `custom-agent`, `Task`) | Verified against the GitHub Copilot custom-agents configuration reference on 2026-09-14 |
+
+Both validators derive the platform delegation vocabulary from the map, so adding a host is a data change rather than an edit to two validator scripts. A host that is not in the map has no confirmed delegation tool name and is treated as unsupported until its primitive is verified and recorded in the map. Adapter-name matching is exact and case-sensitive: a case variant such as `EDIT` is a distinct host name, is not treated as a mutating capability, and cannot collide with the repository's own `edit` tool. The validators apply the same exact-match rule to every tool, role, allow-list, and category name they compare.
 
 The allow-list is expressed with native agent allow-list functionality where the platform supports it. Treat platform delegation support as unverified until tested in the target environment.
+
+On VS Code the mechanism is the `agent` or `runSubagent` tool declared in `tools` plus an `agents:` allow-list that names the permitted subagents. Recursive nesting is off by default there and requires `chat.subagents.allowInvocationsFromSubagents`.
+
+Probe for hook inheritance rather than inferring it. Enable a `PreToolUse` hook that records its invocation, delegate one read-only task to a non-mutating tier member, and check whether the delegated tool call appears in `.github/hooks/logs/agent-audit.log`. The `SubagentStart` and `SubagentStop` events mark the lifecycle boundary to search between. Record what was observed rather than inferring it from the presence of the hook configuration.
 
 Hook lifecycle support is part of this mapping rather than a separate concern. Delegated work runs in an isolated agent context, so before enabling the overlay confirm that a subagent's tool calls still reach `preToolUse`. If the runtime does not invoke the hook lifecycle for delegated agents, the hook policy stops being a guardrail for the delegation boundary, and that gap must be recorded rather than assumed away. See Enablement Preconditions above and `docs/runbooks/hooks.md`.
 
@@ -240,22 +223,24 @@ For the broader starter checks, use:
 - PowerShell: `.github/scripts/check-starter-workflow.ps1`
 - Shell: `.github/scripts/check-starter-workflow.sh`
 
-The checks verify deterministic repository facts: module registration, default-disabled state, required files, the capability and role model, the sole-holder rule, the allow-list, the non-mutating delegation tier's non-emptiness, the approval categories, the delegation depth, the write-set and enforcement flags, the declared write set's non-emptiness and boundedness, every agent file's frontmatter, the approval-gate wording in the agent catalog, every agent file, and the role, scope, and intent strings in `tool-access.json`, the `agentRoleHints` agreement with the capability matrix, and the delegation-plan example against `delegation-plan.schema.json`.
+The checks verify deterministic repository facts: module registration, default-disabled state, required files, the capability and role model, the sole-holder rule, the allow-list, the reverse-direction registration of non-allow-listed agents, the non-mutating delegation tier's non-emptiness, the approval categories, the delegation depth, the write-set and enforcement flags, the declared write set's non-emptiness and boundedness, every agent file's frontmatter, the approval-gate wording in the agent catalog, every agent file, and the role, scope, and intent strings in `tool-access.json`, the `agentRoleHints` agreement with the capability matrix, and the delegation-plan example against `delegation-plan.schema.json`. The delegation-result example is validated against `delegation-result.schema.json`, and that schema's `agent`, `result`, and `surface` enums are checked against the policy allow-list, result vocabulary, and surface keys, so the result contract cannot carry a second copy of any of them. The ADR 0005 routing data is pinned the same way: the task-class taxonomy, the playbook stage shape and allow-list resolution, the evidence vocabulary and completion rule, and the `complexityRouting` fallback, workflow strings, and criteria lists.
 
-The sole-holder check is anchored on every `.github/agents/*.agent.md` file rather than on the capability matrix, because a new agent file can appear without a matrix entry and would otherwise escape a matrix-only check. It parses each agent's `tools` frontmatter, requires that exactly one agent file declares `delegate-agent`, and then requires `.github/roles/tool-access.json` to agree with it in both directions: every `agentCapabilityMatrix` entry must have a matching agent file, and each entry's declared capabilities must equal that agent's frontmatter set. It also rejects a `specialistAllowList` that lists a delegation-capable agent, an `agentCapabilityMatrix` entry that enables a tool absent from `toolDefinitions`, and an `agentRoleHints` entry that disagrees with the same agent's matrix role.
+The sole-holder check is anchored on every `.github/agents/*.agent.md` file rather than on the capability matrix, because a new agent file can appear without a matrix entry and would otherwise escape a matrix-only check. It parses each agent's `tools` frontmatter, requires that exactly one agent file declares `delegate-agent`, and then requires `.github/roles/tool-access.json` to agree with it in both directions: every `agentCapabilityMatrix` entry must have a matching agent file, and each entry's declared capabilities must equal that agent's frontmatter set. It also rejects a `specialistAllowList` that lists a delegation-capable agent, an `agentCapabilityMatrix` entry that enables a tool absent from `toolDefinitions`, an `agentCapabilityMatrix` entry that enables a host adapter tool, and an `agentRoleHints` entry that disagrees with the same agent's matrix role. The same invariant is applied over the host's own vocabulary, because a runtime expresses delegation with its own tool name and allow-list key rather than with the repository's abstract capability name: an agent file other than `delegation-supervisor` may not declare a platform delegation tool in its `tools` list or declare an `agents` allow-list at all, and when `delegation-supervisor` does declare one, its entries must stay within the canonical `specialistAllowList`. Both `tools` and `agents` are read in the inline array form and in the block list form, so reformatting a declaration cannot move it outside the scan. The host vocabulary is no longer a hardcoded list: both validators derive the platform delegation tool names from `delegationDepth.hostAdapters` in `.github/roles/orchestration-policy.json`, and the map itself is checked — it must be non-empty and must not map delegation to a mutating capability such as `edit` or `execute`. The supervisor's own frontmatter is held to a closed set: the canonical `delegate-agent` capability, the role tools, host tool names from the map, and nothing else. Two pairing rules replace the blanket ban the map makes unnecessary: a supervisor `agents` allow-list requires a host delegation tool from the map, and a declared host delegation tool requires an `agents` allow-list, so neither the dead-declaration case nor the unscoped-invocation case can pass. The capability matrix must not enable host tool names either; they live only in `orchestration-policy.json`.
 
 The `tools` obligation is scoped to the agents that carry one. `tools:` is optional in `.agent.md` frontmatter, so only a file registered in `agentCapabilityMatrix` must have a parseable `tools` list; a file that declares `delegate-agent` is caught by the frontmatter scan whether or not it is registered. An unregistered agent file with no `tools` list is therefore out of scope rather than an error, and a registered agent file that omits the list is reported with its own diagnostic instead of being reported as a missing file.
 
-One boundary remains, and it is deliberate rather than an oversight. An agent file that carries no `delegate-agent` capability and has no `agentCapabilityMatrix` entry is not rejected; only the delegation capability must be registered. `orchestration-coordinator` is the current instance: its tool boundary matches no core role id, so registering it would be a role-model decision rather than a validation fix, and it is out of scope for this overlay.
+Registration is now checked in both directions. Every agent file that is not on the specialist allow-list must carry an `agentCapabilityMatrix` entry and an `agentRoleHints` entry, and both validators reject a missing one on either side; that is ADR 0004 Phase 3, which closes the unregistered-agent state the coordinator once demonstrated. The tolerance stays only where its reasoning holds: an allow-listed non-mutating agent with no `agentCapabilityMatrix` entry is still accepted, because the tier derives from frontmatter and an absent matrix entry cannot shrink it. `orchestration-coordinator` has been registered under the `advisory` role in both places since ADR 0004 Phase 1.
 
-Both checks also run a fixture suite. Each fixture copies the repository state and mutates one fact: a negative fixture requires the validator to reject the mutated state with a specific message, and a positive fixture requires it to accept the mutated state. Eighteen fixtures run per platform: seventeen negative and one positive, so the checks cannot silently degrade into no-ops. The negative fixtures cover the overlay being enabled by default, a second agent or role declaring `delegate-agent`, the supervisor frontmatter diverging from the `orchestration` role, a write delegation that omits its declared write set, a write delegation that declares an unbounded write set, the agent catalog drifting back to describing the approval gate as enforcement, an agent file drifting back to describing the approval gate as enforcement, a non-supervisor agent file gaining `delegate-agent` in its own frontmatter, an agent file declaring `delegate-agent` while escaping the capability matrix entirely, a `specialistAllowList` that admits a delegation-capable agent, an agent whose frontmatter diverges from its `agentCapabilityMatrix` entry, a capability-matrix entry with no agent file, a registered agent file that declares no `tools` list, a capability-matrix entry that enables a tool absent from `toolDefinitions`, an `agentRoleHints` entry that disagrees with the matrix role, and every allow-listed agent gaining a mutating capability so that the non-mutating tier empties, with the last derived member also losing its `agentCapabilityMatrix` entry before the mutation loop starts, so that the loop observes the entry-absent state at the last member's index — a non-zero index for any tier larger than one and index 0 for a single-member tier — and a dropped removal is reported as a fixture error instead of passing silently at every legal tier size. The positive fixture removes one allow-listed non-mutating member's `agentCapabilityMatrix` entry and requires the validator to accept the result, which pins the tolerated state described under Enablement Preconditions instead of leaving it exercised only as a side effect of the tier fixture.
+Both checks also run a fixture suite. Each fixture copies the repository state and mutates one fact: a negative fixture requires the validator to reject the mutated state with a specific message, and a positive fixture requires it to accept the mutated state. Forty-six fixtures run per platform: forty-three negative and three positive, so the checks cannot silently degrade into no-ops. The negative fixtures cover the overlay being enabled by default, a second agent or role declaring `delegate-agent`, the supervisor frontmatter diverging from the `orchestration` role, a write delegation that omits its declared write set, a write delegation that declares an unbounded write set, the agent catalog drifting back to describing the approval gate as enforcement, an agent file drifting back to describing the approval gate as enforcement, a non-supervisor agent file gaining `delegate-agent` in its own frontmatter, an agent file declaring `delegate-agent` while escaping the capability matrix entirely, a non-supervisor agent file declaring a platform delegation tool such as `agent` in its own frontmatter, a non-supervisor agent file declaring an `agents` allow-list in its own frontmatter, the supervisor declaring an `agents` allow-list entry outside the canonical `specialistAllowList`, a non-supervisor agent file declaring a platform delegation tool in block list form, a non-supervisor agent file declaring an `agents` allow-list in block list form, a `specialistAllowList` that admits a delegation-capable agent, an agent whose frontmatter diverges from its `agentCapabilityMatrix` entry, a capability-matrix entry with no agent file, a registered agent file that declares no `tools` list, a capability-matrix entry that enables a tool absent from `toolDefinitions`, a capability-matrix entry that enables a host adapter tool, an `agentRoleHints` entry that disagrees with the matrix role, the supervisor declaring an `agents` allow-list without a host delegation tool from `hostAdapters`, the supervisor declaring a host delegation tool without an `agents` allow-list, the `hostAdapters` map declaring a tool name that resolves to a mutating capability, the supervisor declaring a tool outside the `orchestration` role and `hostAdapters`, an agent file off the allow-list with no `agentCapabilityMatrix` entry, an agent file off the allow-list with no `agentRoleHints` entry, and every allow-listed agent gaining a mutating capability so that the non-mutating tier empties, with the last derived member also losing its `agentCapabilityMatrix` entry before the mutation loop starts, so that the loop observes the entry-absent state at the last member's index — a non-zero index for any tier larger than one and index 0 for a single-member tier — and a dropped removal is reported as a fixture error instead of passing silently at every legal tier size. The ADR 0005 fixtures add a task class removed from the taxonomy, a playbook emptied, a playbook stage delegating to an agent outside the allow-list, a playbook stage setting both a non-empty `delegatesTo` and `requiresHumanApproval: true`, a playbook referencing an unknown class id, a mutated evidence result vocabulary, an evidence surface outside the closed vocabulary, an edited completion rule, and the four `complexityRouting` pins: `defaultWhenUncertain` changed from `complex`, `simpleWorkflow` and `complexWorkflow` emptied, and `complexIfAny` and `notBasedOn` emptied. The ADR 0006 fixture removes `verificationPerformed` from the delegation-result example and requires the missing-required-property diagnostic. The positive fixture removes one allow-listed non-mutating member's `agentCapabilityMatrix` entry and requires the validator to accept the result, which pins the tolerated state described under Enablement Preconditions instead of leaving it exercised only as a side effect of the tier fixture. A second positive fixture records an unsupported host in the adapter map with an empty `delegationTools` list and requires the validator to accept the result, so the ADR's "record `unsupported` where none is" representation cannot start being rejected on one platform without a check going red. A third positive fixture appends a case-variant adapter tool name such as `EDIT` to a host's `delegationTools` list and requires the validator to accept the result, so the case-sensitive mutating-name guard cannot drift to a case-insensitive match that would reject the entry on one platform only.
 
 The fixture harness copies `.github/` and `docs/` into a temporary directory and deletes it afterwards. It prunes `.github/hooks/logs` from the copy before any fixture runs, so the machine-local hook audit log never enters a fixture. The copy is removed with the fixture directory and is never written back to the repository.
 
-The repo-local checks evaluate only the subset of JSON Schema draft 2020-12 that `delegation-plan.schema.json` uses. Validate the worked example against the schema with a full validator as well:
+The repo-local checks evaluate only the subset of JSON Schema draft 2020-12 that `delegation-plan.schema.json` and `delegation-result.schema.json` use. Validate the worked examples with a full validator as well:
 
 - Python: `python -m jsonschema -i .github/examples/supervisor-orchestration/complex-feature-delegation-plan.json .github/schema/delegation-plan.schema.json`
+- Python: `python -m jsonschema -i .github/examples/supervisor-orchestration/simple-bugfix-delegation-result.json .github/schema/delegation-result.schema.json`
 - Node.js: `npx ajv-cli validate --spec=draft2020 -s .github/schema/delegation-plan.schema.json -d .github/examples/supervisor-orchestration/complex-feature-delegation-plan.json`
+- Node.js: `npx ajv-cli validate --spec=draft2020 -s .github/schema/delegation-result.schema.json -d .github/examples/supervisor-orchestration/simple-bugfix-delegation-result.json`
 
 ### What Static Validation Cannot Prove
 

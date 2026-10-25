@@ -6,3 +6,7 @@ Thumbs.db
 .forlocal/
 checklist.md
 MIGRATION.md
+
+# Local runtime state and hook audit output
+.github/hooks/logs/
+.agentic/state/

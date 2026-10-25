@@ -19,6 +19,8 @@ $requiredFiles = @(
   "tasks/laravel-component.md",
   "tasks/gameplay-mechanic.md",
   "tasks/game-perf-triage.md",
+  "tasks/decision-trail.md",
+  "tasks/ingest-project-docs.md",
   "expected/simple-bugfix.checklist.md",
   "expected/add-api-endpoint.checklist.md",
   "expected/frontend-component.checklist.md",
@@ -26,7 +28,9 @@ $requiredFiles = @(
   "expected/problem-structuring.checklist.md",
   "expected/laravel-component.checklist.md",
   "expected/gameplay-mechanic.checklist.md",
-  "expected/game-perf-triage.checklist.md"
+  "expected/game-perf-triage.checklist.md",
+  "expected/decision-trail.checklist.md",
+  "expected/ingest-project-docs.checklist.md"
 )
 
 foreach ($relativePath in $requiredFiles) {

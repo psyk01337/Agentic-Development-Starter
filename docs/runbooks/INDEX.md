@@ -25,6 +25,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 
 - **[Approval-Gated Handoffs](approval-gated-handoffs.md)** - Implement approval workflows between agents
 - **[Supervisor Orchestration](supervisor-orchestration.md)** - Run supervised delegation to approved specialist agents
+- **[Repo Self-Improvement](self-improvement.md)** - Run one bounded, evidence-based improvement iteration on the starter
 - **[Tool Surface Matrix](tool-surface-matrix.md)** - Compare agent platforms and tool capabilities
 
 ## Runtime Integration
@@ -47,6 +48,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 | Manage agent memory | [Memory Strategy](memory-strategy.md) |
 | Add approval workflows | [Approval-Gated Handoffs](approval-gated-handoffs.md) |
 | Run supervised delegation | [Supervisor Orchestration](supervisor-orchestration.md) |
+| Improve the starter autonomously | [Repo Self-Improvement](self-improvement.md) |
 | Compare agent platforms | [Tool Surface Matrix](tool-surface-matrix.md) |
 | Integrate Hermes | [Hermes Runtime](hermes-runtime.md) |
 | Use Honcho memory | [Honcho Memory](honcho-memory.md) |
@@ -55,7 +57,7 @@ This index organizes all runbooks by use case to help you find the right guidanc
 ## Related Documentation
 
 - [README](../../README.md) - Overview and quick start
-- [QUICKSTART](../../QUICKSTART.md) - 5-minute setup guide
+- [QUICKSTART](../../QUICKSTART.md) - Fast app setup guide
 - [TROUBLESHOOTING](../../TROUBLESHOOTING.md) - Common issues and solutions
 - [Prompts](../../.github/prompts/) - Reusable task prompts
 - [Agents](../../.github/agents/) - Specialist agent definitions

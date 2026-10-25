@@ -22,6 +22,8 @@ required_files=(
   "tasks/laravel-component.md"
   "tasks/gameplay-mechanic.md"
   "tasks/game-perf-triage.md"
+  "tasks/decision-trail.md"
+  "tasks/ingest-project-docs.md"
   "expected/simple-bugfix.checklist.md"
   "expected/add-api-endpoint.checklist.md"
   "expected/frontend-component.checklist.md"
@@ -30,6 +32,8 @@ required_files=(
   "expected/laravel-component.checklist.md"
   "expected/gameplay-mechanic.checklist.md"
   "expected/game-perf-triage.checklist.md"
+  "expected/decision-trail.checklist.md"
+  "expected/ingest-project-docs.checklist.md"
 )
 
 for relative_path in "${required_files[@]}"; do

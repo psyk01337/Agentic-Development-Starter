@@ -133,6 +133,71 @@ Example prompts:
 - `Use approval-gated-handoffs to draft the next transition from tech-planner to senior-software-engineer.`
 - `Coordinate the next specialist handoff with explicit approval and fallback to manual if approval is missing.`
 
+### `verification-evidence-loop`
+
+Use only when the repo has enabled the supervisor orchestration overlay and a change needs direct verification evidence before the orchestrator declares completion. The skill reads the per-surface evidence kinds from `evidenceRequirements` in `.github/roles/orchestration-policy.json`, produces `VERIFIED` / `NOT_VERIFIED` / `INCONCLUSIVE` results, and emits `delegation-result.schema.json`-shaped verification entries. `INCONCLUSIVE` is never a success.
+
+Example prompts:
+
+- `Use verification-evidence-loop to verify this API change and produce the verification record.`
+- `Run verification-evidence-loop for this bugfix and keep INCONCLUSIVE out of the success path.`
+
+### `adversarial-review`
+
+Use only when the repo has enabled the supervisor orchestration overlay and a completed change must be interrogated before it is relied on. Attempts to prove the implementation wrong across thirteen lenses and returns deduplicated, evidence-first findings; evidence outranks voting.
+
+Example prompts:
+
+- `Use adversarial-review to interrogate this diff and attempt to prove it wrong.`
+- `Run adversarial-review on this fix, cover the security and failure-handling lenses, and report the six-field findings.`
+
+### `arena-bakeoff`
+
+Use only when the repo has enabled the supervisor orchestration overlay and alternative implementations provide meaningful value, such as architecture decisions, API design, difficult algorithms, complex refactors, or ambiguous abstractions. Runs N isolated candidates, scores them against one rubric, and synthesizes only compatible improvements; never averages incompatible architectures.
+
+Example prompts:
+
+- `Use arena-bakeoff to compare three candidate designs for this API and select a base.`
+- `Run arena-bakeoff on this refactor: isolated worktrees per candidate, one rubric, and only compatible improvements synthesized.`
+
+### `swarm`
+
+Use only when the repo has enabled the supervisor orchestration overlay and one task decomposes into different independent slices that can run concurrently. Unlike `arena-bakeoff`, which competes on the same problem, a swarm runs each slice on a different problem; it detects shared mutable state before parallel execution and aggregates results only after all required slices finish.
+
+Example prompts:
+
+- `Use swarm to split this change into backend, tests, and documentation slices and run them concurrently.`
+- `Run swarm on this migration: audit, backend, and docs slices, with write sets checked before parallel execution.`
+
+### `prose-cleanup`
+
+Applies repo-wide to agent-produced prose — agent responses, ADRs, PR descriptions, documentation, handoffs, and code comments — even though it ships under the supervisor orchestration overlay's manifest section. Removes canned AI introductions, redundant summaries, unnecessary headings, fake certainty, verbose restatement, repetitive conclusions, and excessive conversational filler while preserving technical detail. It is a writing-quality filter, not a context compressor, and is not responsible for workflow-state storage.
+
+Example prompts:
+
+- `Use prose-cleanup on this PR description to cut the filler and keep every technical detail.`
+- `Run prose-cleanup over this ADR and handoff before review.`
+
+### `session-compactor`
+
+Use when a long working history must be compressed into a compact continuation brief before compaction, reset, or resumption. Unlike core `session-compaction`, which preserves handoff-time state (current plan, acceptance criteria, validation evidence, next recommended action), `session-compactor` compacts accumulated engineering context into the ten-field brief — current objective, locked decisions, important constraints, relevant architecture, files changed, known failures, verified facts, unresolved questions, current phase, and next actions — and discards conversational filler. The brief is not workflow-state storage and is not a completion declaration. Like `prose-cleanup`, it is repo-wide but ships under the supervisor orchestration overlay's manifest section for pattern continuity.
+
+Example prompts:
+
+- `Use session-compactor to compress this session before compaction into a compact continuation brief.`
+- `Turn this long working history into the ten-field brief with session-compactor and keep unresolved risks intact.`
+
+### `decision-trail`
+
+Use when a complex or autonomous task must leave an auditable decision trail: per-decision entries with suggested fields (timestamp, phase, decision, reason, evidence, result) and evidence as pointers — test output, commit, file and line, screenshot, trace, browser artifact, benchmark, command output — rather than pasted content. Trivial changes create no trail artifacts, and the trail is never workflow state and never a completion declaration. Like `prose-cleanup` and `session-compactor`, it is repo-wide but ships under the supervisor orchestration overlay's manifest section for pattern continuity.
+
+Changelogs record landed changes, ADRs record durable decisions with tradeoffs, and `session-compactor` produces continuation briefs. The decision trail records task-time decisions and points to those repo records instead of duplicating them; it can supply context to compaction without replacing it.
+
+Example prompts:
+
+- `Use decision-trail to record the decisions from this task with pointers to the validation output.`
+- `Keep a decision trail for this multi-phase change and point each entry at its evidence.`
+
 ### `api-scaffold`
 
 Use when a repo has a stable backend pattern and you want a scaffold from a contract or endpoint spec.
