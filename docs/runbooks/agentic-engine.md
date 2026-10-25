@@ -71,14 +71,15 @@ Every stage requires at least one evidence pointer. A pointer is either a local
 file inside the repository, or a reference using one of these schemes:
 `http://`, `https://`, `cmd:`, `test:`, `commit:`, `diff:`, `trace:`,
 `screenshot:`, `benchmark:`, `artifact:`. A scheme must carry content, a URL
-must have a host and must not embed credentials, and a directory is not
-evidence. Local paths, absolute or relative, must resolve inside the repository
-root; use an `artifact:`, `screenshot:`, `trace:`, or `benchmark:` scheme for
-anything outside it.
+must have a host, a valid port, and no credentials or query string, and a
+directory is not evidence. Local paths, absolute or relative, must resolve
+inside the repository root; use an `artifact:`, `screenshot:`, `trace:`, or
+`benchmark:` scheme for anything outside it. Signed or tokenized links belong
+behind `artifact:` rather than in a URL query string.
 
 Malformed input fails closed with a single `[ERROR]` line and exit code `1`;
-the engine does not print tracebacks for bad URLs, NUL paths, corrupt state, or
-an invalid state directory.
+the engine does not print tracebacks for bad URLs, NUL paths, corrupt state,
+missing state fields, an unknown stage, or an invalid state directory.
 
 The task spec must declare a bounded write set of explicit paths. Wildcards
 (`*`, `?`) and the policy's unbounded indicators (`unknown`, `broad`,
@@ -129,7 +130,9 @@ The engine blocks with a reason and a packet:
 - `inconclusive` — verification could not produce evidence.
 - `write-set-violation` — changed files outside the declared write set.
 - `wall-clock-budget-exceeded` — run budget reached; the run is persisted as
-  `BLOCKED` and exits with code `3` on the same call.
+  `BLOCKED` and exits with code `3`. The budget is checked on `record`, `next`,
+  and `approve`, so expiry is visible before the next write. The blocker names
+  the stage that produced the last evidence.
 
 A blocked run is not retried by the agent. It is escalated to the user with the packet.
 
@@ -159,6 +162,7 @@ and unbounded write sets, missing evidence, empty schemes, directory and
 traversal evidence, `VERIFIED` with failing checks, `needs-revision` without
 findings, self-review rejection, unknown task class and surface, wall-clock
 blocking, `--force` on completed and blocked runs, report exit codes, the
-history cap, malformed URLs, URL credentials, NUL paths, corrupt state, an
-invalid state directory, and state persistence. The umbrella check runs it on
-every validation.
+history cap, malformed URLs, URL credentials, invalid ports, query strings,
+NUL paths, corrupt state, missing state fields, an unknown stage, budget
+blocking on `next` and `approve`, and state persistence. The umbrella check
+runs it on every validation.

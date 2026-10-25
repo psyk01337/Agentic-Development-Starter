@@ -227,11 +227,30 @@ def read_state_file(path: Path) -> dict:
     return payload
 
 
+def validate_state(state: dict, run_id: str) -> dict:
+    for key in ("runId", "stage", "status", "task"):
+        if key not in state:
+            raise EngineError(f"state is missing required field '{key}'")
+    if state["runId"] != run_id:
+        raise EngineError(
+            f"state runId {state['runId']!r} does not match requested run-id {run_id!r}"
+        )
+    if state["stage"] not in STAGE_ORDER:
+        raise EngineError(f"state has an unknown stage: {state['stage']!r}")
+    task = state["task"]
+    if not isinstance(task, dict):
+        raise EngineError("state task must be a JSON object")
+    for key in ("taskId", "title", "acceptanceCriteria", "writeSet"):
+        if key not in task:
+            raise EngineError(f"state task is missing required field '{key}'")
+    return state
+
+
 def load_state(state_dir: Path, run_id: str) -> dict:
     path = state_path(state_dir, run_id)
     if not path.is_file():
         raise EngineError(f"no state for run-id {run_id} in {state_dir}")
-    return read_state_file(path)
+    return validate_state(read_state_file(path), run_id)
 
 
 def save_state(state_dir: Path, state: dict) -> None:
@@ -246,7 +265,8 @@ def append_history(state: dict, **entry) -> None:
     history.append(record)
     if len(history) > HISTORY_LIMIT:
         overflow = len(history) - HISTORY_LIMIT
-        del history[:overflow]
+        # Keep the init entry so the run's origin is never lost.
+        del history[1:1 + overflow]
         state["historyTruncated"] = state.get("historyTruncated", 0) + overflow
 
 
@@ -297,6 +317,7 @@ def validate_evidence(evidence, repo_root: Path) -> list:
             elif matched_scheme in ("http://", "https://"):
                 try:
                     parsed = urlparse(pointer)
+                    parsed.port  # raises ValueError on an invalid port
                 except ValueError as exc:
                     problems.append(f"{pointer!r} is not a valid URL: {exc}")
                     continue
@@ -304,6 +325,11 @@ def validate_evidence(evidence, repo_root: Path) -> list:
                     problems.append(f"{pointer!r} has no host after the scheme")
                 elif parsed.username is not None or parsed.password is not None:
                     problems.append(f"{pointer!r} must not embed credentials")
+                elif parsed.query:
+                    problems.append(
+                        f"{pointer!r} must not include a query string; "
+                        "use the artifact: scheme for signed or tokenized links"
+                    )
             pointers.append(pointer)
             continue
         raw = Path(pointer)
@@ -522,8 +548,13 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 def cmd_next(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    policy = load_policy(repo_root)
     state_dir = state_dir_for(repo_root, args.state_dir)
-    state = load_state(state_dir, args.run_id)
+    with run_lock(state_dir, args.run_id):
+        state = load_state(state_dir, args.run_id)
+        _check_budget(state, policy)
+        if state["stage"] == "blocked":
+            save_state(state_dir, state)
     emit(next_payload(state))
     return 3 if state["stage"] == "blocked" else 0
 
@@ -568,7 +599,8 @@ def _check_budget(state: dict, policy: dict) -> None:
     if isinstance(limit, (int, float)) and limit > 0 and minutes_elapsed(state) > limit:
         detail = (
             f"run exceeded the {limit}-minute wall-clock budget "
-            f"during stage {state.get('stage', '?')} after {state.get('attempt', 0)} attempt(s)"
+            f"during stage {state.get('stage', '?')} after {state.get('attempt', 0)} attempt(s); "
+            f"last evidence came from stage {state.get('lastEvidenceStage', 'none')}"
         )
         block(state, "wall-clock-budget-exceeded", detail, state.get("lastEvidence", []))
 
@@ -643,6 +675,7 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
     result = read_json_file(args.result)
     evidence = validate_evidence(result.get("evidence"), repo_root)
     state["lastEvidence"] = evidence
+    state["lastEvidenceStage"] = args.stage
 
     if args.stage in ("implement", "repair"):
         if result.get("status") != "done":
@@ -763,9 +796,15 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
 
 def cmd_approve(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    policy = load_policy(repo_root)
     state_dir = state_dir_for(repo_root, args.state_dir)
     with run_lock(state_dir, args.run_id):
         state = load_state(state_dir, args.run_id)
+        _check_budget(state, policy)
+        if state["stage"] == "blocked":
+            save_state(state_dir, state)
+            emit(next_payload(state))
+            return 3
         if state["stage"] != "approval":
             raise EngineError("run is not waiting for approval")
         approver = args.approver.strip()
@@ -1901,6 +1940,154 @@ class EngineSelfTest(unittest.TestCase):
             )
         self.assertEqual(code, 1)
         self.assertIn("[ERROR]", buffer.getvalue())
+
+    def test_missing_state_field_reports_error(self) -> None:
+        self.init()
+        state_file = self.state_dir / "r1.json"
+        state_file.write_text("{}", encoding="utf-8")
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(buffer):
+            code = main(
+                [
+                    "status",
+                    "--run-id",
+                    "r1",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+        self.assertIn("[ERROR]", buffer.getvalue())
+        self.assertNotIn("Traceback", buffer.getvalue())
+
+    def test_unknown_state_stage_reports_error(self) -> None:
+        self.init()
+        state_file = self.state_dir / "r1.json"
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+        state["stage"] = "nonsense"
+        state_file.write_text(json.dumps(state), encoding="utf-8")
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(buffer):
+            code = main(
+                [
+                    "next",
+                    "--run-id",
+                    "r1",
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+        self.assertIn("unknown stage", buffer.getvalue())
+
+    def test_invalid_url_port_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["https://example.com:badport"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_query_string_url_rejected(self) -> None:
+        self.init()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "implement",
+                    "--result",
+                    str(
+                        self.write_result(
+                            {
+                                "status": "done",
+                                "implementedBy": "engineer",
+                                "filesChanged": ["src/a.py"],
+                                "evidence": ["https://example.com/?token=abc"],
+                            }
+                        )
+                    ),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 1)
+
+    def test_budget_blocks_next(self) -> None:
+        policy_path = self.root / ".github" / "roles" / "orchestration-policy.json"
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        policy["retryPolicy"]["maxWallClockMinutes"] = 0.000001
+        policy_path.write_text(json.dumps(policy), encoding="utf-8")
+        self.init()
+        time.sleep(0.05)
+        code, payload = self.run_cli(["next", "--run-id", "r1"])
+        self.assertEqual(code, 3)
+        self.assertEqual(payload["blocker"]["reason"], "wall-clock-budget-exceeded")
+
+    def test_budget_blocks_approve(self) -> None:
+        policy_path = self.root / ".github" / "roles" / "orchestration-policy.json"
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        policy["retryPolicy"]["maxWallClockMinutes"] = 0.000001
+        policy_path.write_text(json.dumps(policy), encoding="utf-8")
+        self.write_task(approvalCategory="identity-security-change", requestedBy="supervisor")
+        self.init()
+        time.sleep(0.05)
+        code, payload = self.run_cli(
+            ["approve", "--run-id", "r1", "--approver", "alice"]
+        )
+        self.assertEqual(code, 3)
+        self.assertEqual(payload["blocker"]["reason"], "wall-clock-budget-exceeded")
+
+    def test_budget_blocker_names_evidence_stage(self) -> None:
+        state = {
+            "createdAt": "2000-01-01T00:00:00+00:00",
+            "stage": "verify",
+            "attempt": 2,
+            "lastEvidenceStage": "implement",
+            "lastEvidence": ["diff:HEAD"],
+        }
+        policy = {"retryPolicy": {"maxWallClockMinutes": 1}}
+        _check_budget(state, policy)
+        self.assertEqual(state["stage"], "blocked")
+        self.assertIn("implement", state["blocker"]["detail"])
+
+    def test_history_truncation_keeps_init(self) -> None:
+        state = {"history": []}
+        append_history(state, index=0)
+        for index in range(1, HISTORY_LIMIT + 25):
+            append_history(state, index=index)
+        self.assertEqual(len(state["history"]), HISTORY_LIMIT)
+        self.assertEqual(state["history"][0]["index"], 0)
+        self.assertEqual(state["historyTruncated"], 25)
 
     def test_state_persists(self) -> None:
         self.init()

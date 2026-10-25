@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Close the fifth agentic engine review findings
+
+- Area: orchestration engine, tests, runbook
+- Change type: fix, test, docs
+- Summary: validates state on load (`runId`, `stage`, `status`, `task`, and the task's required fields), so incomplete or hand-edited state reports a single `[ERROR]` instead of a `KeyError` traceback; validates URL ports and rejects query strings so signed or tokenized links cannot be stored as URL evidence; checks the wall-clock budget on `next` and `approve`; records the stage that produced the last evidence in the blocker; and keeps the `init` history entry when truncating. Self-tests grow from 46 to 54.
+- Reason: the fifth QA pass found `KeyError` tracebacks from incomplete state, accepted invalid URL ports and secret-bearing query strings, and budget checks that ran only on `record`.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the fifth agentic engine hardening"
+- Validation: `python .github/scripts/agentic_engine.py selftest` passed 54 tests; probes confirm incomplete state, unknown stage, invalid port, and query-string evidence all fail with `[ERROR]`; both umbrellas passed all 11 checks; `STRAY-NONE`.
+- Discrepancies or follow-up: signed or tokenized links must use the `artifact:` scheme; URL query strings are rejected outright.
+
 ### 2026-10-25 - Close the fourth agentic engine review findings
 
 - Area: orchestration engine, repository hygiene, runbook

@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the fifth agentic engine hardening
+
+- Area: agentic-engine runbook
+- Change type: docs, runbook
+- Summary: documents state validation, the query-string rejection rule for URL evidence, budget checks on `next` and `approve`, the evidence-stage field in the blocker, and the expanded self-test inventory.
+- Reason: the fifth QA and review pass changed enforceable behavior.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Close the fifth agentic engine review findings"
+- Review status: pending-review
+- Discrepancies or follow-up: signed links must use `artifact:`; URL query strings are rejected.
+
 ### 2026-10-25 - Document the fourth agentic engine hardening
 
 - Area: agentic-engine runbook, repository hygiene
