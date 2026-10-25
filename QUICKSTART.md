@@ -37,9 +37,34 @@ git init
 
 If you have local starter changes, clone your local path or commit and push them first.
 
-### 2. Initialize the project
+### 2. Drop your planning documents (optional but recommended)
 
-Open the repository in VS Code and run:
+Create the directory and place any PRD, design brief, architecture note, API contract, or feature spec there. Markdown and plain text are preferred; convert PDF or DOCX first. If you have no documents, skip to step 3.
+
+PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Path docs/inputs -Force
+```
+
+Bash:
+
+```bash
+mkdir -p docs/inputs
+```
+
+### 3. Run the intake router
+
+Open the repository in VS Code and say:
+
+```text
+Use route-project-inputs. I dropped these Markdown files in docs/inputs/.
+Classify each, write the routing table, and run the right workflows in order.
+```
+
+The router runs `initialize-new-project` once if the project context is still generic, then `ingest-project-docs` for repo-truth documents, `build-feature` for one bounded feature spec, and `improve-repo` only for workflow documents. It defers incomplete or unreadable files.
+
+If you have no planning documents, run the initialization prompt directly:
 
 ```text
 Use initialize-new-project. My project is <name> — <description>.
@@ -47,11 +72,9 @@ Tech stack: <frontend>, <backend>, <database>.
 Goals: <goal 1>, <goal 2>, <goal 3>.
 ```
 
-If you want a rollback point, commit the untouched starter before running the prompt. The prompt rewrites the project README, resets both changelogs, and trims stack overlays to match your stack. Keep the workflow assets intact.
+If you want a rollback point, commit the untouched starter before running either prompt.
 
-**If you have a PRD, design brief, architecture note, or API contract:** place it in `docs/inputs/` (create the directory if needed) or attach it, record provenance in `docs/inputs.md`, then run `ingest-project-docs.prompt.md` before coding. It turns the document into `docs/prd.md`, `docs/architecture.md`, `docs/api.md` (as applicable), and a gap analysis without inventing missing requirements.
-
-### 3. Create the application directory
+### 4. Create the application directory
 
 PowerShell:
 
@@ -67,7 +90,7 @@ mkdir -p app
 
 Add frontend and backend code under `app/`. The starter does not enforce a specific layout.
 
-### 4. Build the first vertical slice
+### 5. Build the first vertical slice
 
 ```text
 Use build-feature. Build <one small end-to-end feature>.
@@ -77,7 +100,7 @@ Out of scope: <...>.
 
 The prompt routes the work through plan, implementation, tests, `code-reviewer`, `qa`, and changelog updates. Start with one endpoint or one screen, not a subsystem.
 
-### 5. Validate
+### 6. Validate
 
 ```bash
 bash .github/scripts/check-starter-workflow.sh
@@ -89,7 +112,7 @@ pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1
 
 Also run the application's own test, lint, and build commands.
 
-### 6. Commit
+### 7. Commit
 
 ```bash
 git add -A
@@ -102,7 +125,7 @@ git commit -m "Initialize project from Agentic Development Starter"
 2. Copy the baseline first: `.github/copilot-instructions.md`, `.github/instructions/core.instructions.md`, `.github/instructions/security.instructions.md`, `.github/starter-modules.json`, `CHANGELOG.md`, `DOC-CHANGELOG.md`, and `docs/inputs.md`.
 3. Add agents, skills, prompts, and hooks in a follow-up commit.
 4. Run the umbrella checks.
-5. Run `ingest-project-docs.prompt.md` on existing PRD, design, architecture, or API documents before implementation.
+5. Drop existing PRD, design, architecture, or API documents in `docs/inputs/` and run `route-project-inputs.prompt.md` before implementation.
 6. Use `build-feature.prompt.md` for the first feature.
 
 ## Choose Team Mode

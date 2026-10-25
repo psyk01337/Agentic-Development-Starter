@@ -12,6 +12,12 @@ This runbook describes the daily operating model once the starter has been compo
 
 ## 1a) Common Guided Chains
 
+### Project input routing
+
+1. Drop one or more Markdown files in `docs/inputs/`.
+2. Use `route-project-inputs.prompt.md`.
+3. Review the routing table in `docs/inputs.md`; the prompt runs `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo` in order.
+
 ### Project documentation intake
 
 1. Use `ingest-project-docs.prompt.md` with the PRD, design brief, architecture note, or API contract.

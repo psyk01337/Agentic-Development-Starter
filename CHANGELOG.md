@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Add project input routing
+
+- Area: prompts, docs, module manifest
+- Change type: feature, docs
+- Summary: adds `.github/prompts/route-project-inputs.prompt.md` as the single intake router for one or more dropped Markdown files. It inventories and classifies each file, writes a routing table in `docs/inputs.md`, and executes `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo` in order without asking the user to choose file by file. Registered in `workflow-prompts`; manifest `1.13` → `1.14`. QUICKSTART and README now make dropping planning docs and running the router the default start path, with `initialize-new-project` as the no-docs fallback; the `agentic-dev` runbook points to the router.
+- Reason: the user wants to drop one or more Markdown files and have the agent decide where each belongs, instead of manually selecting a prompt per file.
+- Affected files: .github/prompts/route-project-inputs.prompt.md, .github/starter-modules.json, README.md, QUICKSTART.md, docs/runbooks/agentic-dev.md, docs/inputs.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entries "2026-10-25 - Document project input routing" and "2026-10-25 - Make drop-and-route the default app start"
+- Validation: pending; run `bash .github/scripts/check-prompt-contracts.sh`, `bash .github/scripts/check-markdown-quality.sh`, `bash .github/scripts/check-starter-manifest.sh`, and both umbrellas.
+- Discrepancies or follow-up: the router is prompt-level orchestration, not a deterministic parser or file watcher. It handles Markdown and readable text; unsupported or binary sources are deferred for conversion. No golden eval task covers the router yet.
+
 ### 2026-10-25 - Fix the Bash prompt-contract SIGPIPE false negative
 
 - Area: validation scripts

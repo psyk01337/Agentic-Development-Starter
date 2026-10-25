@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Make drop-and-route the default app start
+
+- Area: QUICKSTART, README
+- Change type: docs
+- Summary: restructures QUICKSTART Path A so dropping planning documents and running `route-project-inputs` is the default setup path; `initialize-new-project` is the fallback when no documents exist. README Quick Start mirrors the same order and names the router as the single entry point.
+- Reason: the user wants to drop one or more Markdown files and have the agent decide where each belongs, instead of selecting prompts file by file.
+- Affected files: QUICKSTART.md, README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add project input routing"
+- Review status: pending-review
+- Discrepancies or follow-up: docs-only; the router remains prompt-level orchestration, not a file watcher or binary parser.
+
+### 2026-10-25 - Document project input routing
+
+- Area: prompts, QUICKSTART, README, runbooks
+- Change type: docs, runbook
+- Summary: adds the router prompt to the README prompt list and daily frame step, replaces the single-document callout in QUICKSTART with the router flow, adds the routing chain to the `agentic-dev` runbook, and adds workflow destinations plus a routing log to `docs/inputs.md`.
+- Reason: make one dropped-files prompt the default intake path and remove per-file prompt selection.
+- Affected files: .github/prompts/route-project-inputs.prompt.md, README.md, QUICKSTART.md, docs/runbooks/agentic-dev.md, docs/inputs.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add project input routing"
+- Review status: pending-review
+- Discrepancies or follow-up: the router is prompt-level orchestration; no automatic parser, watcher, or binary-format support is added. Unsupported sources must be converted.
+
 ### 2026-10-25 - Document the document-ingestion eval and inputs template
 
 - Area: evals, docs, README

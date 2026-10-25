@@ -1,5 +1,5 @@
 {
-  "version": "1.13",
+  "version": "1.14",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -121,7 +121,8 @@
         ".github/prompts/add-policy-rule.prompt.md",
         ".github/prompts/improve-repo.prompt.md",
         ".github/prompts/build-feature.prompt.md",
-        ".github/prompts/ingest-project-docs.prompt.md"
+        ".github/prompts/ingest-project-docs.prompt.md",
+        ".github/prompts/route-project-inputs.prompt.md"
       ]
     },
     {

@@ -66,10 +66,11 @@ This repository is not Hermes Agent. Hermes is a stateful runtime. This starter 
 Start with [QUICKSTART.md](QUICKSTART.md) for the 10-minute path to a working app.
 
 1. Clone the starter as your project root, detach the starter history, and run `git init`.
-2. Open the project in VS Code and run the `initialize-new-project` prompt with your stack and goals.
-3. Add application code under `app/`.
-4. Run `build-feature.prompt.md` for the first vertical slice.
-5. Run the starter validation and your application's own tests before merging.
+2. Drop any PRD, design brief, architecture note, API contract, or feature spec into `docs/inputs/`.
+3. Run `route-project-inputs.prompt.md`. It classifies every file and runs `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo` in order. If you have no documents, run `initialize-new-project` directly.
+4. Add application code under `app/`.
+5. Run `build-feature.prompt.md` for the first vertical slice.
+6. Run the starter validation and your application's own tests before merging.
 
 For an existing app, use `docs/runbooks/adopting-existing-github.md` instead.
 
@@ -103,7 +104,7 @@ The starter earns its keep only when the repo stays the source of truth and the 
 
 ### 1. Run every task as a loop
 
-1. **Frame.** If you have a PRD, design brief, or API contract, run `ingest-project-docs.prompt.md` first; if the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
+1. **Frame.** If you dropped one or more planning documents in `docs/inputs/`, run `route-project-inputs.prompt.md`; it classifies every file and routes it to `initialize-new-project`, `ingest-project-docs`, `build-feature`, or `improve-repo`. If the problem is vague or spans systems, use the `problem-structuring` skill, then `analyst`.
 2. **Route.** Choose the smallest surface that fits the task, using the surface table below.
 3. **Deliver.** Use `build-feature.prompt.md` for one feature end-to-end, or invoke `senior-software-engineer` directly; use `tdd-vitest` only in repos that actually run Vitest.
 4. **Verify.** Run the smallest relevant validation. Add `code-reviewer` and `qa` for anything user-facing, and `security-reviewer` when the change touches secrets, auth, command execution, hooks, MCP, memory, or dependency trust.
@@ -247,6 +248,7 @@ Prompt files are repeatable one-off tasks, not always-on rules. They live under 
 
 - Existing repo onboarding.
 - End-to-end feature delivery through plan, implementation, review, and QA.
+- Project input routing for one or more dropped Markdown files (`route-project-inputs.prompt.md`).
 - Project document ingestion for PRDs, design briefs, architecture notes, and API contracts (`ingest-project-docs.prompt.md`, run in the downstream project repo).
 - Small feature planning.
 - Small diff implementation.

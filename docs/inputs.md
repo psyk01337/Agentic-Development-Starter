@@ -1,8 +1,29 @@
 # Source Document Inputs
 
-Place PRDs, design briefs, architecture notes, API contracts, and other planning documents in `docs/inputs/` before running `ingest-project-docs.prompt.md`. Create the directory when you first use it. Run the prompt in the downstream project repository, not in the starter template.
+Place PRDs, design briefs, architecture notes, API contracts, and other planning documents in `docs/inputs/` before running `route-project-inputs.prompt.md`. Create the directory when you first use it. Run the router in the downstream project repository, not in the starter template.
 
-This file is the tracked provenance index and format guide. The `docs/inputs/` directory is an intake area, not repo truth. The prompt turns the source into `docs/prd.md`, `docs/architecture.md`, `docs/api.md`, and `docs/design-brief.md` as applicable.
+This file is the tracked provenance index, routing log, and format guide. The `docs/inputs/` directory is an intake area, not repo truth. The router uses `ingest-project-docs` to turn each source into `docs/prd.md`, `docs/architecture.md`, `docs/api.md`, and `docs/design-brief.md` as applicable.
+
+## Workflow Destinations
+
+| Workflow | Use when | Output |
+| --- | --- | --- |
+| `initialize-new-project` | The repository is a fresh clone with generic starter context and needs a project name, stack, goals, or overlay setup. | README, changelogs, enabled overlays |
+| `ingest-project-docs` | A PRD, design brief, architecture note, API contract, requirements, or research document should become repo truth. | `docs/prd.md`, `docs/architecture.md`, `docs/api.md`, `docs/design-brief.md` |
+| `build-feature` | A bounded feature specification has acceptance criteria and can be delivered as one vertical slice. | Code, tests, review, QA, changelogs |
+| `improve-repo` | A document describes starter or workflow friction, validation gaps, or agent, skill, and prompt improvements. | One bounded repository improvement |
+| `defer` | The source is incomplete, unreadable, or ambiguous. | Missing-input list |
+
+One `route-project-inputs` invocation processes every file in `docs/inputs/`. A PRD is never passed directly to `build-feature`; ingest it first. Run at most one `build-feature` slice per invocation and queue the rest. Ambiguous files are deferred, not guessed.
+
+## Routing Log
+
+`route-project-inputs.prompt.md` writes the routing decision here before executing it.
+
+| Source file | Type | Confidence | Target workflow | Order | Reason | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| `example-prd.md` | PRD | High | `ingest-project-docs` | 1 | Product requirements must become repo truth before coding | Pending |
+| `example-feature.md` | Feature spec | High | `build-feature` | 2 | Bounded acceptance criteria for one vertical slice | Pending |
 
 ## Supported Formats
 
