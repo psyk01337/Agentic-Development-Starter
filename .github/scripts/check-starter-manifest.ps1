@@ -74,6 +74,22 @@ if (-not (Test-Path $manifestPath)) {
       }
     }
 
+    foreach ($relativePath in $seenFiles.Keys) {
+      if ($relativePath -notlike "*.instructions.md") { continue }
+      $instructionPath = Join-Path $RepoRoot $relativePath
+      if (-not (Test-Path $instructionPath)) { continue }
+      $content = Get-Content -Path $instructionPath -Raw
+      if (-not $content.StartsWith("---")) {
+        Add-CheckError("Instruction file must start with YAML frontmatter: $relativePath")
+        continue
+      }
+      $closing = $content.IndexOf("---", 3)
+      $frontmatter = if ($closing -gt 0) { $content.Substring(0, $closing) } else { "" }
+      if ($frontmatter -notmatch "(?m)^applyTo:") {
+        Add-CheckError("Instruction file is missing applyTo: $relativePath")
+      }
+    }
+
     foreach ($relativePath in $requiredCoreFiles) {
       if (-not $seenFiles.ContainsKey($relativePath)) {
         Add-CheckError("Required core file is not listed in starter-modules.json: $relativePath")

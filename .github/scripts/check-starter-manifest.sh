@@ -67,6 +67,26 @@ for module in modules or []:
         if not (repo_root / relative_path).exists():
             errors.append(f"Manifest-listed file does not exist: {relative_path}")
 
+# Instruction files must declare applyTo, or they never load predictably.
+for relative_path in sorted(seen_files):
+    if not relative_path.endswith(".instructions.md"):
+        continue
+    instruction_path = repo_root / relative_path
+    if not instruction_path.is_file():
+        continue
+    try:
+        content = instruction_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"Instruction file cannot be read: {relative_path} ({exc})")
+        continue
+    if not content.startswith("---"):
+        errors.append(f"Instruction file must start with YAML frontmatter: {relative_path}")
+        continue
+    closing = content.find("\n---", 3)
+    frontmatter = content[:closing] if closing != -1 else ""
+    if "applyTo:" not in frontmatter:
+        errors.append(f"Instruction file is missing applyTo: {relative_path}")
+
 missing_core = sorted(required_core_files - seen_files)
 for relative_path in missing_core:
     errors.append(f"Required core file is not listed in starter-modules.json: {relative_path}")

@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-26 - Document the instruction loading model
+
+- Area: starter composition runbook, README
+- Change type: docs, runbook
+- Summary: adds a "How Instruction Files Load" section explaining the baseline, always-on, and scoped layers, the token cost of overlapping globs, the Phaser overlay choice, and the new `applyTo` requirement; adds a loading-model pointer to the README core-versus-optional section.
+- Reason: users could not tell which instructions are always injected, why overlapping overlays cost context, or why an instruction file silently has no effect.
+- Affected files: docs/runbooks/starter-composition.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-26 - Reduce always-on context and validate instruction frontmatter"
+- Review status: pending-review
+- Discrepancies or follow-up: the loading table describes GitHub Copilot behavior; other hosts may load instructions differently.
 ### 2026-10-25 - Document the four delivery skills and core baseline
 
 - Area: skills runbook, README, core instructions

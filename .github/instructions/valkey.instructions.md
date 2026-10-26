@@ -1,5 +1,5 @@
 ---
-applyTo: "{**/config/*.php,**/.env.example,**/app/**/*.php}"
+applyTo: "{**/config/*.php,**/.env.example,**/app/**/*Valkey*.php,**/app/**/*Redis*.php,**/app/**/*Cache*.php,**/app/Jobs/**/*.php}"
 ---
 # Valkey Overlay Instructions (RESP Store)
 

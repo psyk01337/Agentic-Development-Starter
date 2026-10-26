@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-26 - Reduce always-on context and validate instruction frontmatter
+
+- Area: copilot instructions, instruction overlays, manifest validators
+- Change type: fix, docs, test
+- Summary: removes the duplicated delivery and security rule lists from `.github/copilot-instructions.md` so it acts as a thin always-on router pointing at `core`, `security`, and `memory`; narrows the Valkey overlay from every `app/**/*.php` file to config, env, Valkey/Redis/Cache-named classes, and jobs; and extends both `check-starter-manifest` twins to require YAML frontmatter with `applyTo` on every manifest-listed instruction file.
+- Reason: `copilot-instructions.md` is injected on every request, so duplicated rules cost tokens and can drift from `core.instructions.md`, which now carries a fuller Definition Of Done and blast-radius contract. The Valkey overlay applied to unrelated PHP files, and an instruction file without `applyTo` loads unpredictably with no check to catch it.
+- Affected files: .github/copilot-instructions.md, .github/instructions/valkey.instructions.md, .github/scripts/check-starter-manifest.sh, .github/scripts/check-starter-manifest.ps1, docs/runbooks/starter-composition.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-26 - Document the instruction loading model"
+- Validation: `bash .github/scripts/check-starter-manifest.sh` and the PowerShell twin pass; removing `applyTo` from a test instruction file makes both twins fail with `Instruction file is missing applyTo`, then passes after restore; both umbrellas pass.
+- Discrepancies or follow-up: the new check validates presence, not that a glob matches real files. Unmatched globs remain a review concern.
 ### 2026-10-25 - Add four delivery skills and tighten the core baseline
 
 - Area: skills, core instructions, module manifest

@@ -5,6 +5,25 @@ This runbook explains how to adapt the starter to a target repository without dr
 If the target repository already has a populated `.github` folder, follow `docs/runbooks/adopting-existing-github.md` first and treat this runbook as the composition reference after baseline merge decisions are made.
 Do not assume sample file names or paths exist in every target repository; map assets by purpose and available source-of-truth docs.
 
+## How Instruction Files Load
+
+The starter uses three instruction layers, and they do not all load on every request.
+
+| Layer | Files | When it loads |
+| --- | --- | --- |
+| Repository baseline | `.github/copilot-instructions.md` | Always, on every request |
+| Always-on instructions | `core`, `security`, and `memory` (`applyTo: "**/*"`) | Always, alongside the baseline |
+| Scoped instructions | Every other `*.instructions.md` | Only when a file matching its `applyTo` glob is in context |
+
+Consequences worth knowing:
+
+- Always-on content costs tokens on every request. Keep `copilot-instructions.md` a thin router; put detail in `core` or `security` rather than restating the same rule in both.
+- A scoped instruction whose glob never matches a real path is dead weight. Check the glob against the repo's actual layout.
+- Overlapping globs stack. `frontend`, `react`, and `nextjs` all match `**/*.{ts,tsx,js,jsx}`, so enabling all three loads all three for every TypeScript file. That is intentional framework layering, but it is a token cost.
+- `phaser.instructions.md` and `js.phaser4.instructions.md` share a glob. Enable exactly one.
+- An instruction file without `applyTo` does not load predictably. The manifest check fails when a manifest-listed instruction file omits it.
+
+"Always applied" means always injected as context. It is not enforcement: nothing prevents a model from ignoring an instruction.
 ## 1. Start With Core Modules
 
 Keep these modules in almost every repo:

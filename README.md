@@ -239,7 +239,7 @@ Use when organization-level governance matters:
 
 `.github/starter-modules.json` is the module source of truth.
 
-Core modules cover baseline instructions, security, memory strategy, governance, agents, guardrails, validation, and CI.
+Core modules cover baseline instructions, security, memory strategy, governance, agents, guardrails, validation, and CI. `.github/copilot-instructions.md` and the `core`, `security`, and `memory` instruction files load on every request; other overlays load only when a matching file is in context. See `docs/runbooks/starter-composition.md` for the loading model.
 
 Optional modules cover prompt workflows, skills, evals, editor templates, and MCP templates.
 
