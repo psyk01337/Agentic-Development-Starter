@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-25 - Document the four delivery skills and core baseline
+
+- Area: skills runbook, README, core instructions
+- Change type: docs, runbook
+- Summary: documents `database-migration`, `dependency-upgrade`, `refactor-safely`, and `threat-modeling` with example prompts, updates the README skills summary, and records the new core sections.
+- Reason: make the new delivery playbooks discoverable and record the tightened baseline.
+- Affected files: README.md, docs/runbooks/skills.md, .github/instructions/core.instructions.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-25 - Add four delivery skills and tighten the core baseline"
+- Review status: pending-review
+- Discrepancies or follow-up: skills are playbooks; the core additions are prompt-level rules.
 ### 2026-10-25 - Document the engine, ingestion, and push troubleshooting
 
 - Area: README, QUICKSTART, TROUBLESHOOTING

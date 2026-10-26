@@ -276,7 +276,7 @@ Each prompt states what context to inspect first, deliverables, safety boundarie
 
 Skills are bounded multi-step playbooks. Use them when the workflow is repeatable and format-sensitive.
 
-Included workflow skills cover ADR authoring, bug triage, PR review, QA test plans, security checks, release notes, session compaction, memory curation, repo onboarding, CI failure debugging, migration planning, tool-surface audits, and problem structuring.
+Included workflow skills cover ADR authoring, bug triage, PR review, QA test plans, security checks, threat modeling, database migrations, dependency upgrades, safe refactors, release notes, session compaction, memory curation, repo onboarding, CI failure debugging, migration planning, tool-surface audits, and problem structuring.
 
 Stack overlays include API and UI scaffold skills, plus `game-perf-triage` for game frame-time, memory, and load-time diagnosis. Domain skills include `embedded-bringup`, `binary-analysis` for authorized reverse engineering, `network-troubleshooting`, `web-quality`, and `game-design`. Approval-gated handoffs are an optional overlay skill.
 

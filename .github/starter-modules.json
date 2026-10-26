@@ -1,5 +1,5 @@
 {
-  "version": "1.17",
+  "version": "1.18",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -147,7 +147,11 @@
         ".github/skills/ci-failure-debugging/SKILL.md",
         ".github/skills/migration-planning/SKILL.md",
         ".github/skills/tool-surface-audit/SKILL.md",
-        ".github/skills/problem-structuring/SKILL.md"
+        ".github/skills/problem-structuring/SKILL.md",
+        ".github/skills/database-migration/SKILL.md",
+        ".github/skills/dependency-upgrade/SKILL.md",
+        ".github/skills/refactor-safely/SKILL.md",
+        ".github/skills/threat-modeling/SKILL.md"
       ]
     },
     {

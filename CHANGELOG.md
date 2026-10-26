@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-25 - Add four delivery skills and tighten the core baseline
+
+- Area: skills, core instructions, module manifest
+- Change type: feature, docs
+- Summary: adds `database-migration`, `dependency-upgrade`, `refactor-safely`, and `threat-modeling` skills, registered in `workflow-skills`; manifest `1.17` -> `1.18`. Extends `.github/instructions/core.instructions.md` with Definition Of Done, Blast Radius And Rollback, Generated/Vendored/Migrated Code, and Choosing The Check sections. Updates the README skills summary and the skills runbook.
+- Reason: daily delivery work had playbooks for reviews, tests, and debugging, but none for the four highest-risk recurring changes: schema changes, dependency upgrades, behavior-preserving refactors, and design-time threat modeling. The core baseline also lacked an explicit done contract and rules for generated or vendored code.
+- Affected files: .github/skills/database-migration/SKILL.md, .github/skills/dependency-upgrade/SKILL.md, .github/skills/refactor-safely/SKILL.md, .github/skills/threat-modeling/SKILL.md, .github/instructions/core.instructions.md, .github/starter-modules.json, README.md, docs/runbooks/skills.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-25 - Document the four delivery skills and core baseline"
+- Validation: `bash .github/scripts/check-starter-skills.sh` and the PowerShell twin pass with the four new skills; `bash .github/scripts/check-starter-manifest.sh`, `bash .github/scripts/check-markdown-quality.sh`, and both umbrellas pass.
+- Discrepancies or follow-up: the new skills are playbooks, not validators. The core additions are prompt-level rules, not runtime enforcement.
 ### 2026-10-25 - Fix wall-clock budget precision and the flaky budget test
 
 - Area: orchestration engine, tests

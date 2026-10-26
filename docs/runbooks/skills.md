@@ -207,6 +207,41 @@ Example prompts:
 - `Use repair-loop to drive this failing test fix through the engine and stop if the same failure repeats.`
 - `Run the bounded repair loop for this feature and escalate the blocker packet if the attempt budget is exhausted.`
 
+### `database-migration`
+
+Use when a change alters schema, constraints, indexes, or stored data. Forces expand-and-contract sequencing, bounded backfills, lock analysis, verification, and a real rollback path.
+
+Example prompts:
+
+- `Use database-migration to add a non-null column to a large table without downtime.`
+- `Plan the backfill and rollback for this table split before anyone writes code.`
+
+### `dependency-upgrade`
+
+Use when adding, removing, or bumping a dependency, runtime, build tool, or base image. Checks advisories, changelogs, package identity, lockfile integrity, blast radius, and rollback.
+
+Example prompts:
+
+- `Use dependency-upgrade to move React 18 to 19 and list the breaking changes.`
+- `This package has a CVE; use dependency-upgrade to confirm the fix and validate the blast radius.`
+
+### `refactor-safely`
+
+Use before restructuring working code. Requires characterization tests, explicit seams, small reversible steps, and no behavior change in the same commit.
+
+Example prompts:
+
+- `Use refactor-safely to extract this service class before we add the next feature.`
+- `Remove this duplication with refactor-safely and keep every public contract unchanged.`
+
+### `threat-modeling`
+
+Use at design time for a new feature, endpoint, integration, or identity flow. Builds a lightweight STRIDE model over the real trust boundaries and records accepted risks.
+
+Example prompts:
+
+- `Use threat-modeling on this file upload feature before implementation.`
+- `Threat model the trust boundaries for this multi-tenant API and list the gaps.`
 ### `api-scaffold`
 
 Use when a repo has a stable backend pattern and you want a scaffold from a contract or endpoint spec.
