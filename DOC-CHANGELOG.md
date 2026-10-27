@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Record the manifest reset in initialize-new-project
+
+- Area: initialize-new-project prompt
+- Change type: docs
+- Summary: adds a step that resets `"version"` in `.github/starter-modules.json` to `1.0.0` and names that version in the initial changelog entry.
+- Reason: a live run of the prompt rewrote the README and cleared both changelogs exactly as instructed, and the repository then failed `check-starter-manifest` with `version 2.2.0 is not recorded in a CHANGELOG.md Summary line`. Two shipped instructions contradicted each other: the manifest check requires the current version in a Summary line, and the prompt said to remove every starter entry without saying to reset the version.
+- Affected files: .github/prompts/initialize-new-project.prompt.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: None - the validator is unchanged; the prompt now satisfies it
+- Review status: pending-review
+- Discrepancies or follow-up: the prompt still leaves `maintainerAssetScan` at `true`, which is correct for a full clone because the project then maintains its own module manifest, but a project that deletes most modules will want to set it to `false`.
+
 ### 2026-10-27 - Record the build-feature golden task result
 
 - Area: eval harness
