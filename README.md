@@ -1,4 +1,4 @@
-# Agentic Development Starter (VS Code, August 2026 Workflow)
+# Agentic Development Starter (VS Code Agent Workflows)
 
 Agentic Development Starter is a repo-native workflow, safety, and governance starter for AI-assisted software development. It standardizes instructions, prompts, agents, skills, hooks, MCP templates, memory policy, handoffs, validation, and evaluation so teams can ship changes with consistent guardrails and auditability.
 
@@ -349,7 +349,7 @@ Both overlays are disabled by default and documented in `docs/runbooks/hermes-ru
 
 ## Evaluation Harness
 
-`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Initial tasks cover simple bugfixes, API endpoints, frontend components, Laravel components, gameplay mechanics, game performance triage, security review, docs/changelog updates, CI debugging, problem structuring, document ingestion, and decision trails.
+`evals/` contains manual/semi-automated golden tasks for checking whether agents follow starter rules. Tasks cover end-to-end feature delivery, simple bugfixes, API endpoints, frontend components, Laravel components, gameplay mechanics, game performance triage, security review, docs/changelog updates, CI debugging, problem structuring, document ingestion, and decision trails.
 
 Structure checks:
 

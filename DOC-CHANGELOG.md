@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Drop the month stamp from the README title and name the new eval
+
+- Area: README
+- Change type: docs
+- Summary: changes the README title from "(VS Code, August 2026 Workflow)" to "(VS Code Agent Workflows)" and adds end-to-end feature delivery to the evaluation-harness task list.
+- Reason: the month in the title had already been carried forward twice (June 2026 to August 2026) and was stale again by two months. A calendar stamp on line 1 of a living document reads as an abandoned project and needs manual upkeep every month. The eval list also predated the `build-feature` task.
+- Affected files: README.md, DOC-CHANGELOG.md
+- Related code: None — documentation only, no behavior change
+- Review status: pending-review
+- Discrepancies or follow-up: if the month stamp was carrying a real meaning, such as the VS Code release the workflow was verified against, that belongs in a dated line near the validation section rather than in the title. Restoring a month would reintroduce the same drift.
+
 ### 2026-10-27 - Document the trimmed baseline, the merged skill, and ADR 0007
 
 - Area: security instructions, skills runbook, engineering team runbook, supervisor runbook, ADR
