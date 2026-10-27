@@ -83,9 +83,12 @@ Include:
 - `.github/copilot-instructions.md`
 - `.github/instructions/core.instructions.md`
 - `.github/instructions/security.instructions.md`
+- `.github/instructions/memory.instructions.md`
 - `.github/starter-modules.json`
 - Basic validation scripts
 - `CHANGELOG.md` and `DOC-CHANGELOG.md`
+
+All three instruction files above are required core files: the manifest check fails if `core`, `security`, or `memory` is missing. They are also the three that load on every request, so copy them together or not at all.
 
 Keep disabled:
 

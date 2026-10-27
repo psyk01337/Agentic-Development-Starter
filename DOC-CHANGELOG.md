@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Fix the baseline copy lists and scope what they promise
+
+- Area: QUICKSTART, starter adoption runbook
+- Change type: docs
+- Summary: adds `.github/instructions/memory.instructions.md` to both baseline copy lists and states in QUICKSTART that the list is the always-on rule set rather than a copyable module, pointing readers at `.github/starter-modules.json` for a copy whose checks pass.
+- Reason: a workflow test copied exactly the documented baseline into a scratch repo and the manifest check reported `memory.instructions.md` missing, because both lists named `core` and `security` and stopped. The same test showed the list cannot produce a passing repo on its own, since the manifest also requires the validation scripts, role definitions, and overlays, so the wording promised more than the list delivered.
+- Affected files: QUICKSTART.md, docs/runbooks/starter-adoption.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: None — documentation only, no behavior change
+- Review status: pending-review
+- Discrepancies or follow-up: copying the corrected list still leaves 220 manifest errors from overlays, scripts, evals, and editor templates. That is correct for a rule-only baseline and is now stated; a future pass could publish a minimal copyable module if partial adoption turns out to be a common request.
+
 ### 2026-10-27 - Document what the manifest validators actually enforce
 
 - Area: module manifest versioning guide
