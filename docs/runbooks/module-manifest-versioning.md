@@ -165,6 +165,35 @@ Increment when:
 }
 ```
 
+### Rename a File
+
+**Scenario**: You want to rename a file for clarity without changing what it is for
+
+**Steps**:
+1. Replace the old path with the new path in the owning module's `files` array
+2. Increment the major version, because the old path disappears for every adopter who references it
+3. Update every reference in validators, runbooks, and examples
+4. Document the old path, the new path, and the reason in the changelog
+
+**Example**:
+
+```json
+{
+  "version": "2.0.0",  // Major version bump
+  "modules": [
+    {
+      "id": "core-agents",
+      "files": [
+        // Renamed: ".github/AGENTS.md" -> ".github/agent-catalog.md"
+        ".github/agent-catalog.md"
+      ]
+    }
+  ]
+}
+```
+
+A rename is not a removal followed by an unrelated addition. Record it as one change in the changelog so a reader can find the new path from the old one.
+
 ## Validation Rules
 
 The manifest is validated by `.github/scripts/check-starter-manifest.sh` and `.github/scripts/check-starter-manifest.ps1`.

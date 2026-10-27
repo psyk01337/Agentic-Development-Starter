@@ -13,6 +13,7 @@ fi
 python3 - "${MANIFEST_PATH}" "${REPO_ROOT}" <<'PY'
 import json
 import pathlib
+import re
 import sys
 
 manifest_path = pathlib.Path(sys.argv[1])
@@ -28,6 +29,15 @@ except Exception as exc:
 modules = manifest.get("modules")
 if not isinstance(modules, list) or not modules:
     errors.append("starter-modules.json must contain a non-empty modules array")
+
+# The versioning guide requires semantic X.Y.Z and a major bump whenever a
+# module loses a file path, including a rename. Nothing enforced the shape, so
+# two-part versions drifted in unnoticed.
+version = manifest.get("version")
+if not isinstance(version, str) or not re.fullmatch(r"\d+\.\d+\.\d+", version):
+    errors.append(
+        f"starter-modules.json version must be semantic X.Y.Z; found {version!r}"
+    )
 
 seen_ids = set()
 required_core_files = {

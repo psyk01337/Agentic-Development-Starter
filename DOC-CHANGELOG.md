@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Align the docs with the root entry point and the catalog rename
+
+- Area: README, QUICKSTART, TROUBLESHOOTING, module manifest versioning guide, root entry point
+- Change type: docs, runbook
+- Summary: adds the root `AGENTS.md` and `.github/agent-catalog.md` to the README folder structure and surface-selection table, adds the root file to the QUICKSTART baseline copy list, adds a "Rename a File" procedure to the versioning guide, adds an "Agent ignores the repo rules" troubleshooting entry, and points the root entry point at the composition runbook.
+- Reason: four reader-facing documents still described the starter without the cross-agent entry point, the versioning guide had no procedure for renaming a file even though that is the change that just occurred, and there was no troubleshooting path for the most likely confusion: an agent that follows general good practice but not this repository's rules.
+- Affected files: README.md, QUICKSTART.md, TROUBLESHOOTING.md, AGENTS.md, docs/runbooks/module-manifest-versioning.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Bump the manifest to 2.0.0 and enforce the version shape"
+- Review status: pending-review
+- Discrepancies or follow-up: `docs/runbooks/module-manifest-versioning.md` still describes the manifest as consumed by "CI workflows"; no workflow currently reads the version field. The new validator enforces shape only, so a missed major bump remains a review responsibility.
+
 ### 2026-10-27 - Document the agent catalog rename
 
 - Area: ADRs, composition and adoption runbooks, agent catalog

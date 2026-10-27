@@ -90,6 +90,17 @@ chmod +x evals/*.sh
 3. File must contain required sections: Handoff Memory, Escalation, Required Inputs, Constraints, Approach, Output Format
 4. Run validation: `bash .github/scripts/check-agent-contracts.sh`
 
+### Agent ignores the repo rules
+
+**Problem**: The agent follows general good practice but not this repository's rules
+
+**Solution**:
+1. Confirm which file your harness actually reads. `.github/copilot-instructions.md` is the Copilot baseline, and the `core`, `security`, and `memory` instruction files load on every request. Full detail: `docs/runbooks/starter-composition.md`.
+2. Remember that "always applied" means always injected as context, not enforced. Nothing prevents a model from ignoring an instruction; only hooks and validators enforce.
+3. `.github/agent-catalog.md` is not an instruction file. It is the agent roster and handoff contract, read on demand. Rules that must apply every time belong in the instruction files.
+4. If you use a non-Copilot harness, confirm it reads `AGENTS.md` at the repository root rather than `CLAUDE.md`.
+5. An instruction file whose `applyTo` glob matches nothing never loads. Run `bash .github/scripts/check-starter-manifest.sh` to catch a missing `applyTo`.
+
 ### Skill not working
 
 **Problem**: Skill doesn't execute or shows errors

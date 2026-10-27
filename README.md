@@ -120,6 +120,7 @@ Chains and conditional redirects are listed in `.github/agent-catalog.md` and wa
 
 | You have... | Use a... | It lives in |
 | --- | --- | --- |
+| A harness that needs one entry point | Cross-agent entry | `AGENTS.md` (repo root) |
 | A rule that must apply to every session | Instruction | `.github/instructions/` |
 | A repeatable one-off task | Prompt | `.github/prompts/` |
 | A bounded, format-sensitive playbook | Skill | `.github/skills/` |
@@ -218,7 +219,9 @@ Use when organization-level governance matters:
 
 ## Folder Structure
 
+- `AGENTS.md`: cross-agent entry point at the repository root; routes other harnesses to the scoped rules.
 - `.github/copilot-instructions.md`: always-on repo baseline.
+- `.github/agent-catalog.md`: agent roster, handoff contract, and delegation triggers.
 - `.github/instructions/`: core, stack, memory, and optional runtime overlays.
 - `.github/prompts/`: reusable slash-command style task prompts.
 - `.github/agents/`: specialist agent definitions.

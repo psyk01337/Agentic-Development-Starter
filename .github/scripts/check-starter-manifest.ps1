@@ -29,6 +29,14 @@ if (-not (Test-Path $manifestPath)) {
       Add-CheckError("starter-modules.json must contain a non-empty modules array")
     }
 
+    # The versioning guide requires semantic X.Y.Z and a major bump whenever a
+    # module loses a file path, including a rename. Nothing enforced the shape,
+    # so two-part versions drifted in unnoticed.
+    $manifestVersion = $manifest.version
+    if (-not ($manifestVersion -is [string]) -or $manifestVersion -cnotmatch '^\d+\.\d+\.\d+$') {
+      Add-CheckError("starter-modules.json version must be semantic X.Y.Z; found '$manifestVersion'")
+    }
+
     $seenIds = @{}
     $seenFiles = @{}
     $requiredCoreFiles = @(

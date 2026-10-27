@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Bump the manifest to 2.0.0 and enforce the version shape
+
+- Area: module manifest, manifest validators
+- Change type: fix, build, config
+- Summary: bumps `.github/starter-modules.json` from `1.18` to `2.0.0` and adds a semantic-version check to both `check-starter-manifest` twins that rejects anything but `X.Y.Z`.
+- Reason: the rename of `.github/AGENTS.md` to `.github/agent-catalog.md` removed a file path from `core-agents`, which `docs/runbooks/module-manifest-versioning.md` classifies as a major change. The version was also two-part (`1.18`) while the guide requires semantic `X.Y.Z`. Nothing validated the field, so both drifts were silent.
+- Affected files: .github/starter-modules.json, .github/scripts/check-starter-manifest.sh, .github/scripts/check-starter-manifest.ps1, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-27 - Align the docs with the root entry point and the catalog rename"
+- Validation: both twins pass at `2.0.0`; with the version forced to `1.18`, `2.0`, `v2.0.0`, or `abc`, both twins exit 1 and report the semantic-version error; both umbrellas pass.
+- Discrepancies or follow-up: the check enforces the version *shape*, not that a bump actually happened. Detecting a missed bump would need the previous manifest state and belongs in review, not in a stateless script.
+
 ### 2026-10-27 - Rename the agent catalog away from the AGENTS.md name
 
 - Area: core agent module, validators, ADRs, runbooks, prompts, examples

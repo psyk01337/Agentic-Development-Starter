@@ -125,7 +125,7 @@ git commit -m "Initialize project from Agentic Development Starter"
 ## Path B — Existing App
 
 1. Read `docs/runbooks/adopting-existing-github.md`.
-2. Copy the baseline first: `.github/copilot-instructions.md`, `.github/instructions/core.instructions.md`, `.github/instructions/security.instructions.md`, `.github/starter-modules.json`, `CHANGELOG.md`, `DOC-CHANGELOG.md`, and `docs/inputs.md`.
+2. Copy the baseline first: `AGENTS.md`, `.github/copilot-instructions.md`, `.github/instructions/core.instructions.md`, `.github/instructions/security.instructions.md`, `.github/starter-modules.json`, `CHANGELOG.md`, `DOC-CHANGELOG.md`, and `docs/inputs.md`.
 3. Add agents, skills, prompts, and hooks in a follow-up commit.
 4. Run the umbrella checks.
 5. Drop existing PRD, design, architecture, or API documents in `docs/inputs/` and run `route-project-inputs.prompt.md` before implementation.
