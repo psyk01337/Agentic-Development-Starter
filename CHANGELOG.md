@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Add the cross-agent root entry point
+
+- Area: root instructions, module manifest, composition and adoption runbooks
+- Change type: feature, docs
+- Summary: adds `AGENTS.md` at the repository root as a thin cross-agent entry point that routes to the scoped instruction files and states four non-negotiables; registers it in `core-agents` so it ships with the agent surface; and corrects `docs/runbooks/starter-composition.md`, which described instruction loading without mentioning `AGENTS.md` at all.
+- Reason: `.github/AGENTS.md` was the only file named `AGENTS.md` in the repository and sits in a subfolder, where harnesses load it only as a nested instruction file. Anyone reading the composition runbook could reasonably conclude that a file named `AGENTS.md` is injected as instructions in this repo, when the agent catalog is actually repo truth that no harness auto-loads.
+- Affected files: AGENTS.md, .github/starter-modules.json, docs/runbooks/starter-composition.md, docs/runbooks/starter-adoption.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-27 - Document where AGENTS.md loads from"
+- Validation: both `check-starter-manifest` twins pass with the new manifest entry; `check-markdown-quality` passes on the new root file; both umbrellas pass.
+- Discrepancies or follow-up: the root file adds about 1.5 KB of context for harnesses that attach `AGENTS.md` automatically. It is deliberately a pointer rather than a copy so it cannot drift from `copilot-instructions.md`, which keeps the Copilot baseline in one place.
+
 ### 2026-10-27 - Encode the delegated subagent contract
 
 - Area: agent contracts, supervisor orchestration overlay, engineering team runbook, validators

@@ -11,12 +11,16 @@ The starter uses three instruction layers, and they do not all load on every req
 
 | Layer | Files | When it loads |
 | --- | --- | --- |
+| Cross-agent entry point | `AGENTS.md` at the repository root | When the harness supports `AGENTS.md` |
 | Repository baseline | `.github/copilot-instructions.md` | Always, on every request |
 | Always-on instructions | `core`, `security`, and `memory` (`applyTo: "**/*"`) | Always, alongside the baseline |
 | Scoped instructions | Every other `*.instructions.md` | Only when a file matching its `applyTo` glob is in context |
 
 Consequences worth knowing:
 
+- `AGENTS.md` and `.github/AGENTS.md` are different files with different jobs. The root `AGENTS.md` is the cross-agent entry point that harnesses load. `.github/AGENTS.md` is the agent catalog: repo truth that the README points at and the validators check, not an injected instruction file.
+- The root `AGENTS.md` must stay at the repository root. A file named `AGENTS.md` in a subfolder is discovered only as a nested instruction file, which several harnesses leave disabled by default.
+- `AGENTS.md` is a cross-agent format, not a single-vendor one. Copilot, Codex, and the VS Code Local harness read it; Claude Code reads `CLAUDE.md` instead. Keep the root file a thin pointer so the harnesses that read it cannot receive contradictory guidance.
 - Always-on content costs tokens on every request. Keep `copilot-instructions.md` a thin router; put detail in `core` or `security` rather than restating the same rule in both.
 - A scoped instruction whose glob never matches a real path is dead weight. Check the glob against the repo's actual layout.
 - Overlapping globs stack. `frontend`, `react`, and `nextjs` all match `**/*.{ts,tsx,js,jsx}`, so enabling all three loads all three for every TypeScript file. That is intentional framework layering, but it is a token cost.

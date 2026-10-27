@@ -79,6 +79,7 @@ Use when a repo only needs baseline AI coding guardrails.
 
 Include:
 
+- `AGENTS.md` at the repository root — the cross-agent entry point
 - `.github/copilot-instructions.md`
 - `.github/instructions/core.instructions.md`
 - `.github/instructions/security.instructions.md`
@@ -103,7 +104,7 @@ Use when multiple contributors or agents need shared workflow assets.
 
 Add:
 
-- `.github/AGENTS.md`
+- `.github/AGENTS.md` — the agent catalog and handoff contract, which is a different file from the root `AGENTS.md` entry point
 - `.github/agents/*.agent.md`
 - `.github/skills/*/SKILL.md`
 - `.github/prompts/*.prompt.md`

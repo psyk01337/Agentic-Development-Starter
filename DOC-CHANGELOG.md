@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document where AGENTS.md loads from
+
+- Area: starter composition runbook, starter adoption runbook, README
+- Change type: docs, runbook
+- Summary: adds a cross-agent entry-point row to the instruction-loading table and three bullets that separate the root `AGENTS.md` from `.github/AGENTS.md`, state that the root file must stay at the repository root, and record which harnesses read `AGENTS.md` versus `CLAUDE.md`. Adds the root file to the adoption tiers and to the README reading order.
+- Reason: the loading table listed three layers and omitted `AGENTS.md`, so the only `AGENTS.md` anyone could find was the catalog in `.github/`, which led to the reasonable but wrong conclusion that `AGENTS.md` is a Claude-only file that this repository does not use.
+- Affected files: docs/runbooks/starter-composition.md, docs/runbooks/starter-adoption.md, README.md, AGENTS.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Add the cross-agent root entry point"
+- Review status: pending-review
+- Discrepancies or follow-up: the per-harness discovery rules come from the VS Code custom instructions documentation as of 2026-10-27. Harnesses change discovery behavior, so recheck the table when a host adds or renames its instruction file.
+
 ### 2026-10-27 - Document the delegated subagent contract
 
 - Area: agent catalog, engineering team runbook, supervisor orchestration skill

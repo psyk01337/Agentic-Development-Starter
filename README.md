@@ -89,13 +89,14 @@ pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1
 
 ## Start Here
 
-Start with [QUICKSTART.md](QUICKSTART.md) for the fastest path to a working app, then read these five files in order before your first change:
+Start with [QUICKSTART.md](QUICKSTART.md) for the fastest path to a working app, then read these six files in order before your first change:
 
-1. `.github/copilot-instructions.md` — the always-on baseline that every session inherits.
-2. `.github/AGENTS.md` — the specialist roles, the guided handoff contract, and the delegation triggers.
-3. `docs/runbooks/agentic-dev.md` — the daily operating rhythm.
-4. `docs/runbooks/starter-adoption.md` — how much of the starter to adopt.
-5. `docs/runbooks/starter-composition.md` — what each module and overlay is for.
+1. `AGENTS.md` — the cross-agent entry point at the repository root; how the other agents find this repo's rules.
+2. `.github/copilot-instructions.md` — the always-on baseline that every session inherits.
+3. `.github/AGENTS.md` — the specialist roles, the guided handoff contract, and the delegation triggers.
+4. `docs/runbooks/agentic-dev.md` — the daily operating rhythm.
+5. `docs/runbooks/starter-adoption.md` — how much of the starter to adopt.
+6. `docs/runbooks/starter-composition.md` — what each module and overlay is for.
 
 After that, use the [Runbooks Index](docs/runbooks/INDEX.md) to find guidance by task, and `.github/starter-modules.json` as the authoritative inventory of what ships enabled.
 

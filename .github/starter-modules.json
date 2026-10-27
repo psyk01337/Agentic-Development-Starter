@@ -90,6 +90,7 @@
       "defaultEnabled": true,
       "when": "Repositories that want specialist agents",
       "files": [
+        "AGENTS.md",
         ".github/AGENTS.md",
         ".github/agents/analyst.agent.md",
         ".github/agents/architecture-reviewer.agent.md",
