@@ -311,17 +311,21 @@ Before adding a file to a module, consider:
 
 ```json
 {
-  "id": "feature-approval-handoffs",
-  "kind": "optional",
+  "id": "overlay-approval-gated-orchestration",
+  "kind": "overlay",
   "defaultEnabled": false,
   "when": "Repositories that want approval-gated handoffs",
   "files": [
     ".github/agents/orchestration-coordinator.agent.md",
     ".github/skills/approval-gated-handoffs/SKILL.md",
-    "docs/runbooks/approval-gated-handoffs.md"
+    ".github/schema/approval-gated-handoff-envelope.schema.json",
+    "docs/runbooks/approval-gated-handoffs.md",
+    "docs/adr/0001-approval-gated-orchestration-overlay.md"
   ]
 }
 ```
+
+Use `kind: overlay` for anything that ships disabled and changes how an existing workflow behaves. Reserve `kind: optional` for a surface the repository may simply switch on, and use the `overlay-` id prefix so the kind is visible in the id.
 
 ## Troubleshooting
 

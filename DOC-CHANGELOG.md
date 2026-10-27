@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Correct the stale module example in the versioning guide
+
+- Area: module manifest versioning guide
+- Change type: docs
+- Summary: corrects Pattern 3, which showed `"id": "feature-approval-handoffs"` with `"kind": "optional"`; the real module is `overlay-approval-gated-orchestration` with `"kind": "overlay"`. The example file list also omitted the schema, the runbook, and ADR 0001, and adds a note on when to use `optional` versus `overlay`.
+- Reason: a reader copying the example would create a module whose id does not follow the `overlay-` convention and whose kind contradicts how the real approval-gated overlay ships.
+- Affected files: docs/runbooks/module-manifest-versioning.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Bump the manifest to 2.0.0 and enforce the version shape"
+- Review status: pending-review
+- Discrepancies or follow-up: `MIGRATION.md` exists only in the local working tree and is gitignored, so the migration-guidance gap recorded in `.forlocal/supervisor-orchestration-review-packet.md` cannot be closed in the tracked repo until a tracked equivalent is agreed.
+
 ### 2026-10-27 - Align the docs with the root entry point and the catalog rename
 
 - Area: README, QUICKSTART, TROUBLESHOOTING, module manifest versioning guide, root entry point
