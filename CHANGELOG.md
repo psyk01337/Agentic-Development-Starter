@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Encode the delegated subagent contract
+
+- Area: agent contracts, supervisor orchestration overlay, engineering team runbook, validators
+- Change type: docs, test
+- Summary: documents that a delegated subagent is stateless — it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools — and requires every delegated payload to state the goal, the context, the allowed actions, and the expected result. Makes `needs-clarification` a terminal result rather than an interactive wait, and records that the guided handoff allow-list and the delegable `specialistAllowList` are different sets. Four new `assert_file_contains` pins are added to both `check-supervisor-orchestration` twins.
+- Reason: VS Code documents that Local-harness subagents cannot ask clarifying questions or use todo tools, receive no follow-up messages, and inherit no conversation history, while the Copilot harness delegates through a different tool than `runSubagent`. The repository contract never stated any of this, yet every agent file instructs the worker to "hold at `needs-clarification`", which reads as an interactive pause a subagent cannot perform.
+- Affected files: .github/AGENTS.md, docs/runbooks/engineering-team.md, .github/skills/supervisor-orchestration/SKILL.md, .github/agents/delegation-supervisor.agent.md, .github/scripts/check-supervisor-orchestration.sh, .github/scripts/check-supervisor-orchestration.ps1, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-27 - Document the delegated subagent contract"
+- Validation: both `check-supervisor-orchestration` twins pass. The four new pins are byte-identical across the twins. Deleting the statelessness sentence from `.github/AGENTS.md` makes the bash twin exit 1 with `Missing expected content for delegated subagent statelessness rule in .github/AGENTS.md`, then pass again after restore.
+- Discrepancies or follow-up: `delegate-agent` is confirmed as this repository's capability token, not a host tool name. The validator requires it in the supervisor frontmatter and maps it through `delegationDepth.hostAdapters`, so it must not be removed. Nested delegation is available in the platform through `chat.subagents.allowInvocationsFromSubagents` with a maximum depth of five, which would lift `maxLevels: 1`; that stays deferred until an ADR accepts the recursion and budget risks.
+
 ### 2026-10-26 - Reduce always-on context and validate instruction frontmatter
 
 - Area: copilot instructions, instruction overlays, manifest validators
@@ -34,6 +45,7 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 - Related docs: DOC-CHANGELOG.md entry "2026-10-26 - Document the instruction loading model"
 - Validation: `bash .github/scripts/check-starter-manifest.sh` and the PowerShell twin pass; removing `applyTo` from a test instruction file makes both twins fail with `Instruction file is missing applyTo`, then passes after restore; both umbrellas pass.
 - Discrepancies or follow-up: the new check validates presence, not that a glob matches real files. Unmatched globs remain a review concern.
+
 ### 2026-10-25 - Add four delivery skills and tighten the core baseline
 
 - Area: skills, core instructions, module manifest

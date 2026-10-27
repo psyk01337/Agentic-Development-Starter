@@ -869,6 +869,10 @@ Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Decision status"
 Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "overlay-only" -Description "overlay-only orchestration wording"
 Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "prompt-level contract" -Description "prompt-level approval caveat in the agent catalog"
 Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "supervisor-orchestration.md" -Description "supervisor runbook pointer from the agent catalog"
+Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." -Description "delegated subagent statelessness rule"
+Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Return needs-clarification as a terminal result, not as a question that waits for an answer." -Description "delegated needs-clarification terminal rule"
+Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "The guided handoff allow-list and the delegable subagent allow-list are different" -Description "guided versus delegable allow-list distinction"
+Assert-FileContains -RelativePath "docs/runbooks/engineering-team.md" -Pattern "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." -Description "engineering team runbook statelessness parity"
 
 # The approval gate is a prompt-level contract, not enforcement. Guard the
 # shipped governance text - the agent catalog, every agent file, and the role

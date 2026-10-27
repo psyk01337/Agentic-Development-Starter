@@ -48,6 +48,21 @@ Every delegated task states:
 
 A task without acceptance criteria or a bounded write set is not ready for implementation.
 
+### Delegated Subagent Contract
+
+Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools.
+
+Every delegated payload therefore carries four parts:
+
+- **Goal**: the single outcome the subagent must produce
+- **Context**: the files, constraints, and decisions already made
+- **Allowed actions**: read-only research, or write-capable changes with a declared write set
+- **Expected result**: the fields to return, shaped by `delegation-result.schema.json`
+
+Return needs-clarification as a terminal result, not as a question that waits for an answer. When the payload cannot support the task, the subagent returns the blocking gap so the supervisor can re-delegate with better context or escalate.
+
+The guided handoff allow-list and the delegable subagent allow-list are different: a guided handoff may recommend any agent in this catalog, while delegated work is restricted to `specialistAllowList` in `.github/roles/orchestration-policy.json`.
+
 ## Guided Handoff Contract
 
 Every agent should end its output with these fields:

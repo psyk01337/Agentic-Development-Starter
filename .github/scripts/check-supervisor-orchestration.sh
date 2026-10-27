@@ -821,6 +821,10 @@ assert_file_contains ".github/AGENTS.md" "Decision status" "decision status fiel
 assert_file_contains ".github/AGENTS.md" "overlay-only" "overlay-only orchestration wording"
 assert_file_contains ".github/AGENTS.md" "prompt-level contract" "prompt-level approval caveat in the agent catalog"
 assert_file_contains ".github/AGENTS.md" "supervisor-orchestration.md" "supervisor runbook pointer from the agent catalog"
+assert_file_contains ".github/AGENTS.md" "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." "delegated subagent statelessness rule"
+assert_file_contains ".github/AGENTS.md" "Return needs-clarification as a terminal result, not as a question that waits for an answer." "delegated needs-clarification terminal rule"
+assert_file_contains ".github/AGENTS.md" "The guided handoff allow-list and the delegable subagent allow-list are different" "guided versus delegable allow-list distinction"
+assert_file_contains "docs/runbooks/engineering-team.md" "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." "engineering team runbook statelessness parity"
 
 assert_file_contains "docs/runbooks/agentic-dev.md" "Supervisor delegation flow" "supervisor delegation flow guidance"
 assert_file_contains "docs/runbooks/supervisor-orchestration.md" "orchestration-policy.json" "canonical policy reference"

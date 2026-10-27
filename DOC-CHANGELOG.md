@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document the delegated subagent contract
+
+- Area: agent catalog, engineering team runbook, supervisor orchestration skill
+- Change type: docs, runbook
+- Summary: adds a "Delegated Subagent Contract" section to the agent catalog and a statelessness paragraph to the engineering team runbook, and adds the same rules to the supervisor skill and the supervisor agent. Covers the four-part payload (goal, context, allowed actions, expected result), `needs-clarification` as a terminal result, and the difference between the guided handoff allow-list and the delegable `specialistAllowList`.
+- Reason: readers had no way to know that a delegated subagent cannot ask a follow-up question, keep a todo list, or see the earlier conversation, so handoffs were written as conversations rather than as self-contained payloads.
+- Affected files: .github/AGENTS.md, docs/runbooks/engineering-team.md, .github/skills/supervisor-orchestration/SKILL.md, .github/agents/delegation-supervisor.agent.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Encode the delegated subagent contract"
+- Review status: pending-review
+- Discrepancies or follow-up: the statelessness rule is stated as a host-independent contract because Local and Copilot harnesses differ in tool names and available tools; a host that supports richer subagent interaction may relax it later. The `user-invocable: false` option is documented by VS Code but deliberately not applied — the nine specialists are intended to be directly invocable by a human as well as delegable.
+
 ### 2026-10-26 - Document the instruction loading model
 
 - Area: starter composition runbook, README
@@ -34,6 +45,7 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 - Related code: CHANGELOG.md entry "2026-10-26 - Reduce always-on context and validate instruction frontmatter"
 - Review status: pending-review
 - Discrepancies or follow-up: the loading table describes GitHub Copilot behavior; other hosts may load instructions differently.
+
 ### 2026-10-25 - Document the four delivery skills and core baseline
 
 - Area: skills runbook, README, core instructions

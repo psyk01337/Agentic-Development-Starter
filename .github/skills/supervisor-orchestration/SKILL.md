@@ -50,6 +50,8 @@ Use `repair-loop` and `agentic_engine.py` for any task that may need more than o
 When the task spans multiple SDLC stages or squads, use `docs/runbooks/engineering-team.md`:
 
 - Build a task board with objective, owner, reviewer, acceptance criteria, write set, dependencies, evidence, and status.
+- Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools. Send a self-contained payload naming the goal, the context, the allowed actions, and the expected result.
+- Return needs-clarification as a terminal result, not as a question that waits for an answer.
 - Assign approved specialists by squad and keep exactly one delegation level.
 - Run read-only analysis and review in parallel; serialize or isolate writes.
 - Use `swarm` for independent slices and `arena-bakeoff` for design alternatives.

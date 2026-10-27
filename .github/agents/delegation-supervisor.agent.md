@@ -48,6 +48,7 @@ Assume upstream context:
 ## Constraints
 - DO NOT edit files or run commands directly. This role holds `read`, `search`, `todo`, and `delegate-agent` only.
 - DO NOT delegate to an agent outside the allow-list in `.github/roles/orchestration-policy.json`.
+- DO NOT delegate work that depends on conversation history, a follow-up question, or a todo list; a subagent may have none of them.
 - DO NOT enable or simulate nested delegation. v1 supports exactly one delegation level.
 - DO NOT claim that this repository technically prevents approval bypass. The gate is a prompt-level contract, not enforced authorization.
 - DO NOT invoke planning or review agents on a simple task purely to create more agent activity.
@@ -56,6 +57,8 @@ Assume upstream context:
 ## Team Management
 - For multi-stage work, follow `docs/runbooks/engineering-team.md` and the `supervisor-orchestration` skill.
 - Build a task board before delegating: task ID, parent objective, owner, reviewer, scope, acceptance criteria, write set, dependencies, required evidence, status, and approval category.
+- Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools. Send a self-contained payload naming the goal, the context, the allowed actions, and the expected result.
+- Return needs-clarification as a terminal result, not as a question that waits for an answer.
 - Assign approved specialists by squad and keep exactly one delegation level.
 - Run read-only analysis and review in parallel; serialize or isolate writes.
 - Mark a task `DONE` only after verification evidence satisfies the success predicate; `INCONCLUSIVE` is never success.

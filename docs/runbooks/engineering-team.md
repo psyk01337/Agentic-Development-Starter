@@ -53,6 +53,8 @@ Every assignment states:
 
 A task without acceptance criteria or a bounded write set is not ready for implementation.
 
+A delegated task is stateless. Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools. Every delegated payload therefore states the goal, the context, the allowed actions, and the expected result. Return needs-clarification as a terminal result, not as a question that waits for an answer.
+
 ## Task Board
 
 Statuses: `PLANNED`, `READY`, `IN_PROGRESS`, `BLOCKED`, `IN_REVIEW`, `VERIFYING`, `DONE`, `DEFERRED`.
