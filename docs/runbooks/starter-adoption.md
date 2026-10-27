@@ -90,6 +90,12 @@ Include:
 
 All three instruction files above are required core files: the manifest check fails if `core`, `security`, or `memory` is missing. They are also the three that load on every request, so copy them together or not at all.
 
+Set `"maintainerAssetScan": false` in the copied `.github/starter-modules.json`. That flag exists for the starter's own maintainers: when it is true, the manifest check requires every file under the asset directories to be registered, which in your repository would flag your existing ADRs, runbooks, agents, and `.vscode` settings as unregistered starter files. The field is required rather than defaulted, so omitting it fails the check instead of silently inheriting the wrong mode.
+
+Keep the `editor-templates` module disabled unless you want the starter's `.vscode` files, since copying them replaces your current editor settings.
+
+Your own agent files are held to the starter's agent contract. A file under `.github/agents/` must have a `tools` frontmatter list and an entry in `agentCapabilityMatrix` and `agentRoleHints`; adding it to `specialistAllowList` also requires updating the agent enum in both delegation schemas. If you do not want that coupling yet, keep your agents outside `.github/agents/` or leave the supervisor overlay disabled and do not run its check.
+
 Keep disabled:
 
 - MCP servers

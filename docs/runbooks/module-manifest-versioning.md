@@ -205,11 +205,21 @@ The manifest is validated by `.github/scripts/check-starter-manifest.sh` and `.g
 | `version` is semantic `X.Y.Z` | yes |
 | `version` is not left at `0.0.0` | yes |
 | `version` appears in a `CHANGELOG.md` Summary line | yes |
+| `maintainerAssetScan` is present and boolean | yes |
 | Every listed file exists | yes |
-| Every asset file is listed | yes |
+| Every asset file is listed (only when `maintainerAssetScan` is `true`) | yes |
 | `version` was increased when the inventory changed | **no** |
 
 The last row is deliberate. A stateless script cannot know whether a bump was warranted, because that needs the previous manifest to compare against. The validators enforce everything downstream of the decision, which leaves exactly one judgement for review: pick the right bump. A missing bump with an unchanged version is invisible to the checks and must be caught by a reviewer reading the manifest diff.
+
+### The `maintainerAssetScan` Flag
+
+The reverse check — "every asset file is listed" — only makes sense in the repository that maintains the starter. An adopting repository owns files in those same directories, so running the check there reports the adopter's own ADRs, runbooks, agents, and `.vscode` settings as violations.
+
+- `true` in this repository, so a forgotten registration fails the check.
+- `false` in an adopting repository.
+
+The field is required rather than defaulted. A missing value fails the check with a message naming the expected value, so neither mode is inherited by accident.
 
 The changelog check is scoped to `- Summary:` lines on purpose. A match anywhere in the file is satisfied by the version being quoted in a validation note, or by accident inside a longer number, which makes the rule impossible to fail. Put the version transition in the entry's Summary the way the existing entries do, for example "manifest `1.17` -> `1.18`".
 

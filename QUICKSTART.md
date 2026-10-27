@@ -126,10 +126,12 @@ git commit -m "Initialize project from Agentic Development Starter"
 
 1. Read `docs/runbooks/adopting-existing-github.md`.
 2. Copy the baseline first: `AGENTS.md`, `.github/copilot-instructions.md`, `.github/instructions/core.instructions.md`, `.github/instructions/security.instructions.md`, `.github/instructions/memory.instructions.md`, `.github/starter-modules.json`, `CHANGELOG.md`, `DOC-CHANGELOG.md`, and `docs/inputs.md`. That list is the always-on rule set, not a copyable module: the manifest also requires the validation scripts and role definitions. To get a repo where the checks pass, copy everything the modules in `.github/starter-modules.json` list, or clone this repo and delete what you do not need.
-3. Add agents, skills, prompts, and hooks in a follow-up commit.
-4. Run the umbrella checks.
-5. Drop existing PRD, design, architecture, or API documents in `docs/inputs/` and run `route-project-inputs.prompt.md` before implementation.
-6. Use `build-feature.prompt.md` for the first feature.
+3. Set `"maintainerAssetScan": false` in your copied `.github/starter-modules.json`. That flag turns off the starter's own asset-registration check, which would otherwise report your existing ADRs, runbooks, agents, and editor settings as unregistered starter files. The flag is required, so leaving it out fails the check with a message naming the expected value.
+4. Do not copy the `editor-templates` module unless you want the starter's `.vscode` files; it ships disabled because it would overwrite your existing editor settings.
+5. Add agents, skills, prompts, and hooks in a follow-up commit.
+6. Run the umbrella checks.
+7. Drop existing PRD, design, architecture, or API documents in `docs/inputs/` and run `route-project-inputs.prompt.md` before implementation.
+8. Use `build-feature.prompt.md` for the first feature.
 
 ## Choose Team Mode
 

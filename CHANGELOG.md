@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Stop the asset scan from blocking adopters and split editor templates out
+
+- Area: module manifest, manifest validators, adoption docs
+- Change type: fix, config, docs
+- Summary: gates the reverse asset scan behind a new required `maintainerAssetScan` flag, set to `true` in this repository and `false` in an adopting one; moves `.vscode/mcp.json`, `.vscode/settings.json`, and `.vscode/tasks.json` out of `core-governance` into a new default-disabled `editor-templates` module; manifest `2.1.0` -> `2.2.0`.
+- Reason: a user-journey test of the documented existing-project path copied the baseline into a repository that already had its own ADR, runbook, and agent, and the reverse scan reported all three as violations, so that path could never pass its own checks. The same test showed the three `.vscode` files sitting in a core module, which meant an adopter copying core modules would overwrite existing VS Code settings.
+- Affected files: .github/starter-modules.json, .github/scripts/check-starter-manifest.sh, .github/scripts/check-starter-manifest.ps1, QUICKSTART.md, docs/runbooks/starter-adoption.md, docs/runbooks/adopting-existing-github.md, docs/runbooks/module-manifest-versioning.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-27 - Document the maintainer asset scan and the editor templates module"
+- Validation: the starter passes with the scan on; an unregistered runbook still makes both twins exit 1; setting the flag to `false` in a copy that has its own ADR, runbook, and agent lets both twins pass; removing the flag makes both twins exit 1 with a message naming the required value. Both umbrellas pass all twelve checks.
+- Discrepancies or follow-up: the flag is required rather than defaulted so neither the starter nor an adopter can silently lose or inherit the check. Adopters must set it while merging, which is now a documented step in both adoption docs.
+
 ### 2026-10-27 - Enforce the changelog side of the manifest versioning contract
 
 - Area: manifest validators, module manifest versioning guide

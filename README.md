@@ -158,7 +158,14 @@ Add a mode's assets only when the team can review the risk, and keep MCP servers
 
 1. Add the file in the surface directory that matches the table above.
 2. Register it in `.github/starter-modules.json`, or the manifest check fails.
-3. For an agent, also register it in `.github/agent-catalog.md` and `.github/roles/tool-access.json` (`agentRoleHints` plus `agentCapabilityMatrix`), and include a `## Handoff Memory Contract` section.
+3. For an agent, the supervisor overlay validator requires five coordinated registrations, and missing any one is a hard failure:
+   - a `tools` frontmatter list in the agent file itself
+   - `.github/agent-catalog.md`
+   - `.github/roles/tool-access.json`: `agentRoleHints` plus `agentCapabilityMatrix`
+   - `specialistAllowList` in `.github/roles/orchestration-policy.json`
+   - the agent enum in `.github/schema/delegation-plan.schema.json` and `.github/schema/delegation-result.schema.json`, which must match the allow-list exactly
+
+   Also include a `## Handoff Memory Contract` section. An agent file that skips the allow-list is still allowed, but it needs a matrix entry and a role hint, and it cannot be delegated to.
 4. For a skill, give `SKILL.md` frontmatter a lowercase hyphenated `name` and a `description`.
 5. For a prompt, state the context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and the expected output.
 6. Add an eval task and matching checklist under `evals/` when the workflow should be behavior-tested.
@@ -245,7 +252,7 @@ Use when organization-level governance matters:
 
 Core modules cover baseline instructions, security, memory strategy, governance, agents, guardrails, validation, and CI. `.github/copilot-instructions.md` and the `core`, `security`, and `memory` instruction files load on every request; other overlays load only when a matching file is in context. See `docs/runbooks/starter-composition.md` for the loading model.
 
-Optional modules cover prompt workflows, skills, evals, editor templates, and MCP templates.
+Optional modules cover prompt workflows, skills, evals, and editor templates (`.vscode` files, disabled by default so an adopting repo keeps its own settings).
 
 Overlay modules cover stack- and domain-specific guidance (frontend, backend, PHP/Laravel ecosystem, database, CI workflow, embedded, reverse engineering, networking, and game development overlays), Vitest TDD, approval-gated orchestration, supervisor orchestration, Hermes runtime integration, and Honcho durable memory integration.
 

@@ -128,43 +128,55 @@ for relative_path in sorted(seen_files):
 
 # The manifest above is checked manifest-to-disk. Without the reverse direction a
 # new asset simply never ships when its module is adopted, and nothing notices:
-# four ADRs and the runbook index were missing this way. Only directories that
-# hold module assets are scanned, so root tooling stays out of scope.
-asset_dirs = [
-    ".github/agents",
-    ".github/prompts",
-    ".github/skills",
-    ".github/instructions",
-    ".github/schema",
-    ".github/examples",
-    ".github/scripts",
-    ".github/roles",
-    ".github/hooks",
-    ".github/workflows",
-    ".vscode",
-    "docs/adr",
-    "docs/runbooks",
-    "evals/tasks",
-    "evals/expected",
-]
-generated_markers = ("__pycache__", ".pytest_cache", ".mypy_cache")
-for relative_dir in asset_dirs:
-    base = repo_root / relative_dir
-    if not base.is_dir():
-        continue
-    for candidate in sorted(base.rglob("*")):
-        if not candidate.is_file():
+# four ADRs and the runbook index were missing this way.
+#
+# The reverse scan only makes sense in the repository that maintains the starter.
+# An adopting repository legitimately owns files in these directories, so running
+# the scan there would report the adopter's own ADRs, runbooks, and agents as
+# violations. `maintainerAssetScan` is that switch: true in the starter, false in
+# an adopting repo. It is required rather than defaulted so neither case is silent.
+scan_setting = manifest.get("maintainerAssetScan")
+if not isinstance(scan_setting, bool):
+    errors.append(
+        "starter-modules.json must set maintainerAssetScan to true (starter) or "
+        "false (adopting repository)"
+    )
+elif scan_setting:
+    asset_dirs = [
+        ".github/agents",
+        ".github/prompts",
+        ".github/skills",
+        ".github/instructions",
+        ".github/schema",
+        ".github/examples",
+        ".github/scripts",
+        ".github/roles",
+        ".github/hooks",
+        ".github/workflows",
+        ".vscode",
+        "docs/adr",
+        "docs/runbooks",
+        "evals/tasks",
+        "evals/expected",
+    ]
+    generated_markers = ("__pycache__", ".pytest_cache", ".mypy_cache")
+    for relative_dir in asset_dirs:
+        base = repo_root / relative_dir
+        if not base.is_dir():
             continue
-        parts = candidate.relative_to(repo_root).parts
-        if any(marker in parts for marker in generated_markers):
-            continue
-        if relative_dir == ".github/hooks" and parts[:3] == (".github", "hooks", "logs"):
-            continue
-        relative_path = candidate.relative_to(repo_root).as_posix()
-        if relative_path not in seen_files:
-            errors.append(
-                f"Asset is not listed in starter-modules.json: {relative_path}"
-            )
+        for candidate in sorted(base.rglob("*")):
+            if not candidate.is_file():
+                continue
+            parts = candidate.relative_to(repo_root).parts
+            if any(marker in parts for marker in generated_markers):
+                continue
+            if relative_dir == ".github/hooks" and parts[:3] == (".github", "hooks", "logs"):
+                continue
+            relative_path = candidate.relative_to(repo_root).as_posix()
+            if relative_path not in seen_files:
+                errors.append(
+                    f"Asset is not listed in starter-modules.json: {relative_path}"
+                )
 
 missing_core = sorted(required_core_files - seen_files)
 for relative_path in missing_core:

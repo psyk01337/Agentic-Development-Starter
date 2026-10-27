@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document the maintainer asset scan and the editor templates module
+
+- Area: adoption runbooks, module manifest versioning guide, README
+- Change type: docs, runbook
+- Summary: records the `maintainerAssetScan` switch in the versioning guide and both adoption paths, adds the note that the umbrella assumes a complete module copy, documents the five registrations the supervisor validator requires for any agent file, and corrects the README claim that optional modules include MCP templates to describe the default-disabled `editor-templates` module that now exists.
+- Reason: the existing-project path told readers to copy assets and run the checks, but following it produced registration errors for their own files and could overwrite their `.vscode` settings. A follow-up test showed an adopting repo's own agent file fails the supervisor validator, and the README listed three of the five registrations that check requires, so the remedy was not discoverable from the docs.
+- Affected files: docs/runbooks/module-manifest-versioning.md, docs/runbooks/starter-adoption.md, docs/runbooks/adopting-existing-github.md, QUICKSTART.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Stop the asset scan from blocking adopters and split editor templates out"
+- Review status: pending-review
+- Discrepancies or follow-up: a partial merge still produces `Manifest-listed file does not exist` errors for modules that were not copied, which is now stated rather than fixed. Trimming the manifest to match a partial copy is the reader's decision, because only they know which modules they intend to ship.
+
 ### 2026-10-27 - Fix the baseline copy lists and scope what they promise
 
 - Area: QUICKSTART, starter adoption runbook

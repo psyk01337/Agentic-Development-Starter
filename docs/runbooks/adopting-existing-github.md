@@ -92,6 +92,12 @@ Use this merge strategy:
 
 ## 6. Validation
 
+Before running the checks, set `"maintainerAssetScan": false` in your merged `.github/starter-modules.json`.
+
+That flag belongs to the starter's own maintenance: when it is `true`, `check-starter-manifest` requires every file under the asset directories to be listed in the manifest, so your existing ADRs, runbooks, agents, and `.vscode` settings would be reported as unregistered starter files. The field is required, so leaving it out fails the check with a message naming the expected value.
+
+Also leave the `editor-templates` module disabled unless you intend to replace your current `.vscode` files. It ships disabled for that reason.
+
 Run the local checks after merge:
 
 PowerShell:
@@ -105,6 +111,10 @@ Shell:
 ```bash
 .github/scripts/check-starter-workflow.sh
 ```
+
+The umbrella runs checks that assume a complete module copy. If you merged only part of the starter, expect `Manifest-listed file does not exist` errors for the modules you did not take; either copy those modules or trim them from `.github/starter-modules.json` so the manifest describes what you actually ship.
+
+Your existing agent files are held to the starter's agent contract. Anything under `.github/agents/` needs a `tools` frontmatter list plus `agentCapabilityMatrix` and `agentRoleHints` entries, and adding it to `specialistAllowList` also requires the agent enum in both delegation schemas to match. If that is more coupling than you want on the first merge, keep your agents elsewhere or leave the supervisor overlay out of the first PR.
 
 Then run a quick smoke test in agent mode:
 

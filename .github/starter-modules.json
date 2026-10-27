@@ -1,5 +1,6 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
+  "maintainerAssetScan": true,
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -59,10 +60,7 @@
         "docs/runbooks/mcp-servers.md",
         "docs/runbooks/module-manifest-versioning.md",
         "docs/ARCHITECTURE.md",
-        ".github/examples/README.md",
-        ".vscode/mcp.json",
-        ".vscode/settings.json",
-        ".vscode/tasks.json"
+        ".github/examples/README.md"
       ]
     },
     {
@@ -201,6 +199,17 @@
         "evals/expected/update-docs-and-changelog.checklist.md",
         "evals/run-evals.sh",
         "evals/run-evals.ps1"
+      ]
+    },
+    {
+      "id": "editor-templates",
+      "kind": "optional",
+      "defaultEnabled": false,
+      "when": "Repositories that want the VS Code editor and task templates; keep disabled when the repo already has its own .vscode configuration",
+      "files": [
+        ".vscode/mcp.json",
+        ".vscode/settings.json",
+        ".vscode/tasks.json"
       ]
     },
     {

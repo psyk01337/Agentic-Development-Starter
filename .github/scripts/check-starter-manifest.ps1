@@ -124,39 +124,50 @@ if (-not (Test-Path $manifestPath)) {
     # The manifest above is checked manifest-to-disk. Without the reverse
     # direction a new asset simply never ships when its module is adopted, and
     # nothing notices: four ADRs and the runbook index were missing this way.
-    # Only directories that hold module assets are scanned, so root tooling
-    # stays out of scope.
-    $assetDirs = @(
-      ".github/agents",
-      ".github/prompts",
-      ".github/skills",
-      ".github/instructions",
-      ".github/schema",
-      ".github/examples",
-      ".github/scripts",
-      ".github/roles",
-      ".github/hooks",
-      ".github/workflows",
-      ".vscode",
-      "docs/adr",
-      "docs/runbooks",
-      "evals/tasks",
-      "evals/expected"
-    )
-    $generatedMarkers = @("__pycache__", ".pytest_cache", ".mypy_cache")
-    foreach ($assetDir in $assetDirs) {
-      $base = Join-Path $RepoRoot $assetDir
-      if (-not (Test-Path -Path $base -PathType Container)) { continue }
-      foreach ($file in Get-ChildItem -Path $base -Recurse -File) {
-        $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName).Replace('\', '/')
-        $skip = $false
-        foreach ($marker in $generatedMarkers) {
-          if ($relativePath -like "*$marker*") { $skip = $true; break }
-        }
-        if ($skip) { continue }
-        if ($relativePath -like ".github/hooks/logs/*") { continue }
-        if (-not $seenFiles.ContainsKey($relativePath)) {
-          Add-CheckError("Asset is not listed in starter-modules.json: $relativePath")
+    #
+    # The reverse scan only makes sense in the repository that maintains the
+    # starter. An adopting repository legitimately owns files in these
+    # directories, so running the scan there would report the adopter's own
+    # ADRs, runbooks, and agents as violations. maintainerAssetScan is that
+    # switch: true in the starter, false in an adopting repo. It is required
+    # rather than defaulted so neither case is silent.
+    $scanSetting = $manifest.maintainerAssetScan
+    if (-not ($scanSetting -is [bool])) {
+      Add-CheckError("starter-modules.json must set maintainerAssetScan to true (starter) or false (adopting repository)")
+    }
+    elseif ($scanSetting) {
+      $assetDirs = @(
+        ".github/agents",
+        ".github/prompts",
+        ".github/skills",
+        ".github/instructions",
+        ".github/schema",
+        ".github/examples",
+        ".github/scripts",
+        ".github/roles",
+        ".github/hooks",
+        ".github/workflows",
+        ".vscode",
+        "docs/adr",
+        "docs/runbooks",
+        "evals/tasks",
+        "evals/expected"
+      )
+      $generatedMarkers = @("__pycache__", ".pytest_cache", ".mypy_cache")
+      foreach ($assetDir in $assetDirs) {
+        $base = Join-Path $RepoRoot $assetDir
+        if (-not (Test-Path -Path $base -PathType Container)) { continue }
+        foreach ($file in Get-ChildItem -Path $base -Recurse -File) {
+          $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName).Replace('\', '/')
+          $skip = $false
+          foreach ($marker in $generatedMarkers) {
+            if ($relativePath -like "*$marker*") { $skip = $true; break }
+          }
+          if ($skip) { continue }
+          if ($relativePath -like ".github/hooks/logs/*") { continue }
+          if (-not $seenFiles.ContainsKey($relativePath)) {
+            Add-CheckError("Asset is not listed in starter-modules.json: $relativePath")
+          }
         }
       }
     }
