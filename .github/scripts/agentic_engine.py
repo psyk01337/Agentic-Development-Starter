@@ -359,7 +359,7 @@ def validate_evidence(evidence, repo_root: Path) -> list:
     return pointers
 
 
-def _validate_write_set(write_set) -> None:
+def _validate_write_set(write_set, repo_root: Path) -> None:
     if not isinstance(write_set, list):
         raise EngineError("task.writeSet must be a list (may be empty for read-only work)")
     for entry in write_set:
@@ -369,6 +369,42 @@ def _validate_write_set(write_set) -> None:
         if normalized in UNBOUNDED_WRITE_SET_ENTRIES or any(char in entry for char in "*?"):
             raise EngineError(
                 f"task.writeSet entry {entry!r} is unbounded; declare explicit paths"
+            )
+        # A write set is the boundary the engine later checks files against, so
+        # an entry the boundary cannot express is a hole in the boundary, not a
+        # harmless typo. Evidence pointers already reject absolute and outside-
+        # root paths; the write set needs the same treatment or a task can
+        # declare its way out of the repository.
+        stripped = entry.strip()
+        # An absolute path has to be refused on every host, not just the one the
+        # engine runs on: "C:/x.py" is not absolute to POSIX Path, and "/x.py" is
+        # not absolute to Windows Path, but neither is a repository-relative path.
+        drive_qualified = bool(re.match(r"^[A-Za-z]:", stripped))
+        if stripped.startswith(("/", "\\", "~")) or drive_qualified or Path(stripped).is_absolute():
+            raise EngineError(
+                f"task.writeSet entry {entry!r} must be a repository-relative path"
+            )
+        if any(part == ".." for part in Path(stripped).parts):
+            raise EngineError(
+                f"task.writeSet entry {entry!r} must not traverse outside the repository"
+            )
+        if stripped.endswith(("/", "\\")) or stripped in {".", "./", ".\\"}:
+            raise EngineError(
+                f"task.writeSet entry {entry!r} must name a file, not a directory"
+            )
+        try:
+            resolved = (repo_root / stripped).resolve()
+        except (OSError, ValueError) as exc:
+            raise EngineError(
+                f"task.writeSet entry {entry!r} cannot be resolved: {exc}"
+            ) from exc
+        if not resolved.is_relative_to(repo_root.resolve()):
+            raise EngineError(
+                f"task.writeSet entry {entry!r} resolves outside the repository root"
+            )
+        if resolved.is_dir():
+            raise EngineError(
+                f"task.writeSet entry {entry!r} is a directory; name the files instead"
             )
 
 
@@ -434,7 +470,7 @@ def block(state: dict, reason: str, detail: str, evidence: list) -> None:
     append_history(state, stage="blocked", action="escalate", reason=reason, detail=detail)
 
 
-def validate_task(task: dict, policy: dict) -> dict:
+def validate_task(task: dict, policy: dict, repo_root: Path) -> dict:
     if not isinstance(task, dict):
         raise EngineError("task must be a JSON object")
     for field in ("taskId", "title"):
@@ -445,7 +481,7 @@ def validate_task(task: dict, policy: dict) -> dict:
         raise EngineError("task.acceptanceCriteria must be a non-empty list")
     if not all(isinstance(item, str) and item.strip() for item in criteria):
         raise EngineError("task.acceptanceCriteria entries must be non-empty strings")
-    _validate_write_set(task.get("writeSet"))
+    _validate_write_set(task.get("writeSet"), repo_root)
     categories = approval_categories(policy)
     category = task.get("approvalCategory")
     if category is not None and category not in categories:
@@ -511,7 +547,7 @@ def next_payload(state: dict) -> dict:
 def cmd_init(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
     policy = load_policy(repo_root)
-    task = validate_task(read_json_file(args.task), policy)
+    task = validate_task(read_json_file(args.task), policy, repo_root)
     state_dir = state_dir_for(repo_root, args.state_dir)
     path = state_path(state_dir, args.run_id)
     with run_lock(state_dir, args.run_id):
@@ -1131,6 +1167,48 @@ class EngineSelfTest(unittest.TestCase):
                 ]
             )
         self.assertEqual(code, 1)
+
+    def _init_with_write_set(self, entry: str) -> int:
+        self.write_task(writeSet=[entry])
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            return main(
+                [
+                    "init",
+                    "--run-id",
+                    "r1",
+                    "--task",
+                    str(self.task_path),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+
+    def test_absolute_write_set_entry_rejected(self) -> None:
+        for entry in ("/etc/passwd", "C:/Windows/evil.py", "C:\\Windows\\evil.py", "~/evil.py", "\\\\server\\share\\x.py"):
+            with self.subTest(entry=entry):
+                self.assertEqual(self._init_with_write_set(entry), 1)
+
+    def test_traversing_write_set_entry_rejected(self) -> None:
+        for entry in ("../outside.py", "src/../../outside.py", "a/../../b.py"):
+            with self.subTest(entry=entry):
+                self.assertEqual(self._init_with_write_set(entry), 1)
+
+    def test_directory_write_set_entry_rejected(self) -> None:
+        for entry in ("src/", "src\\", ".", "./"):
+            with self.subTest(entry=entry):
+                self.assertEqual(self._init_with_write_set(entry), 1)
+
+    def test_existing_directory_name_rejected(self) -> None:
+        (self.root / "realdir").mkdir(parents=True, exist_ok=True)
+        self.assertEqual(self._init_with_write_set("realdir"), 1)
+
+    def test_nonexistent_bare_name_accepted(self) -> None:
+        self.assertEqual(self._init_with_write_set("notyet.py"), 0)
+
+    def test_relative_file_write_set_entry_accepted(self) -> None:
+        self.assertEqual(self._init_with_write_set("src/a.py"), 0)
 
     def test_verify_requires_evidence(self) -> None:
         self.init()

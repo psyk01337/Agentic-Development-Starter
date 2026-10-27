@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
     {
@@ -21,6 +21,8 @@
       "when": "All repositories using this starter",
       "files": [
         "README.md",
+        "QUICKSTART.md",
+        "TROUBLESHOOTING.md",
         "CHANGELOG.md",
         "DOC-CHANGELOG.md",
         ".github/starter-modules.json",
@@ -52,7 +54,15 @@
         "docs/runbooks/skills.md",
         "docs/runbooks/starter-adoption.md",
         "docs/runbooks/starter-composition.md",
-        "docs/runbooks/tool-surface-matrix.md"
+        "docs/runbooks/tool-surface-matrix.md",
+        "docs/runbooks/INDEX.md",
+        "docs/runbooks/mcp-servers.md",
+        "docs/runbooks/module-manifest-versioning.md",
+        "docs/ARCHITECTURE.md",
+        ".github/examples/README.md",
+        ".vscode/mcp.json",
+        ".vscode/settings.json",
+        ".vscode/tasks.json"
       ]
     },
     {
@@ -127,7 +137,8 @@
         ".github/prompts/build-feature.prompt.md",
         ".github/prompts/ingest-project-docs.prompt.md",
         ".github/prompts/route-project-inputs.prompt.md",
-        ".github/prompts/run-engineering-team.prompt.md"
+        ".github/prompts/run-engineering-team.prompt.md",
+        "docs/runbooks/self-improvement.md"
       ]
     },
     {
@@ -405,7 +416,10 @@
         "docs/runbooks/engineering-team.md",
         "docs/runbooks/agentic-engine.md",
         "docs/adr/0003-supervisor-orchestration-overlay.md",
-        "docs/adr/0007-nested-delegation-disabled.md"
+        "docs/adr/0007-nested-delegation-disabled.md",
+        "docs/adr/0004-adapter-bound-delegation.md",
+        "docs/adr/0005-routing-policy-as-data.md",
+        "docs/adr/0006-delegation-result-contract.md"
       ]
     },
     {
@@ -468,7 +482,8 @@
         ".github/prompts/prepare-game-build.prompt.md",
         ".github/examples/game-dev/gitattributes.addendum",
         ".github/examples/game-dev/gitignore.addendum",
-        "docs/runbooks/game-dev.md"
+        "docs/runbooks/game-dev.md",
+        "docs/adr/0002-game-asset-storage-policy.md"
       ]
     },
     {

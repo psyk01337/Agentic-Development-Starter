@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document the write-set boundary and the manifest coverage check
+
+- Area: agentic engine runbook, module manifest versioning guide
+- Change type: docs, runbook
+- Summary: records in `docs/runbooks/agentic-engine.md` that a write-set entry the engine cannot compare against a changed file is refused at `init`, naming each rejected shape, and states why the boundary is treated as structural rather than advisory.
+- Reason: the runbook promised "a bounded write set of explicit paths" while `init` only enforced wildcards and the unbounded indicator words, so a reader could reasonably conclude that `../outside.py` was permitted because nothing said otherwise.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Close three QA findings in the engine and the manifest"
+- Review status: pending-review
+- Discrepancies or follow-up: the manifest now lists 229 of 233 tracked files. The four remaining are root tooling (`Makefile`, `.gitignore`, `.gitattributes`, `.pre-commit-config.yaml`) and stay outside any module on purpose, because a module that shipped them would fight the adopting repo's own tooling.
+
 ### 2026-10-27 - Drop the month stamp from the README title and name the new eval
 
 - Area: README

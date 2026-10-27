@@ -83,9 +83,13 @@ missing state fields, an unknown stage, or an invalid state directory.
 
 The task spec must declare a bounded write set of explicit paths. Wildcards
 (`*`, `?`) and the policy's unbounded indicators (`unknown`, `broad`,
-`wildcard-only`, `tbd`, `not-safely-bounded`) are rejected at `init`.
-`class` must be a policy task class, and `evidenceSurfaces` must use policy
-surface keys.
+`wildcard-only`, `tbd`, `not-safely-bounded`) are rejected at `init`. So are
+entries the boundary cannot express: absolute paths, `~` paths, any `..`
+segment, a trailing separator, `.` itself, and any entry that resolves to an
+existing directory or outside the repository root. A write set entry the engine
+cannot compare against a changed file is a hole in the boundary rather than a
+typo, so it is refused instead of accepted. `class` must be a policy task class,
+and `evidenceSurfaces` must use policy surface keys.
 
 Write-set comparison normalizes separators and a leading `./`. Case is folded
 only on Windows, so a case variant is a distinct file on Linux.

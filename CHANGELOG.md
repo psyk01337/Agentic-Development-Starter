@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Close three QA findings in the engine and the manifest
+
+- Area: agentic engine, module manifest, manifest validators
+- Change type: fix, test, config
+- Summary: hardens `init` so a write-set entry cannot be absolute, `~`-rooted, drive-qualified, contain a `..` segment, end in a separator, be `.`, resolve outside the repository root, or resolve to an existing directory. Registers the 15 tracked assets that were missing from `starter-modules.json` and adds the reverse disk-to-manifest direction to both `check-starter-manifest` twins. Bumps the manifest to `2.1.0`.
+- Reason: a QA pass found that `writeSet: ["../outside.py"]` and `writeSet: ["C:/Windows/Temp/evil.py"]` were accepted at `init` and then sanctioned a reported write to that path — the write-set gate certified a write outside the repository, while evidence pointers were already correctly bounded. Directory-shaped entries failed closed but blamed the worker. Separately, 13 module assets including four ADRs and the runbook index were absent from the manifest, so adopting a module silently omitted them; nothing detected that because only the manifest-to-disk direction was validated.
+- Affected files: .github/scripts/agentic_engine.py, .github/scripts/check-starter-manifest.sh, .github/scripts/check-starter-manifest.ps1, .github/starter-modules.json, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-27 - Document the write-set boundary and the manifest coverage check"
+- Validation: engine self-tests grew from 55 to 61 and pass under both the Windows interpreter and `python3` in bash. A 12-shape probe rejects every malformed entry and accepts `app/api/health.py` and `newfile.py`. Planting an unregistered runbook makes both manifest twins exit 1 with `Asset is not listed in starter-modules.json`, then pass after removal. Both umbrellas pass all twelve checks.
+- Discrepancies or follow-up: the bash run caught a platform bug that the Windows run had hidden: `C:/Windows/evil.py` is not absolute to POSIX `Path`, so it passed under `python3` while failing under `python`. The fix now tests for a drive prefix independently of the host. The disk-to-manifest scan covers asset directories only; root tooling such as `Makefile`, `.gitignore`, and `.pre-commit-config.yaml` stays deliberately unregistered.
+
 ### 2026-10-27 - Trim always-on security, add evals, consolidate skills, split validators
 
 - Area: security instructions, eval harness, skills, supervisor validators, ADR

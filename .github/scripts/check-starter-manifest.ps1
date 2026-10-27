@@ -98,6 +98,46 @@ if (-not (Test-Path $manifestPath)) {
       }
     }
 
+    # The manifest above is checked manifest-to-disk. Without the reverse
+    # direction a new asset simply never ships when its module is adopted, and
+    # nothing notices: four ADRs and the runbook index were missing this way.
+    # Only directories that hold module assets are scanned, so root tooling
+    # stays out of scope.
+    $assetDirs = @(
+      ".github/agents",
+      ".github/prompts",
+      ".github/skills",
+      ".github/instructions",
+      ".github/schema",
+      ".github/examples",
+      ".github/scripts",
+      ".github/roles",
+      ".github/hooks",
+      ".github/workflows",
+      ".vscode",
+      "docs/adr",
+      "docs/runbooks",
+      "evals/tasks",
+      "evals/expected"
+    )
+    $generatedMarkers = @("__pycache__", ".pytest_cache", ".mypy_cache")
+    foreach ($assetDir in $assetDirs) {
+      $base = Join-Path $RepoRoot $assetDir
+      if (-not (Test-Path -Path $base -PathType Container)) { continue }
+      foreach ($file in Get-ChildItem -Path $base -Recurse -File) {
+        $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName).Replace('\', '/')
+        $skip = $false
+        foreach ($marker in $generatedMarkers) {
+          if ($relativePath -like "*$marker*") { $skip = $true; break }
+        }
+        if ($skip) { continue }
+        if ($relativePath -like ".github/hooks/logs/*") { continue }
+        if (-not $seenFiles.ContainsKey($relativePath)) {
+          Add-CheckError("Asset is not listed in starter-modules.json: $relativePath")
+        }
+      }
+    }
+
     foreach ($relativePath in $requiredCoreFiles) {
       if (-not $seenFiles.ContainsKey($relativePath)) {
         Add-CheckError("Required core file is not listed in starter-modules.json: $relativePath")
