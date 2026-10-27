@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Enforce the changelog side of the manifest versioning contract
+
+- Area: manifest validators, module manifest versioning guide
+- Change type: fix, test, docs
+- Summary: both `check-starter-manifest` twins now reject a manifest version that is not recorded in a `CHANGELOG.md` Summary line, and reject `0.0.0` as a placeholder. The versioning guide gains a "What The Validators Enforce" table that states plainly which rules are checked and that a missed bump is not one of them.
+- Reason: the guide requires a changelog entry for every manifest change, and nothing verified it, so a version could move with no traceable reason. The guide also read as if the whole contract were automated, which invited trusting a green check for something the check cannot see.
+- Affected files: .github/scripts/check-starter-manifest.sh, .github/scripts/check-starter-manifest.ps1, docs/runbooks/module-manifest-versioning.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: CHANGELOG.md entry "2026-10-27 - Close three QA findings in the engine and the manifest"
+- Validation: both twins pass at `2.1.0`. Setting the version to `9.9.9` makes both exit 1 with `not recorded in a CHANGELOG.md Summary line`; setting it to `0.0.0` makes both exit 1 with `must not stay at 0.0.0`; restoring `2.1.0` passes. A six-case matrix covering `2.1.0`, `2.0.0`, `9.9.9`, `1.18`, `0.0.0`, and `2.1.0.1` gives identical exit codes on both twins. Both umbrellas pass all twelve checks.
+- Discrepancies or follow-up: the first version of this check searched the whole file, and the probe proved it unfalsifiable within minutes: `9.9.9` passed because an earlier validation note in the changelog quoted that number. Scoping to Summary lines fixed it. Whether a bump was *warranted* still requires the previous manifest and stays a review obligation, now stated in the guide instead of implied. The check also skips when `CHANGELOG.md` is absent, because the supervisor validator fixtures copy only `.github` and `docs` into a temp root.
+
 ### 2026-10-27 - Close three QA findings in the engine and the manifest
 
 - Area: agentic engine, module manifest, manifest validators

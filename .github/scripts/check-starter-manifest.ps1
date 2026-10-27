@@ -36,6 +36,29 @@ if (-not (Test-Path $manifestPath)) {
     if (-not ($manifestVersion -is [string]) -or $manifestVersion -cnotmatch '^\d+\.\d+\.\d+$') {
       Add-CheckError("starter-modules.json version must be semantic X.Y.Z; found '$manifestVersion'")
     }
+    elseif ($manifestVersion -eq "0.0.0") {
+      Add-CheckError("starter-modules.json version must not stay at 0.0.0")
+    }
+    else {
+      # The guide also requires a changelog entry for every manifest change. A
+      # bump with no recorded entry is untraceable, and that is the one part of
+      # the versioning contract a stateless check can actually hold: whether a
+      # bump was warranted cannot be known without the previous manifest, but
+      # whether the current version is documented can.
+      $changelogPath = Join-Path $RepoRoot "CHANGELOG.md"
+      if (Test-Path -Path $changelogPath -PathType Leaf) {
+        $changelogText = Get-Content -Path $changelogPath -Raw
+        # Scope the search to Summary lines. A substring match over the whole
+        # file is satisfied by the version being quoted anywhere, including in a
+        # validation note about this very check, which makes the rule
+        # unfalsifiable. The trailing lookahead keeps "2.1.0" from matching
+        # inside "2.1.0.1".
+        $versionPattern = "(?m)^- Summary:.*" + [regex]::Escape($manifestVersion) + "(?![\d.])"
+        if ($changelogText -notmatch $versionPattern) {
+          Add-CheckError("starter-modules.json version $manifestVersion is not recorded in a CHANGELOG.md Summary line; describe the manifest change there")
+        }
+      }
+    }
 
     $seenIds = @{}
     $seenFiles = @{}

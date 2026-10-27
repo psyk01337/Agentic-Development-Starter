@@ -38,6 +38,35 @@ if not isinstance(version, str) or not re.fullmatch(r"\d+\.\d+\.\d+", version):
     errors.append(
         f"starter-modules.json version must be semantic X.Y.Z; found {version!r}"
     )
+elif version == "0.0.0":
+    errors.append("starter-modules.json version must not stay at 0.0.0")
+else:
+    # The guide also requires a changelog entry for every manifest change. A
+    # bump with no recorded entry is untraceable, and that is the one part of
+    # the versioning contract a stateless check can actually hold: whether a
+    # bump was warranted cannot be known without the previous manifest, but
+    # whether the current version is documented can.
+    changelog_path = repo_root / "CHANGELOG.md"
+    if changelog_path.is_file():
+        try:
+            changelog_text = changelog_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            errors.append(f"CHANGELOG.md cannot be read: {exc}")
+        else:
+            # Scope the search to Summary lines. A substring match over the whole
+            # file is satisfied by the version being quoted anywhere, including
+            # in a validation note about this very check, which makes the rule
+            # unfalsifiable. The trailing lookahead keeps "2.1.0" from matching
+            # inside "2.1.0.1".
+            version_pattern = re.compile(
+                r"^- Summary:.*" + re.escape(version) + r"(?![\d.])",
+                re.MULTILINE,
+            )
+            if not version_pattern.search(changelog_text):
+                errors.append(
+                    f"starter-modules.json version {version} is not recorded in a "
+                    "CHANGELOG.md Summary line; describe the manifest change there"
+                )
 
 seen_ids = set()
 required_core_files = {

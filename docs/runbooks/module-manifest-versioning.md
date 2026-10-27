@@ -198,6 +198,21 @@ A rename is not a removal followed by an unrelated addition. Record it as one ch
 
 The manifest is validated by `.github/scripts/check-starter-manifest.sh` and `.github/scripts/check-starter-manifest.ps1`.
 
+### What The Validators Enforce
+
+| Rule | Enforced |
+| --- | --- |
+| `version` is semantic `X.Y.Z` | yes |
+| `version` is not left at `0.0.0` | yes |
+| `version` appears in a `CHANGELOG.md` Summary line | yes |
+| Every listed file exists | yes |
+| Every asset file is listed | yes |
+| `version` was increased when the inventory changed | **no** |
+
+The last row is deliberate. A stateless script cannot know whether a bump was warranted, because that needs the previous manifest to compare against. The validators enforce everything downstream of the decision, which leaves exactly one judgement for review: pick the right bump. A missing bump with an unchanged version is invisible to the checks and must be caught by a reviewer reading the manifest diff.
+
+The changelog check is scoped to `- Summary:` lines on purpose. A match anywhere in the file is satisfied by the version being quoted in a validation note, or by accident inside a longer number, which makes the rule impossible to fail. Put the version transition in the entry's Summary the way the existing entries do, for example "manifest `1.17` -> `1.18`".
+
 ### Required Fields
 
 Each module must have:
@@ -213,6 +228,7 @@ Each module must have:
 - Paths must use forward slashes (`/`)
 - Paths must not contain wildcards
 - All listed files must exist in the repository
+- Every file under an asset directory must be listed; the scanned directories are `.github/agents`, `.github/prompts`, `.github/skills`, `.github/instructions`, `.github/schema`, `.github/examples`, `.github/scripts`, `.github/roles`, `.github/hooks`, `.github/workflows`, `.vscode`, `docs/adr`, `docs/runbooks`, `evals/tasks`, and `evals/expected`. Root tooling such as `Makefile`, `.gitignore`, and `.pre-commit-config.yaml` stays outside any module on purpose.
 - No duplicate file paths across modules
 
 ### Module ID Rules

@@ -28,8 +28,8 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 - Area: agentic engine runbook, module manifest versioning guide
 - Change type: docs, runbook
-- Summary: records in `docs/runbooks/agentic-engine.md` that a write-set entry the engine cannot compare against a changed file is refused at `init`, naming each rejected shape, and states why the boundary is treated as structural rather than advisory.
-- Reason: the runbook promised "a bounded write set of explicit paths" while `init` only enforced wildcards and the unbounded indicator words, so a reader could reasonably conclude that `../outside.py` was permitted because nothing said otherwise.
+- Summary: records in `docs/runbooks/agentic-engine.md` that a write-set entry the engine cannot compare against a changed file is refused at `init`, naming each rejected shape, and states why the boundary is treated as structural rather than advisory. Adds a "What The Validators Enforce" table to the versioning guide that names the one rule left to review.
+- Reason: the runbook promised "a bounded write set of explicit paths" while `init` only enforced wildcards and the unbounded indicator words, so a reader could reasonably conclude that `../outside.py` was permitted because nothing said otherwise. The versioning guide likewise demanded a changelog entry for every manifest change without stating whether anything checked it.
 - Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
 - Related code: CHANGELOG.md entry "2026-10-27 - Close three QA findings in the engine and the manifest"
 - Review status: pending-review
