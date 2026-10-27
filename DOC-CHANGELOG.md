@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document the trimmed baseline, the merged skill, and ADR 0007
+
+- Area: security instructions, skills runbook, engineering team runbook, supervisor runbook, ADR
+- Change type: docs, runbook
+- Summary: documents the two-mode `session-compaction` skill in place of the removed `session-compactor`, updates the cross-cutting skill lists in the engineering team and supervisor runbooks, and adds ADR 0007 recording why nested delegation stays disabled.
+- Reason: three runbooks listed a skill that no longer exists, and one described the old state-versus-history split as if the two skills were still separate. The nested delegation limit was documented only as a policy value with no explanation of when it would be revisited.
+- Affected files: docs/runbooks/skills.md, docs/runbooks/engineering-team.md, docs/runbooks/supervisor-orchestration.md, docs/adr/0007-nested-delegation-disabled.md, .github/instructions/security.instructions.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Trim always-on security, add evals, consolidate skills, split validators"
+- Review status: pending-review
+- Discrepancies or follow-up: the trimmed security baseline is shorter but not reorganized, so a future pass could merge the remaining bullet pairs if the rule count grows again. ADR 0007 is `Proposed`; it should move to `Rejected` if the answer is still "serialize it" at review time, rather than staying open indefinitely.
+
 ### 2026-10-27 - Correct the stale module example in the versioning guide
 
 - Area: module manifest versioning guide

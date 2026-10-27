@@ -27,7 +27,7 @@ Before completing a supervision turn, preserve in session memory:
 - **Fallback decision**: whether delegation fell back to a guided delegation plan, and why
 - **Residual supervision debt**: unreviewed findings, serialized work still pending, and open risks
 
-Before compaction, apply the `session-compactor` skill to turn accumulated context into a compact continuation brief.
+Before compaction, apply the `session-compaction` skill to turn accumulated context into a compact continuation brief.
 
 Assume upstream context:
 - The repo has explicitly enabled the supervisor orchestration overlay

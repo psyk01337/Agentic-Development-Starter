@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Trim always-on security, add evals, consolidate skills, split validators
+
+- Area: security instructions, eval harness, skills, supervisor validators, ADR
+- Change type: refactor, test, docs, config
+- Summary: cuts `.github/instructions/security.instructions.md` from 5,921 to 3,578 characters while keeping every rule; adds the `build-feature` eval and the two missing checklists that left `debug-failing-ci` and `update-docs-and-changelog` ungradeable; merges `session-compactor` into `session-compaction` as a two-mode skill; moves both supervisor validator fixture harnesses into `.github/scripts/lib/`; and adds `docs/adr/0007-nested-delegation-disabled.md`.
+- Reason: security text was 45% of the 13,183 always-on characters, so every request paid for prose rather than rules. The front-door `build-feature` prompt had no eval coverage. Two skills described the same job in a five-line paragraph explaining how they differed. Both validator twins had grown past 1,500 lines with the fixture harness interleaved into the invariant body. Nested delegation is available in the host but disabled by policy, and that choice had no recorded rationale.
+- Affected files: .github/instructions/security.instructions.md, evals/tasks/build-feature.md, evals/expected/build-feature.checklist.md, evals/expected/debug-failing-ci.checklist.md, evals/expected/update-docs-and-changelog.checklist.md, evals/run-evals.sh, evals/run-evals.ps1, .github/scripts/check-evals.sh, .github/scripts/check-evals.ps1, .github/skills/session-compaction/SKILL.md, .github/scripts/lib/supervisor-fixtures.sh, .github/scripts/lib/supervisor-fixtures.ps1, .github/scripts/check-supervisor-orchestration.sh, .github/scripts/check-supervisor-orchestration.ps1, .github/agents/delegation-supervisor.agent.md, .github/skills/decision-trail/SKILL.md, .github/starter-modules.json, docs/adr/0007-nested-delegation-disabled.md, docs/runbooks/skills.md, docs/runbooks/engineering-team.md, docs/runbooks/supervisor-orchestration.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-27 - Document the trimmed baseline, the merged skill, and ADR 0007"
+- Validation: always-on context measured at 10,840 chars, down from 13,183. Both eval runners and both `check-evals` twins pass with 13 tasks and 13 checklists. Both supervisor twins pass with the fixtures externalized; deleting a pinned sentence from `.github/agent-catalog.md` still makes both twins exit 1 with 8 error lines each, confirming the extracted fixtures execute rather than silently no-op. Both umbrellas pass all twelve checks.
+- Discrepancies or follow-up: `$PSCommandPath` inside a dot-sourced PowerShell file points at that file, not at the validator, so the extracted fixtures initially re-ran `lib/supervisor-fixtures.ps1` and reported every negative fixture as "not detected" while still exiting 0. Fixed by passing `$ValidatorPath` from the caller. The engine still bounds work at a single level; ADR 0007 records why, and what a safe reversal would require.
+
 ### 2026-10-27 - Bump the manifest to 2.0.0 and enforce the version shape
 
 - Area: module manifest, manifest validators

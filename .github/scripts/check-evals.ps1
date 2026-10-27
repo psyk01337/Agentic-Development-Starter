@@ -28,6 +28,7 @@ $requiredFiles = @(
   "evals/tasks/problem-structuring.md",
   "evals/tasks/decision-trail.md",
   "evals/tasks/ingest-project-docs.md",
+  "evals/tasks/build-feature.md",
   "evals/expected/simple-bugfix.checklist.md",
   "evals/expected/add-api-endpoint.checklist.md",
   "evals/expected/frontend-component.checklist.md",
@@ -38,6 +39,9 @@ $requiredFiles = @(
   "evals/expected/problem-structuring.checklist.md",
   "evals/expected/decision-trail.checklist.md",
   "evals/expected/ingest-project-docs.checklist.md",
+  "evals/expected/build-feature.checklist.md",
+  "evals/expected/debug-failing-ci.checklist.md",
+  "evals/expected/update-docs-and-changelog.checklist.md",
   "evals/run-evals.sh",
   "evals/run-evals.ps1"
 )

@@ -21,6 +21,7 @@ $requiredFiles = @(
   "tasks/game-perf-triage.md",
   "tasks/decision-trail.md",
   "tasks/ingest-project-docs.md",
+  "tasks/build-feature.md",
   "expected/simple-bugfix.checklist.md",
   "expected/add-api-endpoint.checklist.md",
   "expected/frontend-component.checklist.md",
@@ -30,7 +31,10 @@ $requiredFiles = @(
   "expected/gameplay-mechanic.checklist.md",
   "expected/game-perf-triage.checklist.md",
   "expected/decision-trail.checklist.md",
-  "expected/ingest-project-docs.checklist.md"
+  "expected/ingest-project-docs.checklist.md",
+  "expected/build-feature.checklist.md",
+  "expected/debug-failing-ci.checklist.md",
+  "expected/update-docs-and-changelog.checklist.md"
 )
 
 foreach ($relativePath in $requiredFiles) {

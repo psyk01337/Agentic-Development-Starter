@@ -3,64 +3,41 @@ applyTo: "**/*"
 ---
 # Security Instructions
 
-These rules are the always-applied security baseline for every repository using this starter. They cover OWASP-aligned input validation, access control, cryptography, supply chain, secrets handling, file/network boundaries, and command safety. Stack-specific overlays may add further constraints but must not weaken these defaults.
+The always-applied security baseline. Stack overlays may add constraints but must not weaken these defaults.
 
-## Baseline Checks (OWASP-aligned)
-- Validate, normalize, and constrain all untrusted input at boundaries.
-- Enforce authorization on protected actions and resources; do not rely on authentication alone.
-- Guard against injection vectors (SQL, shell, template, command, path, and header manipulation).
-- Prevent SSRF and unsafe file path access (no unchecked external or internal fetches).
-- Avoid insecure deserialization and unsafe dynamic code execution.
+## Baseline (OWASP-aligned)
+- Validate, normalize, and constrain untrusted input at boundaries.
+- Guard against injection (SQL, shell, template, command, path, header) and prevent SSRF or unchecked fetches.
+- Block unsafe file access, insecure deserialization, and dynamic code execution.
 
-## Access Control and Session Safety
-- Apply least privilege for users, services, tokens, and runtime roles.
-- Keep authorization checks close to protected resources and state-changing operations.
-- Deny by default when policy context is missing.
-- Do not expose privileged behavior through hidden flags, debug routes, or undocumented endpoints.
+## Access Control
+- Enforce authorization on protected actions and resources; authentication alone is not authorization. Keep the check close to the resource and the state change.
+- Apply least privilege to users, services, tokens, and runtime roles; deny by default when policy context is missing.
+- No privileged behavior behind hidden flags, debug routes, or undocumented endpoints.
 
 ## Data Protection and Cryptography
-- Use approved cryptographic primitives and libraries; do not invent custom crypto.
-- Encrypt sensitive data in transit and at rest when repository architecture requires it.
-- Never store plaintext secrets, credentials, or private keys in source-controlled files.
-- Use key rotation-capable patterns for secrets and signing material.
+- Use approved primitives and libraries; never invent custom crypto.
+- Encrypt sensitive data in transit and at rest where the architecture requires it.
+- Never store plaintext secrets, credentials, or private keys in source-controlled files; use rotation-capable patterns for signing material.
 
-## Secure Configuration and Supply Chain
-- Keep security-sensitive defaults explicit and conservative.
-- Pin or lock dependency versions using the repository's package management conventions; avoid open-ended ranges (`*`, `^`, `~latest`) in production manifests.
-- Use lockfiles (`package-lock.json`, `yarn.lock`, `uv.lock`, pinned `requirements.txt`, `Pipfile.lock`) and commit them — never gitignore lockfiles for deployed artifacts.
-- Verify package integrity using checksums or hash pins where the package manager supports it (e.g. `--require-hashes` for pip, `integrity` fields in npm lockfiles).
-- Review third-party package additions for maintenance status, publish-date anomalies, download count, and known vulnerabilities before merging.
-- Be vigilant for typosquatting and package-name confusion attacks — verify exact package names and publisher identity before adding new dependencies.
-- Treat security tooling (scanners, SAST tools, linters, base images) as first-class supply chain targets — they must be version-pinned; compromising a scanner silently poisons all downstream reviews (ref: TeamPCP/Trivy/Checkmarx/KICS attack pattern, 2025–2026).
-- Do not install packages from plain HTTP registries or sources without TLS; `--trusted-host`, `--index-url http://`, and `npm --registry http://` overrides that bypass certificate validation are blocked.
-- Inspect postinstall scripts and lifecycle hooks in new dependencies before accepting them; a malicious `postinstall` runs at install time with full developer permissions.
-- Prefer well-maintained, widely-adopted libraries with active security disclosure processes over niche or unmaintained alternatives.
-- Audit transitive dependencies periodically; restrict the dependency graph depth where practical.
-- Do not disable TLS/certificate verification except in explicitly documented local-only setups; treat any TLS bypass as a red flag requiring a security review note.
-- Use environment variables and documented setup for registry credentials; never hardcode package source credentials in config files or CI scripts.
-- When evaluating auto-update tooling (Dependabot, Renovate, etc.), restrict auto-merge to patch-only updates and require human review for minor and major bumps, especially for security-sensitive or execution-layer packages — auto-updating supply chain attacks are an active and growing threat vector.
-- Prefer the latest stable LTS (Long Term Support) release for runtime platforms (Node.js, Python, Java, .NET, etc.) and critical framework dependencies. LTS releases receive security backports longer and reduce exposure to unpatched vulnerabilities.
-- Check for security advisories, CVE announcements, and deprecation notices before adding or upgrading any dependency. A dependency that is unmaintained or has open critical CVEs should be rejected regardless of its popularity.
-- Consult the official documentation of each dependency for its security configuration, known attack surfaces, and recommended hardening practices.
+## Supply Chain
+- Pin or lock dependency versions (no `*`, `^`, or `~latest` in production manifests), commit lockfiles, and verify integrity with checksums or hash pins (`--require-hashes`, npm `integrity`). Audit transitive dependencies and keep the graph shallow.
+- Before adding a dependency, check maintenance status, publish-date anomalies, download count, advisories, and exact package identity: typosquatting and name confusion are common. Prefer widely-adopted libraries with an active disclosure process.
+- Version-pin scanners, SAST tools, linters, and base images; a compromised scanner poisons every downstream review.
+- Reject plain-HTTP registries and any override that bypasses certificate validation (`--trusted-host`, `--index-url http://`, `npm --registry http://`). Never disable TLS outside a documented local-only setup; treat any bypass as requiring a security review note.
+- Inspect `postinstall` and lifecycle hooks before accepting a dependency; they run at install time with full developer permissions.
+- Keep registry credentials in environment variables, never in config files or CI scripts.
+- Restrict auto-merge to patch updates and require human review for minor and major bumps, especially execution-layer packages.
+- Prefer the latest stable LTS runtime and critical framework versions, check advisories and deprecations before adding or upgrading, and follow each dependency's documented hardening guidance.
 
 ## Secrets and Logging
-- Never commit secrets, API keys, tokens, or private certificates.
-- Redact sensitive values in logs, errors, traces, and test fixtures.
-- Use environment variables and documented setup for sensitive config.
-- Avoid logging full request bodies, auth headers, tokens, session IDs, or raw PII.
+- Never commit secrets, API keys, tokens, or private certificates, and never write real credentials into `.env` files.
+- Redact sensitive values in logs, errors, traces, and test fixtures; never log request bodies, auth headers, tokens, session IDs, or raw PII.
 
-## File, Network, and Execution Boundaries
-- Validate file paths against allowed roots and block traversal patterns.
-- Restrict outbound network calls to expected destinations and protocols.
-- Keep command execution explicit, parameterized, and avoid passing untrusted input to shells.
-- Prefer static dispatch patterns over dynamic import or reflection when possible.
+## File, Network, and Execution
+- Validate file paths against allowed roots, restrict outbound calls to expected destinations and protocols, and keep command execution explicit and parameterized. Never pass untrusted input to a shell; prefer static dispatch over dynamic import.
+- Avoid `curl | bash`, recursively forced deletes, destructive wildcards, and `git reset --hard`.
 
-## Command and Tool Safety
-- Do not use dangerous shell patterns such as `curl | bash`, `rm -rf`, destructive wildcard deletes, or `git reset --hard`.
-- Do not write auth tokens or real credentials into `.env` files.
-- Prefer explicit, reviewable commands and least-privilege defaults.
-
-## Security Verification Expectations
-- Add or update tests for authz checks, input validation, and error-path behavior when relevant.
-- For changes touching auth, secrets, file/network access, or command execution, include a brief security review note in the PR description.
-- Call out residual risks and compensating controls when full remediation is deferred.
+## Verification
+- Add or update tests for authz, input validation, and error paths, and include a security review note in the PR for auth, secrets, network, file, or command changes.
+- State residual risk and compensating controls when remediation is deferred.

@@ -60,12 +60,13 @@ Example prompts:
 
 ### `session-compaction`
 
-Use before context compaction, handoff, or long-running session reset.
+Use before context compaction, handoff, or long-running session reset. It has two modes: handoff state (goal, acceptance criteria, files, decisions, validation, next action) and the compaction brief (the ten fields, with conversational filler discarded and unresolved risk kept). Neither mode is workflow-state storage or a completion declaration.
 
 Example prompts:
 
 - `Use session-compaction before I compact this chat. Preserve decisions, files changed, validation, and next action.`
 - `Summarize this task for the next agent using the session-compaction skill.`
+- `Compress this long session into a compact continuation brief with session-compaction and keep unresolved risks intact.`
 
 ### `memory-curation`
 
@@ -178,20 +179,11 @@ Example prompts:
 - `Use prose-cleanup on this PR description to cut the filler and keep every technical detail.`
 - `Run prose-cleanup over this ADR and handoff before review.`
 
-### `session-compactor`
-
-Use when a long working history must be compressed into a compact continuation brief before compaction, reset, or resumption. Unlike core `session-compaction`, which preserves handoff-time state (current plan, acceptance criteria, validation evidence, next recommended action), `session-compactor` compacts accumulated engineering context into the ten-field brief — current objective, locked decisions, important constraints, relevant architecture, files changed, known failures, verified facts, unresolved questions, current phase, and next actions — and discards conversational filler. The brief is not workflow-state storage and is not a completion declaration. Like `prose-cleanup`, it is repo-wide but ships under the supervisor orchestration overlay's manifest section for pattern continuity.
-
-Example prompts:
-
-- `Use session-compactor to compress this session before compaction into a compact continuation brief.`
-- `Turn this long working history into the ten-field brief with session-compactor and keep unresolved risks intact.`
-
 ### `decision-trail`
 
-Use when a complex or autonomous task must leave an auditable decision trail: per-decision entries with suggested fields (timestamp, phase, decision, reason, evidence, result) and evidence as pointers — test output, commit, file and line, screenshot, trace, browser artifact, benchmark, command output — rather than pasted content. Trivial changes create no trail artifacts, and the trail is never workflow state and never a completion declaration. Like `prose-cleanup` and `session-compactor`, it is repo-wide but ships under the supervisor orchestration overlay's manifest section for pattern continuity.
+Use when a complex or autonomous task must leave an auditable decision trail: per-decision entries with suggested fields (timestamp, phase, decision, reason, evidence, result) and evidence as pointers — test output, commit, file and line, screenshot, trace, browser artifact, benchmark, command output — rather than pasted content. Trivial changes create no trail artifacts, and the trail is never workflow state and never a completion declaration. Like `prose-cleanup`, it is repo-wide but ships under the supervisor orchestration overlay's manifest section for pattern continuity.
 
-Changelogs record landed changes, ADRs record durable decisions with tradeoffs, and `session-compactor` produces continuation briefs. The decision trail records task-time decisions and points to those repo records instead of duplicating them; it can supply context to compaction without replacing it.
+Changelogs record landed changes, ADRs record durable decisions with tradeoffs, and `session-compaction` produces continuation briefs. The decision trail records task-time decisions and points to those repo records instead of duplicating them; it can supply context to compaction without replacing it.
 
 Example prompts:
 

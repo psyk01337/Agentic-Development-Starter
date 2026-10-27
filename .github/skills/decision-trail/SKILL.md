@@ -43,7 +43,7 @@ A decision trail is an audit record, not workflow state and not a completion dec
 ## Division of Labor
 - Changelogs record landed changes as durable repo truth; the trail records task-time decisions and points at changelog entries instead of duplicating them.
 - ADRs record durable one-time decisions with tradeoffs; a decision that must persist belongs in an ADR, with the trail pointing at it.
-- The session-compactor skill produces compact continuation briefs for resumption; the trail is an input to compaction, not a replacement.
+- The session-compaction skill produces compact continuation briefs for resumption; the trail is an input to compaction, not a replacement.
 - Transient execution state belongs to the workflow-state mechanism; persistent information belongs in the decision trail, not transient execution state.
 
 ## Safety Notes

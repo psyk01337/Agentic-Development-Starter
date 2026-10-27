@@ -22,7 +22,7 @@ v1 uses exactly one delegation level. Specialists do not delegate. A nested team
 | Management | `delegation-supervisor` | Task board, routing, delegation, reconciliation |
 | Approval | `orchestration-coordinator` | Human-approved transitions, when the overlay is enabled |
 
-Cross-cutting skills: `problem-structuring`, `adr-authoring`, `qa-test-plan`, `pr-review`, `security-check`, `release-notes`, `decision-trail`, `verification-evidence-loop`, `repair-loop`, `adversarial-review`, `arena-bakeoff`, `swarm`, `prose-cleanup`, and `session-compactor`.
+Cross-cutting skills: `problem-structuring`, `adr-authoring`, `qa-test-plan`, `pr-review`, `security-check`, `release-notes`, `decision-trail`, `verification-evidence-loop`, `repair-loop`, `adversarial-review`, `arena-bakeoff`, `swarm`, `prose-cleanup`, and `session-compaction`.
 
 ## SDLC Stages
 
