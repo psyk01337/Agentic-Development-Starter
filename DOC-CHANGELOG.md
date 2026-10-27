@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document what the manifest validators actually enforce
+
+- Area: module manifest versioning guide
+- Change type: docs, runbook
+- Summary: rewrites the guide's validation section as a table that names each enforced rule and marks a missed version bump as not enforced, and explains why the changelog check matches `- Summary:` lines rather than the whole file.
+- Reason: the guide described the versioning contract as if all of it were automated. Two rules in it are not, and one of them is the only rule that needs human judgement, so a reader had no way to tell which failures a green check would catch.
+- Affected files: docs/runbooks/module-manifest-versioning.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Enforce the changelog side of the manifest versioning contract"
+- Review status: pending-review
+- Discrepancies or follow-up: the guide states the changelog rule as "version appears in a Summary line", which is the strongest form a stateless check can hold. A version quoted only in a Validation or Affected files line does not satisfy it, and that is intentional: the Summary is where the version transition belongs.
+
 ### 2026-10-27 - Document the write-set boundary and the manifest coverage check
 
 - Area: agentic engine runbook, module manifest versioning guide
