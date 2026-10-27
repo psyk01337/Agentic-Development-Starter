@@ -815,6 +815,10 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
             reviewedBy=reviewed_by.strip(),
             evidence=evidence,
         )
+        # lastStage is what a reader of `report` uses to see which stage ran last.
+        # Leaving it at "verify" on a completed run says review never happened,
+        # which is the one stage that authorises completion.
+        state["lastStage"] = "review"
         if decision == "pass":
             state["stage"] = "done"
             state["status"] = "DONE"
@@ -1869,6 +1873,39 @@ class EngineSelfTest(unittest.TestCase):
         _, payload = self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
         self.assertEqual(payload["stage"], "review")
         self.assertEqual(payload["implementers"], ["engineer"])
+
+    def test_last_stage_records_review_on_completion(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        review = {
+            "decision": "pass",
+            "reviewedBy": "reviewer",
+            "findings": [],
+            "evidence": ["diff:HEAD"],
+        }
+        self.review_file = self.root / "review.json"
+        self.review_file.write_text(json.dumps(review), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = main(
+                [
+                    "record",
+                    "--run-id",
+                    "r1",
+                    "--stage",
+                    "review",
+                    "--result",
+                    str(self.review_file),
+                    "--repo-root",
+                    str(self.root),
+                    "--state-dir",
+                    str(self.state_dir),
+                ]
+            )
+        self.assertEqual(code, 0)
+        state = json.loads((self.state_dir / "r1.json").read_text(encoding="utf-8"))
+        self.assertEqual(state["status"], "DONE")
+        self.assertEqual(state["lastStage"], "review")
 
     def test_force_refused_at_review_stage(self) -> None:
         self.init()

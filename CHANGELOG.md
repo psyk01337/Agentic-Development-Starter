@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Record the review stage as the last stage on completion
+
+- Area: agentic engine
+- Change type: fix, test
+- Summary: sets `lastStage` to `review` when a review is recorded. It previously kept the `verify` value, so a completed run's record said the last stage was verification.
+- Reason: a live run of the `build-feature` golden task reached `DONE` and its `report` output showed `"lastStage": "verify"` while the history clearly ended with a review by `code-reviewer`. `lastStage` exists so a reader can see which stage ran last, and on a completed run that is the review that authorised completion, so the field contradicted the record it summarises.
+- Affected files: .github/scripts/agentic_engine.py, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: None - `lastStage` is not documented in the runbook
+- Validation: engine self-tests grew from 61 to 62 and pass under both `python` and `python3`. Re-running the live feature cycle in an adopted project now reports `lastStage: review` alongside `status: DONE`.
+- Discrepancies or follow-up: `lastStage` is written but no code reads it, and it is not documented. Either document it as part of the run record contract or drop it; it is currently only visible when dumping state.
+
 ### 2026-10-27 - Stop the asset scan from blocking adopters and split editor templates out
 
 - Area: module manifest, manifest validators, adoption docs

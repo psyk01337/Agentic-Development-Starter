@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Record the build-feature golden task result
+
+- Area: eval harness
+- Change type: docs
+- Summary: records the first live run of `evals/tasks/build-feature.md`, executed against an adopted project: a health-check slice with four tests, driven through the engine to `DONE`, graded against `evals/expected/build-feature.checklist.md` at 11 of 12 with the reviewer-separation item marked partial.
+- Reason: the eval harness is described as manual/semi-automated, and no entry recorded that any golden task had actually been executed, so the checklist's grading vocabulary had no example to follow.
+- Affected files: CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Record the review stage as the last stage on completion"
+- Review status: pending-review
+- Discrepancies or follow-up: the reviewer-separation checklist item cannot be satisfied in a single-agent session. `record --stage review` requires `reviewedBy` to differ from every implementer, but that is a string comparison, so one agent writing both values satisfies it. The item passes as a contract and not as a control, which matches how the repository describes its gates elsewhere, but the checklist wording does not say so.
+
 ### 2026-10-27 - Document the maintainer asset scan and the editor templates module
 
 - Area: adoption runbooks, module manifest versioning guide, README
