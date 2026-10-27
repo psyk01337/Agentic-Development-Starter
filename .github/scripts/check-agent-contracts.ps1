@@ -55,7 +55,7 @@ foreach ($relativePath in $agentFiles) {
   Assert-FileContains -RelativePath $relativePath -Pattern "## Escalation and Failure Modes" -Description "escalation and failure modes section"
 }
 
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "## Conditional Delegation Triggers" -Description "conditional delegation trigger table"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "## Conditional Delegation Triggers" -Description "conditional delegation trigger table"
 Assert-FileContains -RelativePath "docs/runbooks/agentic-dev.md" -Pattern "## 1b\) Redirect Mid-Chain When Signals Appear" -Description "mid-chain redirect runbook guidance"
 Assert-FileContains -RelativePath "docs/runbooks/agentic-dev.md" -Pattern "### 4b\) Respect Escalation and Failure Mode Signals" -Description "escalation handling runbook guidance"
 

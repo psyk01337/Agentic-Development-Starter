@@ -4,7 +4,7 @@ Use this prompt as the single entry point for delivering one application feature
 
 ## Context To Inspect First
 
-- `.github/copilot-instructions.md`, `.github/AGENTS.md`, and the instruction overlays that match the stack and touched paths.
+- `.github/copilot-instructions.md`, `.github/agent-catalog.md`, and the instruction overlays that match the stack and touched paths.
 - The project's real source-of-truth docs: PRD, architecture, API contract, ADRs, and acceptance criteria.
 - The nearest application code, tests, package manifests, and validation commands.
 - `.github/roles/tool-access.json` to confirm which agent owns planning, implementation, review, and verification.

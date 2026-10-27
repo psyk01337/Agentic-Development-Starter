@@ -4,7 +4,7 @@ Use this prompt to run one bounded, autonomous improvement iteration on this rep
 
 ## Context To Inspect First
 
-- `.github/copilot-instructions.md`, `.github/AGENTS.md`, and the relevant instruction overlays.
+- `.github/copilot-instructions.md`, `.github/agent-catalog.md`, and the relevant instruction overlays.
 - `docs/runbooks/self-improvement.md` for the loop contract.
 - Open issues labeled `improvement`, plus `checklist.md` if present (it is local-only and gitignored).
 - The latest entries and open discrepancies in `CHANGELOG.md` and `DOC-CHANGELOG.md`.

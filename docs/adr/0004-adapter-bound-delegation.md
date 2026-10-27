@@ -4,7 +4,7 @@
 - Date: 2026-09-14
 - Approved: 2026-09-14 by the repository maintainer (user), recorded as the required approval for a `core-governance-change`
 - Owners: Team
-- Related: `docs/adr/0001-approval-gated-orchestration-overlay.md`, `docs/adr/0003-supervisor-orchestration-overlay.md`, `.github/AGENTS.md`, `.github/roles/tool-access.json`, `.github/roles/orchestration-policy.json`, `.github/agents/delegation-supervisor.agent.md`, `.github/agents/orchestration-coordinator.agent.md`, `.github/scripts/check-supervisor-orchestration.sh`, `.github/scripts/check-supervisor-orchestration.ps1`, `docs/runbooks/supervisor-orchestration.md`
+- Related: `docs/adr/0001-approval-gated-orchestration-overlay.md`, `docs/adr/0003-supervisor-orchestration-overlay.md`, `.github/agent-catalog.md`, `.github/roles/tool-access.json`, `.github/roles/orchestration-policy.json`, `.github/agents/delegation-supervisor.agent.md`, `.github/agents/orchestration-coordinator.agent.md`, `.github/scripts/check-supervisor-orchestration.sh`, `.github/scripts/check-supervisor-orchestration.ps1`, `docs/runbooks/supervisor-orchestration.md`
 
 ## Context
 
@@ -18,7 +18,7 @@ Three consequences follow, and they are the reason this ADR exists.
 
 1. The overlay's headline capability is inert as shipped. `delegation-supervisor.agent.md` declares `tools: [read, search, todo, delegate-agent]` and no `agents` key. It holds a capability it cannot exercise, and the check that would notice the difference reads only this repository's abstract name.
 2. The rule that guards the dangerous case does not exist. `agents:` without a host tool is a dead declaration: the allow-list is validated while nothing can invoke it. A host tool without `agents:` is unscoped delegation. The validator rejects neither, because it expects the tool to be absent.
-3. `orchestration-coordinator` is half-registered. It declares `tools: [read, search, todo]`, appears in `.github/AGENTS.md` and in `starter-modules.json`, and has no `agentCapabilityMatrix` entry and no `agentRoleHints` entry. `README.md` states that registering an agent means registering it in both places, so a shipped asset contradicts a stated rule. Nothing catches it: the matrix scan iterates `agentCapabilityMatrix` and compares it against agent files, so an agent file with no matrix entry is never reached, and the role-hint check is skipped whenever the matrix lookup returns nothing.
+3. `orchestration-coordinator` is half-registered. It declares `tools: [read, search, todo]`, appears in `.github/agent-catalog.md` and in `starter-modules.json`, and has no `agentCapabilityMatrix` entry and no `agentRoleHints` entry. `README.md` states that registering an agent means registering it in both places, so a shipped asset contradicts a stated rule. Nothing catches it: the matrix scan iterates `agentCapabilityMatrix` and compares it against agent files, so an agent file with no matrix entry is never reached, and the role-hint check is skipped whenever the matrix lookup returns nothing.
 
 The missing registration is not an oversight that a single row would fix, but the reason is semantic rather than structural. `orchestration-coordinator` declares exactly `read`, `search`, and `todo`, and the `review` role carries that identical tool set, so a slot with matching capabilities does exist. What does not exist is a slot with matching purpose. The `review` role's stated intent is to inspect work and report findings against repo standards, which is what `architecture-reviewer`, `code-reviewer`, and `security-reviewer` do; registering a workflow-transition coordinator under it would make the registry assert a function the agent does not perform and would dilute a term three agents already share. The coordinator's distinguishing authority is that it recommends a transition for a human to approve without invoking anything, which no existing role describes.
 
@@ -26,7 +26,7 @@ An earlier version of this paragraph claimed that no role in `tool-access.json` 
 
 A second hardcoded list compounds the problem. Both validator twins embed the platform delegation vocabulary as a literal, currently `agent` and `runSubagent`. The set is not derived from anything and is not tied to the host it describes, so a host whose delegation primitive has a different name is outside the rule by construction.
 
-The alternative readings are both closed by existing contract. Promoting a third `orchestrator` agent into core is refused by the Deliberate Exclusions in `AGENTS.md`, which permit supervised delegation only through the default-disabled `overlay-supervisor-orchestration` overlay under the canonical policy in `orchestration-policy.json`. Merging the coordinator and the supervisor into one control plane is refused by `delegation-supervisor.agent.md` itself, which states "Do not merge these roles," and by ADR 0003's Decision.
+The alternative readings are both closed by existing contract. Promoting a third `orchestrator` agent into core is refused by the Deliberate Exclusions in `agent-catalog.md`, which permit supervised delegation only through the default-disabled `overlay-supervisor-orchestration` overlay under the canonical policy in `orchestration-policy.json`. Merging the coordinator and the supervisor into one control plane is refused by `delegation-supervisor.agent.md` itself, which states "Do not merge these roles," and by ADR 0003's Decision.
 
 ## Decision
 
@@ -38,7 +38,7 @@ The host adapter map lives in `.github/roles/orchestration-policy.json` under `d
 
 Two pairing rules replace the current blanket prohibition. Declaring an `agents` allow-list requires declaring the host delegation tool for that host, because a validated allow-list nothing can invoke is a guardrail in appearance only. Declaring the host delegation tool requires declaring `agents`, because an invocation path without a validated allow-list is the unscoped case. Where `agents` is declared, its entries must stay within the canonical `specialistAllowList`, as today.
 
-The role vocabulary gains one entry. A new `advisory` role holds `read`, `search`, and `todo` and maps to the non-mutating tier's predicate. `orchestration-coordinator` is registered against it in both `agentRoleHints` and `agentCapabilityMatrix`, and its role string in `.github/AGENTS.md` is aligned to the vocabulary. The role describes an authority level rather than a tier, because tier membership stays derived from frontmatter.
+The role vocabulary gains one entry. A new `advisory` role holds `read`, `search`, and `todo` and maps to the non-mutating tier's predicate. `orchestration-coordinator` is registered against it in both `agentRoleHints` and `agentCapabilityMatrix`, and its role string in `.github/agent-catalog.md` is aligned to the vocabulary. The role describes an authority level rather than a tier, because tier membership stays derived from frontmatter.
 
 Registration becomes checkable in the direction that matters: **every agent file not on the specialist allow-list must have an `agentCapabilityMatrix` entry and an `agentRoleHints` entry.** The tolerance for an allow-listed non-mutating agent without a matrix entry is preserved deliberately and unchanged, because the non-mutating tier derives from frontmatter and an absent matrix entry cannot shrink it. That reasoning holds only for allow-listed agents. An agent off the allow-list has nothing deriving anything from it, so its declared tools are covered by no rule at all when its matrix entry is missing, which is precisely the coordinator's state.
 
@@ -73,7 +73,7 @@ Trade-offs and risks
 
 Operational impacts
 
-- `tool-access.json` and `AGENTS.md` are approval-protected. The change is a `core-governance-change` and needs recorded maintainer approval before merge.
+- `tool-access.json` and `agent-catalog.md` are approval-protected. The change is a `core-governance-change` and needs recorded maintainer approval before merge.
 - The supervisor's frontmatter, the adapter allowance, and the pairing rules must land in a single change. Landing the pairing rules first turns the shipped tree red; landing the frontmatter first fails the current exact-equality rule.
 - Both validator twins change together, with negative fixtures per platform, and both must remain registered in the paired workflow entry points or they never run.
 - `docs/runbooks/supervisor-orchestration.md` and ADR 0003's amendment pointer are updated in the same change, so no design document describes a rule the code does not assert.
@@ -123,7 +123,7 @@ Operational impacts
 
 - Cons
 - Duplicates governance that must then be kept aligned across files, which is the drift class already observed twice in these same validators
-- `AGENTS.md` and the capability matrix would need per-host registration, multiplying the registry instead of the one place it is checked
+- `agent-catalog.md` and the capability matrix would need per-host registration, multiplying the registry instead of the one place it is checked
 - The distinction is in tool naming, not in semantics, so the cost buys nothing the adapter map does not
 
 1. Script-driven invoker in place of host delegation
@@ -156,7 +156,7 @@ Operational impacts
 - Would give routing one obvious owner
 
 - Cons
-- Refused by the `AGENTS.md` Deliberate Exclusions, which permit supervised delegation only through the default-disabled overlay
+- Refused by the `agent-catalog.md` Deliberate Exclusions, which permit supervised delegation only through the default-disabled overlay
 - Creates a third orchestration authority alongside two that already overlap
 - Puts automatic orchestration into every adopting repo by default, which the core model excludes
 
@@ -183,7 +183,7 @@ Phase 1, role vocabulary and coordinator registration
 
 1. Add the `advisory` role to `.github/roles/tool-access.json` with `read`, `search`, and `todo`.
 2. Add `orchestration-coordinator` to `agentCapabilityMatrix` and `agentRoleHints`.
-3. Align the coordinator's role string in `.github/AGENTS.md` to the vocabulary.
+3. Align the coordinator's role string in `.github/agent-catalog.md` to the vocabulary.
 4. Run the umbrella check on both platforms. The existing validators cannot fail on this slice, because no rule reads the coordinator yet.
 
 Phase 2, adapter map and the atomic capability change
@@ -225,7 +225,7 @@ Verify the decision works in practice by:
 - Confirming the validator fails when a second agent declares the host delegation tool; when a non-supervisor declares an `agents` allow-list; when the holder declares `agents` without the host tool; when the holder declares the host tool without `agents`; when `agents` names an agent outside the canonical `specialistAllowList`; when an adapter-declared name resolves to `edit` or `execute`; when an `agentCapabilityMatrix` entry enables a host adapter tool name; when a non-allow-listed agent file has no `agentCapabilityMatrix` entry; and when a matrix entry or role hint diverges from the frontmatter. Each case is a negative fixture, so the branches cannot regress into silent no-ops.
 - Confirming the positive fixtures still pass: the shipped tree is accepted, an allow-listed non-mutating agent with no matrix entry is still tolerated — the reason the registration rule is scoped to non-allow-listed agents — an unsupported host recorded with an empty `delegationTools` list is accepted on both platforms, and a case-variant adapter tool name is treated as a distinct non-mutating host name on both platforms.
 - Confirming that no core behavior changes when the overlay is disabled: guided handoffs, the one-main-chat model, and the core handoff contract fields stay identical.
-- Confirming that no edited or new document describes the approval gate as enforced authorization, so the enforcement-framing guard over `.github/AGENTS.md`, `.github/roles/tool-access.json`, and every agent file still passes.
+- Confirming that no edited or new document describes the approval gate as enforced authorization, so the enforcement-framing guard over `.github/agent-catalog.md`, `.github/roles/tool-access.json`, and every agent file still passes.
 - Confirming `check-markdown-quality.sh` passes, since new and edited documentation is scanned for trailing whitespace and broken local links.
 
 ## Follow-up

@@ -14,7 +14,7 @@ Do not use this overlay when the repo only needs normal VS Code or Copilot agent
 2. Point the runtime profile at repo truth files before allowing edits.
 3. Require explicit approval before enabling shell automation, MCP servers, memory providers, or self-modifying behavior.
 4. Apply hook policy rules to terminal and tool execution.
-5. Keep transition records aligned with `.github/AGENTS.md` and any enabled approval-gated overlay.
+5. Keep transition records aligned with `.github/agent-catalog.md` and any enabled approval-gated overlay.
 
 The instruction overlay activates in VS Code only when the repository contains a `.hermes/` directory (or similar marker files); repositories without Hermes files never load those rules.
 

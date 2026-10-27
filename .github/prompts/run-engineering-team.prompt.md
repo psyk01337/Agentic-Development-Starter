@@ -4,7 +4,7 @@ Use this prompt when one request should run through the full SDLC team: discover
 
 ## Context To Inspect First
 
-- `.github/copilot-instructions.md`, `.github/AGENTS.md`, `docs/runbooks/engineering-team.md`, `docs/runbooks/agentic-engine.md`, and `.github/skills/supervisor-orchestration/SKILL.md`.
+- `.github/copilot-instructions.md`, `.github/agent-catalog.md`, `docs/runbooks/engineering-team.md`, `docs/runbooks/agentic-engine.md`, and `.github/skills/supervisor-orchestration/SKILL.md`.
 - `.github/roles/orchestration-policy.json` for task classes, playbooks, approval categories, the specialist allow-list, and delegation depth.
 - `.github/roles/tool-access.json` for each agent's capability boundary.
 - The project's PRD, architecture, API docs, current code, tests, and validation commands.

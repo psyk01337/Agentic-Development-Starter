@@ -21,6 +21,6 @@ This repository is the Agentic Development Starter: a modular workflow and gover
 ## Where To Go Next
 
 - `QUICKSTART.md` — fastest path to a first change.
-- `.github/AGENTS.md` — agent catalog, guided handoff contract, and delegation triggers.
+- `.github/agent-catalog.md` — agent catalog, guided handoff contract, and delegation triggers.
 - `docs/runbooks/INDEX.md` — guidance by task.
 - `.github/starter-modules.json` — what ships enabled.

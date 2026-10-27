@@ -11,7 +11,7 @@
   "auditReference": "handoff-2026-03-09-004",
   "inputsForNextAgent": [
     ".github/agents/analyst.agent.md",
-    ".github/AGENTS.md",
+    ".github/agent-catalog.md",
     ".github/schema/approval-gated-handoff-envelope.schema.json"
   ],
   "decisionStatus": "needs-clarification"

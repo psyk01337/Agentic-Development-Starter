@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document the agent catalog rename
+
+- Area: ADRs, composition and adoption runbooks, agent catalog
+- Change type: docs, runbook
+- Summary: records that the agent catalog is now `.github/agent-catalog.md`, explains in the composition runbook why it is deliberately not named `AGENTS.md`, and rewrites the three stale ADR line-number citations as section references.
+- Reason: a reader who found two `AGENTS.md` files had no way to tell which one a harness loads, and the ADR line anchors had already drifted so that `AGENTS.md:206` pointed at an unrelated table row.
+- Affected files: .github/agent-catalog.md, docs/adr/0001-approval-gated-orchestration-overlay.md, docs/adr/0003-supervisor-orchestration-overlay.md, docs/adr/0004-adapter-bound-delegation.md, docs/runbooks/starter-composition.md, docs/runbooks/starter-adoption.md, AGENTS.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Rename the agent catalog away from the AGENTS.md name"
+- Review status: pending-review
+- Discrepancies or follow-up: the rename is a `core-governance-change` by the policy's own definition, since it edits `orchestration-policy.json` text, the agent catalog, and the validator twins. ADR 0003 and ADR 0004 were updated in place rather than superseded because only path citations changed, not the decisions they record. Earlier `DOC-CHANGELOG.md` entries keep the old path for the same reason as the source changelog.
+
 ### 2026-10-27 - Document where AGENTS.md loads from
 
 - Area: starter composition runbook, starter adoption runbook, README

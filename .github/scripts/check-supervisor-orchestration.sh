@@ -787,7 +787,7 @@ negated_enforcement = re.compile(
     re.IGNORECASE,
 )
 
-governance_files = [".github/AGENTS.md", ".github/roles/tool-access.json"]
+governance_files = [".github/agent-catalog.md", ".github/roles/tool-access.json"]
 governance_files.extend(f".github/agents/{agent_path.name}" for agent_path in agent_files)
 for relative_path in governance_files:
     governance_path = root / relative_path
@@ -814,16 +814,16 @@ then
   FAILED=1
 fi
 
-assert_file_contains ".github/AGENTS.md" "delegation-supervisor" "supervisor agent catalog entry"
-assert_file_contains ".github/AGENTS.md" "orchestration-coordinator" "coordinator role distinction"
-assert_file_contains ".github/AGENTS.md" "Inputs for next agent" "core handoff contract extension"
-assert_file_contains ".github/AGENTS.md" "Decision status" "decision status field"
-assert_file_contains ".github/AGENTS.md" "overlay-only" "overlay-only orchestration wording"
-assert_file_contains ".github/AGENTS.md" "prompt-level contract" "prompt-level approval caveat in the agent catalog"
-assert_file_contains ".github/AGENTS.md" "supervisor-orchestration.md" "supervisor runbook pointer from the agent catalog"
-assert_file_contains ".github/AGENTS.md" "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." "delegated subagent statelessness rule"
-assert_file_contains ".github/AGENTS.md" "Return needs-clarification as a terminal result, not as a question that waits for an answer." "delegated needs-clarification terminal rule"
-assert_file_contains ".github/AGENTS.md" "The guided handoff allow-list and the delegable subagent allow-list are different" "guided versus delegable allow-list distinction"
+assert_file_contains ".github/agent-catalog.md" "delegation-supervisor" "supervisor agent catalog entry"
+assert_file_contains ".github/agent-catalog.md" "orchestration-coordinator" "coordinator role distinction"
+assert_file_contains ".github/agent-catalog.md" "Inputs for next agent" "core handoff contract extension"
+assert_file_contains ".github/agent-catalog.md" "Decision status" "decision status field"
+assert_file_contains ".github/agent-catalog.md" "overlay-only" "overlay-only orchestration wording"
+assert_file_contains ".github/agent-catalog.md" "prompt-level contract" "prompt-level approval caveat in the agent catalog"
+assert_file_contains ".github/agent-catalog.md" "supervisor-orchestration.md" "supervisor runbook pointer from the agent catalog"
+assert_file_contains ".github/agent-catalog.md" "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." "delegated subagent statelessness rule"
+assert_file_contains ".github/agent-catalog.md" "Return needs-clarification as a terminal result, not as a question that waits for an answer." "delegated needs-clarification terminal rule"
+assert_file_contains ".github/agent-catalog.md" "The guided handoff allow-list and the delegable subagent allow-list are different" "guided versus delegable allow-list distinction"
 assert_file_contains "docs/runbooks/engineering-team.md" "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." "engineering team runbook statelessness parity"
 
 assert_file_contains "docs/runbooks/agentic-dev.md" "Supervisor delegation flow" "supervisor delegation flow guidance"
@@ -969,7 +969,7 @@ elif mutation == "unbounded-write-set":
             break
     dump(example_path, example)
 elif mutation == "enforcement-overclaim":
-    agents_path = fixture_root / ".github/AGENTS.md"
+    agents_path = fixture_root / ".github/agent-catalog.md"
     agents_text = agents_path.read_text(encoding="utf-8")
     agents_path.write_text(
         re.sub(

@@ -70,7 +70,7 @@ Assume upstream context:
 - Read `.github/roles/orchestration-policy.json` first. It is the canonical source for approval categories, routing criteria, the specialist allow-list, and the write-set rule.
 - Read `docs/runbooks/engineering-team.md` when the request spans multiple SDLC stages or squads.
 - Workers return their bounded results shaped by `.github/schema/delegation-result.schema.json`; a structured result is a communication contract, not proof, so inspect the referenced artifacts before reconciling.
-- Read `.github/AGENTS.md` for the guided handoff contract and the agent ownership map.
+- Read `.github/agent-catalog.md` for the guided handoff contract and the agent ownership map.
 - Read `docs/runbooks/supervisor-orchestration.md` for the operating model, activation, and fallback behavior.
 - Use `.github/roles/tool-access.json` to confirm each target agent's capability boundary before delegating.
 - Consume the task's acceptance criteria and any prior handoff state.

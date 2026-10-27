@@ -69,9 +69,9 @@ if (-not (Test-Path $manifestPath)) {
   }
 }
 
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Inputs for next agent" -Description "core handoff contract extension"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Decision status" -Description "decision status field"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "overlay-only" -Description "overlay-only orchestration wording"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "Inputs for next agent" -Description "core handoff contract extension"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "Decision status" -Description "decision status field"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "overlay-only" -Description "overlay-only orchestration wording"
 Assert-FileContains -RelativePath "docs/runbooks/approval-gated-handoffs.md" -Pattern "approval-gated-handoff-envelope\.schema\.json" -Description "schema reference"
 Assert-FileContains -RelativePath "docs/runbooks/approval-gated-handoffs.md" -Pattern "jsonschema|ajv-cli" -Description "schema validation note"
 Assert-FileContains -RelativePath "docs/runbooks/hooks.md" -Pattern "postToolUse" -Description "audit seam reuse guidance"

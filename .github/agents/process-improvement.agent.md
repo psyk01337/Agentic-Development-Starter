@@ -31,7 +31,7 @@ Assume upstream context:
 
 ## Required Inputs
 - Check `.github/copilot-instructions.md` first for the current baseline rules.
-- Review the relevant workflow assets such as `.github/AGENTS.md`, `.github/copilot-instructions.md`, `.github/agents/*.agent.md`, and `docs/runbooks/agentic-dev.md`.
+- Review the relevant workflow assets such as `.github/agent-catalog.md`, `.github/copilot-instructions.md`, `.github/agents/*.agent.md`, and `docs/runbooks/agentic-dev.md`.
 - Use `.github/notes.log` or other repo workflow notes when present to understand known residual risks and deferred follow-up.
 
 ## Escalation and Failure Modes

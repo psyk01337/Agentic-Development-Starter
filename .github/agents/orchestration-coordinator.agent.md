@@ -40,7 +40,7 @@ Assume upstream context:
 
 ## Required Inputs
 - Check `.github/copilot-instructions.md` first for baseline workflow rules.
-- Use `.github/AGENTS.md` and `docs/runbooks/approval-gated-handoffs.md` as the source of truth for overlay behavior.
+- Use `.github/agent-catalog.md` and `docs/runbooks/approval-gated-handoffs.md` as the source of truth for overlay behavior.
 - Use `.github/schema/approval-gated-handoff-envelope.schema.json` as the machine-readable contract for overlay transition metadata.
 - Consume the current agent handoff before drafting the next transition.
 

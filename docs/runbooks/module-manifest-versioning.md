@@ -270,7 +270,7 @@ Before adding a file to a module, consider:
   "defaultEnabled": true,
   "when": "All repositories using agents",
   "files": [
-    ".github/AGENTS.md",
+    ".github/agent-catalog.md",
     ".github/agents/analyst.agent.md",
     ".github/agents/tech-planner.agent.md"
     // Add more agents as needed

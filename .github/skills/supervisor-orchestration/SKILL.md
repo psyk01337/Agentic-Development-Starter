@@ -17,7 +17,7 @@ Do not use it for human-guided transitions between agents; that is the `approval
 ## Canonical Sources
 - `.github/roles/orchestration-policy.json` for approval categories, routing criteria, the specialist allow-list, delegation depth, and the write-set rule.
 - `.github/roles/tool-access.json` for each agent's capability boundary.
-- `.github/AGENTS.md` for the guided handoff contract and ownership map.
+- `.github/agent-catalog.md` for the guided handoff contract and ownership map.
 - `docs/runbooks/supervisor-orchestration.md` for the operating model and fallback behavior.
 - `docs/runbooks/engineering-team.md` for the team topology, task board, task assignment contract, and SDLC ceremonies.
 - `.github/skills/repair-loop/SKILL.md` and `docs/runbooks/agentic-engine.md` for the deterministic implement-verify-repair loop.

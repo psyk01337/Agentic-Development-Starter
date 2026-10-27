@@ -104,7 +104,7 @@ Use when multiple contributors or agents need shared workflow assets.
 
 Add:
 
-- `.github/AGENTS.md` — the agent catalog and handoff contract, which is a different file from the root `AGENTS.md` entry point
+- `.github/agent-catalog.md` — the agent catalog and handoff contract, which is a different file from the root `AGENTS.md` entry point
 - `.github/agents/*.agent.md`
 - `.github/skills/*/SKILL.md`
 - `.github/prompts/*.prompt.md`

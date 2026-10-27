@@ -862,16 +862,16 @@ if (@($nonMutatingTier).Count -eq 0) {
   Add-CheckError("specialist allow-list has no non-mutating tier: no allow-listed agent declares capabilities within read, search, todo, so an unverified hook-inheritance result would withhold delegation entirely instead of scoping it")
 }
 
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "delegation-supervisor" -Description "supervisor agent catalog entry"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "orchestration-coordinator" -Description "coordinator role distinction"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Inputs for next agent" -Description "core handoff contract extension"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Decision status" -Description "decision status field"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "overlay-only" -Description "overlay-only orchestration wording"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "prompt-level contract" -Description "prompt-level approval caveat in the agent catalog"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "supervisor-orchestration.md" -Description "supervisor runbook pointer from the agent catalog"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." -Description "delegated subagent statelessness rule"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "Return needs-clarification as a terminal result, not as a question that waits for an answer." -Description "delegated needs-clarification terminal rule"
-Assert-FileContains -RelativePath ".github/AGENTS.md" -Pattern "The guided handoff allow-list and the delegable subagent allow-list are different" -Description "guided versus delegable allow-list distinction"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "delegation-supervisor" -Description "supervisor agent catalog entry"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "orchestration-coordinator" -Description "coordinator role distinction"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "Inputs for next agent" -Description "core handoff contract extension"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "Decision status" -Description "decision status field"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "overlay-only" -Description "overlay-only orchestration wording"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "prompt-level contract" -Description "prompt-level approval caveat in the agent catalog"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "supervisor-orchestration.md" -Description "supervisor runbook pointer from the agent catalog"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." -Description "delegated subagent statelessness rule"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "Return needs-clarification as a terminal result, not as a question that waits for an answer." -Description "delegated needs-clarification terminal rule"
+Assert-FileContains -RelativePath ".github/agent-catalog.md" -Pattern "The guided handoff allow-list and the delegable subagent allow-list are different" -Description "guided versus delegable allow-list distinction"
 Assert-FileContains -RelativePath "docs/runbooks/engineering-team.md" -Pattern "Treat a delegated subagent as stateless: it does not inherit the conversation history, cannot ask clarifying questions, and may not have todo or follow-up tools." -Description "engineering team runbook statelessness parity"
 
 # The approval gate is a prompt-level contract, not enforcement. Guard the
@@ -879,7 +879,7 @@ Assert-FileContains -RelativePath "docs/runbooks/engineering-team.md" -Pattern "
 # and scope intents in tool-access.json - against drifting back into an
 # enforcement claim. A line is a claim when it names the boundary and uses an
 # enforcement word without also negating it.
-$governanceFiles = @(".github/AGENTS.md", ".github/roles/tool-access.json")
+$governanceFiles = @(".github/agent-catalog.md", ".github/roles/tool-access.json")
 foreach ($agentFile in $agentFiles) { $governanceFiles += ".github/agents/$($agentFile.Name)" }
 foreach ($governanceFile in $governanceFiles) {
   $governancePath = Join-Path $RepoRoot $governanceFile
@@ -1035,7 +1035,7 @@ function Set-FixtureMutation([string]$Mutation, [string]$Target) {
       $example | ConvertTo-Json -Depth 20 | Set-Content -Path $path -Encoding utf8
     }
     "enforcement-overclaim" {
-      $path = Join-Path $Target ".github/AGENTS.md"
+      $path = Join-Path $Target ".github/agent-catalog.md"
       $mutated = (Get-Content -Path $path -Raw) -replace "high-risk approval gate that is a prompt-level contract, not enforcement", "high-risk approval enforcement"
       Set-Content -Path $path -Value $mutated -Encoding utf8
     }

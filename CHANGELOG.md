@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-27 - Rename the agent catalog away from the AGENTS.md name
+
+- Area: core agent module, validators, ADRs, runbooks, prompts, examples
+- Change type: refactor, docs
+- Summary: renames `.github/AGENTS.md` to `.github/agent-catalog.md` and updates all 91 references across 34 files, including the manifest, six validator scripts, three ADRs, nine runbooks, five prompts, three agent files, the supervisor skill, and four examples. Replaces three stale line-number citations in the ADRs (`AGENTS.md:206`, `AGENTS.md:209`, `starter-composition.md:188`) with section references that cannot drift.
+- Reason: two files named `AGENTS.md` in one repository invited exactly one conclusion, that the catalog was a cross-agent instruction file, when it is repo truth that no harness auto-loads. Renaming also removes the incidental subfolder discovery where an agent editing `.github/agents/*` picked up 17 KB of catalog as instructions.
+- Affected files: .github/agent-catalog.md, .github/starter-modules.json, .github/scripts/check-agent-contracts.sh, .github/scripts/check-agent-contracts.ps1, .github/scripts/check-approval-gated-orchestration.sh, .github/scripts/check-approval-gated-orchestration.ps1, .github/scripts/check-supervisor-orchestration.sh, .github/scripts/check-supervisor-orchestration.ps1, .github/roles/orchestration-policy.json, docs/adr/0001-approval-gated-orchestration-overlay.md, docs/adr/0003-supervisor-orchestration-overlay.md, docs/adr/0004-adapter-bound-delegation.md, docs/runbooks/starter-composition.md, docs/runbooks/starter-adoption.md, docs/runbooks/agentic-dev.md, docs/runbooks/hermes-runtime.md, docs/runbooks/memory-strategy.md, docs/runbooks/module-manifest-versioning.md, AGENTS.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-27 - Document the agent catalog rename"
+- Validation: all 11 bash checks pass individually; both umbrella validators pass all twelve checks; every JSON file in the repo still parses; a repo-wide scan confirms no live file references the old path.
+- Discrepancies or follow-up: entries earlier in this file keep the old `.github/AGENTS.md` path on purpose, because they record what was true when the change landed. The three ADR line-number citations were already stale before this change: inserting the delegated subagent contract shifted `agent-catalog.md` by 15 lines, so `AGENTS.md:206` resolved to an unrelated table row. That is why they are now cited by section name instead of line number.
+
 ### 2026-10-27 - Add the cross-agent root entry point
 
 - Area: root instructions, module manifest, composition and adoption runbooks

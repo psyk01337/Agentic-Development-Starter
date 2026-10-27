@@ -40,7 +40,7 @@
     },
     {
       "id": "core-governance-change",
-      "description": "Changes to starter or repository governance assets such as AGENTS.md, tool-access.json, agent policy, module composition, validators, or architecture contracts."
+      "description": "Changes to starter or repository governance assets such as agent-catalog.md, tool-access.json, agent policy, module composition, validators, or architecture contracts."
     },
     {
       "id": "dependency-change",
@@ -89,7 +89,7 @@
       "Requires a database or schema migration or a data transformation.",
       "Changes authentication, authorization, secrets, permissions, identity, security controls, or trust boundaries.",
       "Changes deployment, production infrastructure, networking, CI/CD, release behavior, or runtime configuration.",
-      "Modifies starter or core governance assets such as AGENTS.md, tool-access.json, agent policy, module composition, validators, or architecture contracts.",
+      "Modifies starter or core governance assets such as agent-catalog.md, tool-access.json, agent policy, module composition, validators, or architecture contracts.",
       "Contains multiple independent implementation workstreams.",
       "Has incomplete, conflicting, or design-dependent acceptance criteria.",
       "Crosses a mandatory human-approval boundary.",

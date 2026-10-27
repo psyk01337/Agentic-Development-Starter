@@ -4,7 +4,7 @@ Use this prompt to review the current working tree or pull request diff for corr
 
 ## Context To Inspect First
 
-- `.github/copilot-instructions.md`, `.github/AGENTS.md`, and applicable instruction overlays.
+- `.github/copilot-instructions.md`, `.github/agent-catalog.md`, and applicable instruction overlays.
 - The current diff and the files it touches.
 - Nearby tests, schemas, runbooks, and source-of-truth docs for changed behavior.
 - Recent changelog entries when the diff changes behavior or workflow contracts.

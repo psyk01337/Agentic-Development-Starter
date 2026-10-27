@@ -18,7 +18,7 @@ The starter uses three instruction layers, and they do not all load on every req
 
 Consequences worth knowing:
 
-- `AGENTS.md` and `.github/AGENTS.md` are different files with different jobs. The root `AGENTS.md` is the cross-agent entry point that harnesses load. `.github/AGENTS.md` is the agent catalog: repo truth that the README points at and the validators check, not an injected instruction file.
+- `AGENTS.md` and `.github/agent-catalog.md` are different files with different jobs. The root `AGENTS.md` is the cross-agent entry point that harnesses load. `.github/agent-catalog.md` is the agent catalog: repo truth that the README points at and the validators check, not an injected instruction file. The catalog is deliberately not named `AGENTS.md` so the two roles cannot be confused.
 - The root `AGENTS.md` must stay at the repository root. A file named `AGENTS.md` in a subfolder is discovered only as a nested instruction file, which several harnesses leave disabled by default.
 - `AGENTS.md` is a cross-agent format, not a single-vendor one. Copilot, Codex, and the VS Code Local harness read it; Claude Code reads `CLAUDE.md` instead. Keep the root file a thin pointer so the harnesses that read it cannot receive contradictory guidance.
 - Always-on content costs tokens on every request. Keep `copilot-instructions.md` a thin router; put detail in `core` or `security` rather than restating the same rule in both.

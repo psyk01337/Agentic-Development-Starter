@@ -5,7 +5,7 @@ Use this prompt when a PRD, design brief, architecture note, API contract, or ot
 ## Context To Inspect First
 
 - The attached or referenced source document or documents. Check `docs/inputs/` if present when the user places source documents there. If a document is unavailable or unreadable, say so and stop; do not reconstruct it from memory.
-- `.github/copilot-instructions.md`, `.github/AGENTS.md`, `docs/runbooks/adopting-existing-github.md`, and `docs/runbooks/starter-composition.md`.
+- `.github/copilot-instructions.md`, `.github/agent-catalog.md`, `docs/runbooks/adopting-existing-github.md`, and `docs/runbooks/starter-composition.md`.
 - The current `README.md`, `CHANGELOG.md`, `DOC-CHANGELOG.md`, `docs/` tree, `.github/starter-modules.json`, and any existing PRD, architecture, design, or API docs.
 - The actual application code and tests when the document describes an existing system.
 

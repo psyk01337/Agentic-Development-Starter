@@ -9,7 +9,7 @@ In VS Code, this overlay only attaches when the repository contains a `.hermes/`
 
 ## Runtime Boundaries
 
-- Read repo truth before acting: `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`, `.github/AGENTS.md`, `.github/starter-modules.json`, runbooks, ADRs, and changelogs.
+- Read repo truth before acting: `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`, `.github/agent-catalog.md`, `.github/starter-modules.json`, runbooks, ADRs, and changelogs.
 - Treat Hermes state as execution context, not source of truth.
 - Do not self-modify core instructions, hooks, policies, or module manifests without explicit user approval.
 - Keep MCP, shell automation, and memory providers disabled until reviewed.

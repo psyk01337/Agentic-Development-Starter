@@ -93,7 +93,7 @@ Start with [QUICKSTART.md](QUICKSTART.md) for the fastest path to a working app,
 
 1. `AGENTS.md` — the cross-agent entry point at the repository root; how the other agents find this repo's rules.
 2. `.github/copilot-instructions.md` — the always-on baseline that every session inherits.
-3. `.github/AGENTS.md` — the specialist roles, the guided handoff contract, and the delegation triggers.
+3. `.github/agent-catalog.md` — the specialist roles, the guided handoff contract, and the delegation triggers.
 4. `docs/runbooks/agentic-dev.md` — the daily operating rhythm.
 5. `docs/runbooks/starter-adoption.md` — how much of the starter to adopt.
 6. `docs/runbooks/starter-composition.md` — what each module and overlay is for.
@@ -114,7 +114,7 @@ The starter earns its keep only when the repo stays the source of truth and the 
 6. **Validate.** Workflow-asset edits are not finished until the starter checks pass.
 7. **Hand off.** Every agent ends with `Decision status`, `Recommended next agent`, `Why that next agent`, `Inputs for next agent`, and `Blockers or approvals needed`.
 
-Chains and conditional redirects are listed in `.github/AGENTS.md` and walked through in `docs/runbooks/agentic-dev.md`.
+Chains and conditional redirects are listed in `.github/agent-catalog.md` and walked through in `docs/runbooks/agentic-dev.md`.
 
 ### 2. Pick the right surface for the job
 
@@ -157,7 +157,7 @@ Add a mode's assets only when the team can review the risk, and keep MCP servers
 
 1. Add the file in the surface directory that matches the table above.
 2. Register it in `.github/starter-modules.json`, or the manifest check fails.
-3. For an agent, also register it in `.github/AGENTS.md` and `.github/roles/tool-access.json` (`agentRoleHints` plus `agentCapabilityMatrix`), and include a `## Handoff Memory Contract` section.
+3. For an agent, also register it in `.github/agent-catalog.md` and `.github/roles/tool-access.json` (`agentRoleHints` plus `agentCapabilityMatrix`), and include a `## Handoff Memory Contract` section.
 4. For a skill, give `SKILL.md` frontmatter a lowercase hyphenated `name` and a `description`.
 5. For a prompt, state the context to inspect first, deliverables, safety boundaries, a destructive-change stop rule, and the expected output.
 6. Add an eval task and matching checklist under `evals/` when the workflow should be behavior-tested.

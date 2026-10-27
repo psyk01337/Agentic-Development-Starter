@@ -54,7 +54,7 @@ for relative_path in "${agent_files[@]}"; do
   assert_file_contains "${relative_path}" "## Escalation and Failure Modes" "escalation and failure modes section"
 done
 
-assert_file_contains ".github/AGENTS.md" "## Conditional Delegation Triggers" "conditional delegation trigger table"
+assert_file_contains ".github/agent-catalog.md" "## Conditional Delegation Triggers" "conditional delegation trigger table"
 assert_file_contains "docs/runbooks/agentic-dev.md" "## 1b\) Redirect Mid-Chain When Signals Appear" "mid-chain redirect runbook guidance"
 assert_file_contains "docs/runbooks/agentic-dev.md" "### 4b\) Respect Escalation and Failure Mode Signals" "escalation handling runbook guidance"
 

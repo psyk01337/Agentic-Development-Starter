@@ -4,11 +4,11 @@
 - Date: 2026-09-11
 - Approved: 2026-09-12 by the repository maintainer (user), recorded as the required approval for a `core-governance-change`
 - Owners: Team
-- Related: `docs/adr/0001-approval-gated-orchestration-overlay.md`, `.github/AGENTS.md`, `.github/starter-modules.json`, `.github/roles/tool-access.json`, `.github/hooks/agent-policy.json`, `docs/runbooks/approval-gated-handoffs.md`, `docs/runbooks/agentic-dev.md`
+- Related: `docs/adr/0001-approval-gated-orchestration-overlay.md`, `.github/agent-catalog.md`, `.github/starter-modules.json`, `.github/roles/tool-access.json`, `.github/hooks/agent-policy.json`, `docs/runbooks/approval-gated-handoffs.md`, `docs/runbooks/agentic-dev.md`
 
 ## Context
 
-The core starter runs on one main chat as orchestrator plus guided handoffs. Hidden automatic multi-agent chains are deliberately excluded from core behavior (`AGENTS.md`, Deliberate Exclusions). ADR 0001 added approval-gated *human* transitions through the `orchestration-coordinator`, but it explicitly does not cover *machine* task delegation, and it states that approval metadata is workflow metadata rather than enforced authorization.
+The core starter runs on one main chat as orchestrator plus guided handoffs. Hidden automatic multi-agent chains are deliberately excluded from core behavior (`agent-catalog.md`, Deliberate Exclusions). ADR 0001 added approval-gated *human* transitions through the `orchestration-coordinator`, but it explicitly does not cover *machine* task delegation, and it states that approval metadata is workflow metadata rather than enforced authorization.
 
 Teams have since asked for a supervisor that can delegate bounded tasks to approved specialist agents. The stated requirement is that safety must not depend on installing another optional module.
 
@@ -16,8 +16,8 @@ An independent architecture review on 2026-09-11 established four facts that sha
 
 1. No core file encodes a general high-risk approval gate. The only core rules of that character are scope-based (`copilot-instructions.md:15`, "Ask before doing broad refactors") or narrow (`security.instructions.md:41`, auto-update review; one hook rule for explicitly unapproved core-policy edits in `.github/hooks/policy-rules.tsv`). High-risk approval semantics are overlay-only today.
 2. The module manifest has no dependency mechanism. Modules carry `id`, `kind`, `defaultEnabled`, `when`, and `files` only, and `check-starter-manifest.sh` validates exactly those fields. A declared dependency would be inert documentation, not an enforced install requirement.
-3. Implementation is not file-level additive. `.github/AGENTS.md` belongs to `core-agents` and `.github/roles/tool-access.json` belongs to `core-governance`, so an overlay that adds an agent and a role must edit two core modules even though it changes no core behavior when disabled.
-4. The repository already sanctions this class of change. `starter-composition.md:188` states that agent-to-agent orchestration should be added as an optional overlay with explicit approval and audit behavior, and `AGENTS.md:209` reserves the same path. Only the exclusion phrase "Automatic multi-agent handoff chains" (`AGENTS.md:206`) is ambiguous and needs narrowing.
+3. Implementation is not file-level additive. `.github/agent-catalog.md` belongs to `core-agents` and `.github/roles/tool-access.json` belongs to `core-governance`, so an overlay that adds an agent and a role must edit two core modules even though it changes no core behavior when disabled.
+4. The repository already sanctions this class of change. `starter-composition.md` states that agent-to-agent orchestration should be added as an optional overlay with explicit approval and audit behavior, and the Deliberate Exclusions in `agent-catalog.md` reserve the same path. Only the exclusion phrase "Automatic multi-agent handoff chains" in `agent-catalog.md` is ambiguous and needs narrowing.
 
 The real decision is therefore not whether to declare a dependency, but where the irreducible high-risk approval gate lives.
 
@@ -40,7 +40,7 @@ Specifically:
 - The approval-required categories are `architecture-change`, `core-governance-change`, `dependency-change`, `destructive-data-change`, `identity-security-change`, `production-or-deployment-change`, `destructive-operation`, and `scope-expansion`.
 - The specialist allow-list is fixed to `analyst`, `tech-planner`, `architecture-reviewer`, `senior-software-engineer`, `code-reviewer`, `security-reviewer`, `qa`, `tdd-vitest`, and `documentation-maintainer`. Arbitrary agent invocation is not permitted.
 - If native subagents are unavailable, the supervisor emits an ordered delegation plan for the user to execute, or refuses the delegation. It never degrades silently.
-- ADR 0001 remains `Accepted` and is not modified. This ADR complements it. Only the ambiguous exclusion at `AGENTS.md:206` is narrowed to distinguish human-gated approval transitions and machine task delegation.
+- ADR 0001 remains `Accepted` and is not modified. This ADR complements it. Only the ambiguous exclusion in `agent-catalog.md` is narrowed to distinguish human-gated approval transitions and machine task delegation.
 
 The gate introduced by this ADR is a prompt-level contract, not enforcement. This repository has no trusted identity source or validated enforcement point for approval, and no hook seam for agent-to-agent delegation. Documentation must not describe the gate as enforced authorization.
 
@@ -58,7 +58,7 @@ Positive outcomes
 Trade-offs and risks
 
 - The gate is a convention, not a control. Nothing prevents an operator from ignoring it, and no validator can detect a bypassed approval.
-- The overlay edits two core modules (`AGENTS.md` in `core-agents`, `tool-access.json` in `core-governance`), so it is additive in behavior but not at the file level.
+- The overlay edits two core modules (`agent-catalog.md` in `core-agents`, `tool-access.json` in `core-governance`), so it is additive in behavior but not at the file level.
 - Adding the `orchestration` role to the always-present `tool-access.json` leaves an idle role in repos that never enable the overlay.
 - The write-set rule is not machine-enforced in v1, so overlapping parallel writes depend on review discipline.
 - `delegation-supervisor` and `orchestration-coordinator` both concern orchestration, so the runbook, the agent catalog, and the ownership map must state the distinction explicitly or readers will conflate them.
@@ -166,7 +166,7 @@ Phase 2, registration across existing assets
 
 1. Add the overlay entry to `.github/starter-modules.json` and bump the manifest minor version.
 2. Add the supervisor to `agentCapabilityMatrix` and `agentRoleHints` in `.github/roles/tool-access.json`.
-3. Update `.github/AGENTS.md`: agent set, ownership map, sequencing shortcuts, and the narrowed `:206` exclusion. Leave `:209` unchanged.
+3. Update `.github/agent-catalog.md`: agent set, ownership map, sequencing shortcuts, and the narrowed `:206` exclusion. Leave `:209` unchanged.
 4. Align `rolePolicyGuidance` in `.github/hooks/agent-policy.json`.
 5. Add the agent to `docs/runbooks/agentic-dev.md` chain and handoff-memory lists.
 6. Register the new runbook in `docs/runbooks/INDEX.md` in both lists.
@@ -217,4 +217,4 @@ Verify the decision works in practice by:
 - Revisit if the write-set rule is bypassed in practice or becomes costly to review.
 - This ADR is `Accepted` as of 2026-09-12; adopting repos are bound by it once they enable the overlay.
 - Amendment: ADR 0004 Phase 2 landed on 2026-09-14. The exact-equality comparison between the supervisor frontmatter and the `orchestration` role was replaced by a contains-plus-closed-adapter-allow-list rule, the host delegation vocabulary is derived from `delegationDepth.hostAdapters` in `.github/roles/orchestration-policy.json` instead of a hardcoded list, the two pairing rules bind the `agents` allow-list to a declared host delegation tool in both directions, and `delegation-supervisor` now declares the host delegation tool `agent` and an `agents` allow-list. The `orchestration` role's tool set in `tool-access.json` is unchanged. Phase 3 landed the same day and closed the registration direction for non-allow-listed agents. See `docs/adr/0004-adapter-bound-delegation.md`.
-- Implementation status: the overlay assets described here are present in the repository as of 2026-09-11. The paired overlay validators, both workflow entry points, and the Markdown quality check were executed on 2026-09-12 and pass, alongside the independent code review, security review, and QA pass; results are recorded in `CHANGELOG.md`. The maintainer accepted this ADR on 2026-09-12, which supplies the recorded approval the `core-governance-change` classification requires because the change adds entries to two core modules (`AGENTS.md` in `core-agents`, `tool-access.json` in `core-governance`).
+- Implementation status: the overlay assets described here are present in the repository as of 2026-09-11. The paired overlay validators, both workflow entry points, and the Markdown quality check were executed on 2026-09-12 and pass, alongside the independent code review, security review, and QA pass; results are recorded in `CHANGELOG.md`. The maintainer accepted this ADR on 2026-09-12, which supplies the recorded approval the `core-governance-change` classification requires because the change adds entries to two core modules (`agent-catalog.md` in `core-agents`, `tool-access.json` in `core-governance`).

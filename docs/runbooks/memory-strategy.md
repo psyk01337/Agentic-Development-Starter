@@ -20,7 +20,7 @@ Use repo files for durable shared facts:
 
 - `.github/copilot-instructions.md`
 - `.github/instructions/*.instructions.md`
-- `.github/AGENTS.md`
+- `.github/agent-catalog.md`
 - `.github/skills/*/SKILL.md`
 - `docs/adr/*.md`
 - `docs/runbooks/*.md`

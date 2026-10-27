@@ -15,7 +15,7 @@ This is a non-executable template for teams that already use a Hermes-style runt
 
 - `.github/copilot-instructions.md`
 - `.github/starter-modules.json`
-- `.github/AGENTS.md`
+- `.github/agent-catalog.md`
 - `.github/instructions/*.instructions.md`
 - `docs/runbooks/memory-strategy.md`
 - `docs/runbooks/hermes-runtime.md`

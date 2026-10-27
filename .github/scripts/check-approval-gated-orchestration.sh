@@ -53,9 +53,9 @@ done
 
 assert_file_contains ".github/starter-modules.json" "overlay-approval-gated-orchestration" "overlay module id"
 assert_file_contains ".github/starter-modules.json" "approval-gated-handoff-envelope\.schema\.json" "schema manifest entry"
-assert_file_contains ".github/AGENTS.md" "Inputs for next agent" "core handoff contract extension"
-assert_file_contains ".github/AGENTS.md" "Decision status" "decision status field"
-assert_file_contains ".github/AGENTS.md" "overlay-only" "overlay-only orchestration wording"
+assert_file_contains ".github/agent-catalog.md" "Inputs for next agent" "core handoff contract extension"
+assert_file_contains ".github/agent-catalog.md" "Decision status" "decision status field"
+assert_file_contains ".github/agent-catalog.md" "overlay-only" "overlay-only orchestration wording"
 assert_file_contains "docs/runbooks/approval-gated-handoffs.md" "approval-gated-handoff-envelope\.schema\.json" "schema reference"
 assert_file_contains "docs/runbooks/approval-gated-handoffs.md" "jsonschema|ajv-cli" "schema validation note"
 assert_file_contains "docs/runbooks/hooks.md" "postToolUse" "audit seam reuse guidance"

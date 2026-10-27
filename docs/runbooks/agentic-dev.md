@@ -81,7 +81,7 @@ Normal guided chains can be redirected when an agent's output reveals a signal t
 - **QA finds a behavioral gap vs. documented expected behavior** → redirect to `analyst`, not directly to `senior-software-engineer`.
 - **Scope expands mid-implementation beyond the requested slice** → stop, surface to user, get explicit scope decision before continuing.
 
-See `.github/AGENTS.md` Conditional Delegation Triggers table for the full reference. These redirects are advisory — the orchestrating user always decides.
+See `.github/agent-catalog.md` Conditional Delegation Triggers table for the full reference. These redirects are advisory — the orchestrating user always decides.
 
 ## 2) Use Agent Plugins as Team Bundles
 
@@ -135,7 +135,7 @@ Common patterns:
 - Escalation to `architecture-reviewer` mid-chain → run an architecture-fit check before returning to implementation.
 - Scope expansion detected → surface to user and get an explicit decision; never silently continue.
 
-Full trigger reference lives in `.github/AGENTS.md` under **Conditional Delegation Triggers**.
+Full trigger reference lives in `.github/agent-catalog.md` under **Conditional Delegation Triggers**.
 
 ## 5) Compact Context After Milestones
 

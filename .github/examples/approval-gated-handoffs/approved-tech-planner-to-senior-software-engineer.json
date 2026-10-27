@@ -10,7 +10,7 @@
   "transitionStatus": "ready",
   "auditReference": "handoff-2026-03-09-001",
   "inputsForNextAgent": [
-    ".github/AGENTS.md",
+    ".github/agent-catalog.md",
     "docs/runbooks/approval-gated-handoffs.md",
     "docs/adr/0001-approval-gated-orchestration-overlay.md"
   ],

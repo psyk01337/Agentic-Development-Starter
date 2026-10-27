@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-03-09
 - Owners: Team
-- Related: `.github/starter-modules.json`, `.github/AGENTS.md`, `docs/runbooks/approval-gated-handoffs.md`
+- Related: `.github/starter-modules.json`, `.github/agent-catalog.md`, `docs/runbooks/approval-gated-handoffs.md`
 
 ## Context
 
