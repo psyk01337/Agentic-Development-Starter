@@ -48,6 +48,7 @@
         ".github/scripts/check-agentic-engine.sh",
         ".github/scripts/agentic_engine.py",
         "docs/adr/0000-template.md",
+        "docs/adr/0008-autonomous-execution-via-sdk.md",
         "docs/inputs.md",
         "docs/runbooks/adopting-existing-github.md",
         "docs/runbooks/agentic-dev.md",

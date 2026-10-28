@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-28 - Register ADR 0008 in the module manifest
+
+- Area: module manifest
+- Change type: config, docs
+- Summary: adds `docs/adr/0008-autonomous-execution-via-sdk.md` to `core-governance`, beside `.github/scripts/agentic_engine.py`, which the ADR would modify. The manifest version stays at `2.2.0` because this adds a documentation asset and changes no runtime behavior.
+- Reason: the reverse asset scan requires every file under `docs/adr/` to be registered. The scan flagged the new ADR before it was listed, which is the intended behavior and the reason this entry exists.
+- Affected files: .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-28 - Propose autonomous execution through the Copilot SDK"
+- Validation: `bash .github/scripts/check-starter-manifest.sh` failed with `Asset is not listed in starter-modules.json: docs/adr/0008-autonomous-execution-via-sdk.md` before registration and passes after; the PowerShell twin passes; both markdown twins pass.
+- Discrepancies or follow-up: the ADR sits in `core-governance` rather than in an overlay because the overlay it describes does not exist yet. When the driver lands, move the ADR into that overlay so a decision record travels with the capability it governs.
+
 ### 2026-10-27 - Record the review stage as the last stage on completion
 
 - Area: agentic engine

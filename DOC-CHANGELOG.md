@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-28 - Propose autonomous execution through the Copilot SDK
+
+- Area: ADR, module manifest, README roadmap
+- Change type: docs
+- Summary: adds `docs/adr/0008-autonomous-execution-via-sdk.md` as `Proposed`, registers it in `core-governance` beside the engine it would modify, and adds one roadmap line pointing at it. The ADR proposes a default-disabled overlay where a GitHub Copilot SDK driver owns the loop and `agentic_engine.py` becomes the permission handler for every tool call, with `filesChanged` derived from git rather than accepted from the caller.
+- Reason: the repository has a decision engine and an evidence layer but nothing that executes, so the loop it documents depends on an operator choosing to honour it. The first proposal was an MCP server, and it does not survive the repository's own rules: MCP is optional and default-disabled here, `check-mcp-posture` fails on any enabled server, so a capability built on it would vanish in the default configuration.
+- Affected files: docs/adr/0008-autonomous-execution-via-sdk.md, .github/starter-modules.json, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: None - decision record only, no behavior change
+- Validation: the orphan scan flagged the new ADR until it was registered, confirming the check works on `docs/adr/`; both manifest twins and both markdown twins pass afterwards.
+- Discrepancies or follow-up: the ADR is `Proposed` and authorizes no code. It records that adopting it makes the README's "not a runtime" statement false, so that sentence must change in the same change that lands the driver, not before. It also records four rejected options with reasons, including the MCP path this session initially recommended.
+
 ### 2026-10-28 - Rewrite the README around the problem it solves
 
 - Area: README

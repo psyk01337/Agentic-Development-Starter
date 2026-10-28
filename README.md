@@ -295,6 +295,7 @@ Also include a `## Handoff Memory Contract` section. An agent that skips the all
 - Platform adapters beyond VS Code agent mode.
 - Deeper schema validation for prompt and agent metadata.
 - Expand policy fixtures as real false positives and bypasses surface.
+- Autonomous execution, if and only if it can be shown to respect the gates — see [ADR 0008](docs/adr/0008-autonomous-execution-via-sdk.md), currently `Proposed`.
 
 Contributions that come with a failing test and a validator get reviewed first.
 
