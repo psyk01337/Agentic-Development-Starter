@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-27 - Document lastStage in the run record
+
+- Area: agentic engine runbook
+- Change type: docs
+- Summary: documents `stage` versus `lastStage` in the state section, states that no code branches on `lastStage`, and points at the `history` array as the authoritative sequence.
+- Reason: `lastStage` is written by the engine and surfaced by `status` and `report`, but nothing documented what it meant or why it differs from `stage` on a completed run. It was the only field in the run record with no stated contract.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-27 - Record the review stage as the last stage on completion"
+- Review status: pending-review
+- Discrepancies or follow-up: `lastStage` remains write-only inside the engine. If it never earns a consumer, dropping it is the simpler end state; documenting it now makes the decision reversible rather than accidental.
+
 ### 2026-10-27 - Record the manifest reset in initialize-new-project
 
 - Area: initialize-new-project prompt

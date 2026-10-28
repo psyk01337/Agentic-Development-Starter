@@ -33,6 +33,13 @@ State is task-scoped and gitignored:
 
 Do not commit it. Do not use a single global workflow-state file. The state records the task, stage, attempts, failure signatures, approvals, and full history.
 
+Two fields answer "what just happened", and they differ on purpose:
+
+- `stage` — where the run is now. It becomes `done` or `blocked`.
+- `lastStage` — the most recent stage that completed a record. It stays the concrete stage name (`implement`, `repair`, `verify`, or `review`) even after `stage` moves to `done`, so a completed run names the review that authorised completion.
+
+No code branches on `lastStage`; it exists for a human or supervisor reading `status` and `report`. Treat the `history` array as the authoritative sequence and `lastStage` as the convenience summary of its tail.
+
 ## Commands
 
 All commands accept `--repo-root` and `--state-dir` for tests or non-standard layouts.
