@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-28 - Replace the app placeholder with an application guide
+
+- Area: app/
+- Change type: docs
+- Summary: replaces the two-line placeholder in `app/README.md` with a guide covering the two layout patterns, the rule that the starter never validates application code, the commands an agent needs in order to verify work here, which optional overlays key off paths inside `app/`, and three environment traps found while testing (`CRLF` in `.sh`, `node` unresolvable from Git Bash, and framework-meaning folder names).
+- Reason: the placeholder said only "put your application root here", so nothing in the repository told an agent landing in `app/` how to prove the application works. Verification commands are the difference between reported and observed results, and the starter's own checks cannot supply them.
+- Affected files: app/README.md, DOC-CHANGELOG.md
+- Related code: None - documentation only, no behavior change
+- Review status: pending-review
+- Discrepancies or follow-up: `app/` stays outside `.github/starter-modules.json` on purpose, so `check-markdown-quality` lints this file but nothing validates the application itself. If a future project wants its app inside the module manifest, that needs a decision about what an application module would even mean.
+
 ### 2026-10-27 - Document lastStage in the run record
 
 - Area: agentic engine runbook
