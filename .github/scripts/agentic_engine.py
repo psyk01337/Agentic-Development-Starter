@@ -36,6 +36,21 @@ if sys.version_info < (3, 9):
     raise SystemExit("agentic_engine.py requires Python 3.9 or newer")
 
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
+
+# Directory names and suffixes that are build output rather than authored work.
+# The git changed-file scan ignores them for the same reason the manifest scan
+# does: importing a module here writes __pycache__, and that is not a change.
+GENERATED_PATH_MARKERS = frozenset({
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "node_modules",
+    ".venv",
+    "dist",
+    "build",
+})
+GENERATED_SUFFIXES = (".pyc", ".pyo")
 UNBOUNDED_WRITE_SET_ENTRIES = {
     "*",
     "**",
@@ -712,7 +727,15 @@ def _git_changed_files(repo_root: Path) -> list:
         path = entry[3:]
         if path.startswith('"') and path.endswith('"'):
             path = path[1:-1]
-        changed.append(path.replace("\\", "/"))
+        path = path.replace("\\", "/")
+        # Generated artifacts are not work. Importing any module in this
+        # repository writes __pycache__, and reporting that as an out-of-scope
+        # change would block every git-mode run for a file nobody edited.
+        if any(marker in path.split("/") for marker in GENERATED_PATH_MARKERS):
+            continue
+        if path.endswith(GENERATED_SUFFIXES):
+            continue
+        changed.append(path)
     return sorted(dict.fromkeys(changed))
 
 
@@ -1369,6 +1392,20 @@ class EngineSelfTest(unittest.TestCase):
 
     def test_declared_mode_still_trusts_the_caller(self) -> None:
         self.write_task(writeSet=["src/a.py"])
+        code, payload = self._record_implement_with(["src/a.py"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "verify")
+
+    def test_git_mode_ignores_generated_artifacts(self) -> None:
+        # Importing any module in this repository writes __pycache__. Reporting
+        # that as an out-of-scope change would block every git-mode run.
+        self._init_git_repository()
+        self.write_task(writeSet=["src/a.py"], changedFilesFrom="git")
+        (self.root / "src").mkdir(parents=True, exist_ok=True)
+        (self.root / "src" / "a.py").write_text("x = 1\n", encoding="utf-8")
+        cache = self.root / ".github" / "scripts" / "__pycache__"
+        cache.mkdir(parents=True, exist_ok=True)
+        (cache / "thing.cpython-312.pyc").write_bytes(b"\x00")
         code, payload = self._record_implement_with(["src/a.py"])
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "verify")

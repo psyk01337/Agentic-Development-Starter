@@ -87,8 +87,8 @@ The design is accepted; enabling it is not. Each step is independently revertibl
 1. **Done.** Land the derived-write-set change in the engine: `task.changedFilesFrom: "git"` makes the repository authoritative about what changed, so an under-reported `filesChanged` cannot satisfy the write-set gate. It is useful on its own and removes a weakness this ADR depends on.
 2. **Done.** Drafted the driver behind the overlay: `agentic_driver.py` with a `PermissionGateway` that denies unclassified tools, unknown stages, writes outside the write set, and commands containing shell metacharacters. The Copilot SDK adapter is deliberately unimplemented and raises rather than pretending.
 3. **Done.** Added `check-agentic-driver` in both twins, registered in both umbrellas. It runs the driver self-tests and asserts the overlay ships disabled and the gateway keeps its denial path.
-4. Run one real feature through it in a scratch repository and compare the outcome against the same feature driven interactively.
-5. Keep the overlay default-disabled until step 4 produces evidence. A maintainer enables it per repository, deliberately, and records that decision.
+4. **Done.** Ran one real feature both ways in a scratch repository. Both reached `DONE` with the same stages, the same 7 passing tests, and byte-identical files. The driver additionally denied a write at `verify` and recorded the denial. Results and the limits of the comparison are in `docs/runbooks/autonomous-execution.md` under Rollout Evidence. The run also exposed a real defect: importing the driver wrote `__pycache__`, which the git scan reported and the write-set gate rejected, so every git-mode run blocked. Fixed with a regression test.
+5. **Still open.** The overlay stays default-disabled. Step 4 produced evidence for the plumbing and none for the open question, because both runs used scripted executors. A maintainer may enable it per repository today, deliberately and with that gap recorded, but the capability should not be recommended for unattended use until a model-driven run shows the gateway being obeyed.
 
 ## Validation
 
@@ -99,6 +99,16 @@ The decision is only real if these hold:
 - A driver test asserts a write outside the declared set is denied even when the agent reports it as inside.
 - A driver test asserts `record --stage verify` with a failing check returns an error rather than advancing the stage.
 - A driver test asserts a repeated identical failure reaches the engine's `identical-failure` blocker rather than looping.
+
+Status against these, as of 2026-10-28:
+
+- Overlay-disabled suites pass: **yes** — engine 69 self-tests, driver 23, both umbrellas twelve checks each.
+- Edit denied at `verify`: **yes** — `PermissionGatewayTest.test_write_denied_at_verify`, and observed live during the rollout run.
+- Write outside the declared set denied even when reported as inside: **yes for the gateway** (`test_write_denied_outside_write_set`) and **yes for the engine** (`test_git_mode_rejects_under_reported_change`). The end-to-end version is unproven because it needs a model-driven executor.
+- `record --stage verify` with a failing check refused: **yes** — `test_verify_refuses_failing_checks` in the engine.
+- Repeated identical failure reaches `identical-failure`: **yes** — `test_identical_failure_escalates` in the engine.
+
+The one requirement that cannot be met without the SDK adapter is the adversarial one: showing that a model obeys a denial. Until then the gateway is a control tested against scripted callers, not against a model that might ignore it.
 - One end-to-end run in a scratch repository produces a diff inside the write set, with changelog entries, and a recorded evidence trail.
 
 ## Follow-up

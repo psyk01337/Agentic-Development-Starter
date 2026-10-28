@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-28 - Skip generated artifacts in the git changed-file scan
+
+- Area: agentic engine
+- Change type: fix, test
+- Summary: the `changedFilesFrom: "git"` scan now ignores generated directories (`__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `node_modules`, `.venv`, `dist`, `build`) and `.pyc`/`.pyo` suffixes, with a regression test. Engine self-tests go from 68 to 69.
+- Reason: the first rollout run of the driver blocked at `implement` on `.github/scripts/__pycache__/agentic_driver.cpython-312.pyc`. Importing the driver writes bytecode inside the repository, the scan reported it, and the write-set gate rejected it — so every git-mode run would fail on a file nobody edited. Only executing the loop against a real repository exposed this.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, docs/runbooks/autonomous-execution.md, docs/adr/0008-autonomous-execution-via-sdk.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-28 - Record the autonomous execution rollout evidence"
+- Validation: `test_git_mode_ignores_generated_artifacts` fails without the filter and passes with it; the driver run that previously blocked now reaches `DONE`; all 69 engine self-tests pass under `python` and `python3`; both umbrellas pass twelve checks.
+- Discrepancies or follow-up: the marker list is a denylist, so a toolchain with a different build directory will need its name added. A `git check-ignore`-based filter would be more general but would also honour ignore rules that hide real work, which is the wrong default for a write-set gate.
+
 ### 2026-10-28 - Derive the write set from git and add the driver overlay
 
 - Area: agentic engine, autonomous execution overlay, manifest validators

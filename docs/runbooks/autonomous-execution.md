@@ -94,6 +94,39 @@ The check runs the driver self-tests and asserts that the overlay ships disabled
 3. Run one feature through it and compare the result with the same feature driven interactively.
 4. Keep `changedFilesFrom: "git"` on every task. Without it the write-set gate is only as good as the executor's honesty.
 
+## Rollout Evidence
+
+One feature was built twice — once interactively, once through the driver — to check that the overlay adds control without changing the outcome.
+
+Feature: `weekly_volume(sets)` aggregating reps per muscle group, with validation that rejects a set missing a group or carrying non-positive reps.
+
+| | Interactive | Driver |
+| --- | --- | --- |
+| Stages recorded | `implement -> verify -> review` | `implement -> verify -> review` |
+| Final status | `DONE` | `DONE` |
+| Tests | 7 passed | 7 passed |
+| Output | sha `b8ad4618` / `a9408907` | sha `b8ad4618` / `a9408907` |
+| `filesChanged` source | declared by the caller, 5 paths | derived from git, 2 paths |
+| `implementedBy` | `senior-software-engineer` | `driver-executor` |
+| Tool calls permitted | not observed | 3 permitted |
+| Tool calls denied | not observed | 1 denied: write at `verify` |
+
+The two runs produced byte-identical files. The difference is what was enforced: the interactive run relied on the operator not writing during verification, while the driver denied that write and recorded the denial.
+
+The git-derived run also reported fewer files than the declared one, and was right to. The interactive run declared five paths because it created them; by the time the driver ran, the package `__init__` files were already in the baseline commit, so git reported only the two files that actually changed.
+
+### What This Proves And What It Does Not
+
+Proven: the loop drives real work to completion, the stage transitions match the interactive run, evidence recording works, the gateway denies a write at a stage that forbids it, and a git-derived write set reflects the repository rather than a claim.
+
+Not proven: whether a language model obeys the gateway. Both runs used scripted executors, because the SDK adapter needs credentials this repository does not carry. The gateway returns a decision and `run_loop` surfaces denials, but nothing here demonstrates that a model-driven executor honours a denial rather than ignoring it. That question stays open until the SDK adapter exists and is driven adversarially.
+
+### Defect Found By Running It
+
+The first driver run blocked at `implement` on `.github/scripts/__pycache__/agentic_driver.cpython-312.pyc`. Importing the driver writes bytecode inside the repository, the git scan reported it, and the write-set gate rejected it. Every git-mode run would have failed this way for a file nobody edited.
+
+Fixed in `agentic_engine.py`: the git changed-file scan now skips generated directories (`__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `node_modules`, `.venv`, `dist`, `build`) and `.pyc`/`.pyo` suffixes, with a regression test. This was only visible by executing the loop against a real repository.
+
 ## Known Gaps
 
 - The SDK adapter is unimplemented. Everything above it is tested; the adapter is not.

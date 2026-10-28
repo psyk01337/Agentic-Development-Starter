@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-28 - Record the autonomous execution rollout evidence
+
+- Area: autonomous execution runbook, ADR 0008
+- Change type: docs, runbook
+- Summary: adds a Rollout Evidence section to `docs/runbooks/autonomous-execution.md` with the two-run comparison table, states plainly what the comparison proves and what it does not, and records the defect the run exposed. Marks rollout step 4 done and step 5 open in ADR 0008, and adds a per-requirement validation status table naming the tests that satisfy each one.
+- Reason: rollout step 4 asked for one feature built both ways. Leaving the result only in a session would waste the only end-to-end evidence the overlay has, and the comparison's limits matter as much as its result.
+- Affected files: docs/runbooks/autonomous-execution.md, docs/adr/0008-autonomous-execution-via-sdk.md, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-28 - Skip generated artifacts in the git changed-file scan"
+- Review status: pending-review
+- Discrepancies or follow-up: both runs used scripted executors because the SDK adapter needs credentials this repository does not carry, so the comparison proves the plumbing and not that a model obeys the gateway. Every test name cited in the ADR's validation table was checked to exist before it was written down.
+
 ### 2026-10-28 - Document the autonomous execution overlay
 
 - Area: runbooks, README, ADR
