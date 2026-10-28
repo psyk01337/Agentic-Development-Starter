@@ -48,7 +48,6 @@
         ".github/scripts/check-agentic-engine.sh",
         ".github/scripts/agentic_engine.py",
         "docs/adr/0000-template.md",
-        "docs/adr/0008-autonomous-execution-via-sdk.md",
         "docs/inputs.md",
         "docs/runbooks/adopting-existing-github.md",
         "docs/runbooks/agentic-dev.md",
@@ -376,6 +375,19 @@
       "when": "Repositories that use Vitest and strict red-green-refactor loops",
       "files": [
         ".github/agents/tdd-vitest.agent.md"
+      ]
+    },
+    {
+      "id": "overlay-autonomous-execution",
+      "kind": "overlay",
+      "defaultEnabled": false,
+      "when": "Repositories that want an SDK-driven implement-verify-repair loop with engine-mediated tool permissions. Grants a process the ability to edit files and run commands, so it ships disabled and each repository enables it deliberately",
+      "files": [
+        ".github/scripts/agentic_driver.py",
+        ".github/scripts/check-agentic-driver.sh",
+        ".github/scripts/check-agentic-driver.ps1",
+        "docs/adr/0008-autonomous-execution-via-sdk.md",
+        "docs/runbooks/autonomous-execution.md"
       ]
     },
     {

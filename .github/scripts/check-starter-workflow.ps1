@@ -19,7 +19,8 @@ $scripts = @(
   ".github/scripts/check-mcp-posture.ps1",
   ".github/scripts/check-markdown-quality.ps1",
   ".github/scripts/check-evals.ps1",
-  ".github/scripts/check-agentic-engine.ps1"
+  ".github/scripts/check-agentic-engine.ps1",
+  ".github/scripts/check-agentic-driver.ps1"
 )
 
 $failures = New-Object System.Collections.Generic.List[string]

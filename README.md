@@ -8,7 +8,7 @@
 ![Skills](https://img.shields.io/badge/skills-34-blue)
 ![Agents](https://img.shields.io/badge/agents-12-blue)
 ![Prompts](https://img.shields.io/badge/prompts-23-blue)
-![Checks](https://img.shields.io/badge/checks-11%2F11-brightgreen)
+![Checks](https://img.shields.io/badge/checks-12%2F12-brightgreen)
 ![Engine tests](https://img.shields.io/badge/engine%20tests-62-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
@@ -71,7 +71,7 @@ pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1
 | **Agents** | 12 | Specialist roles with declared tool access, escalation rules, and a handoff contract |
 | **Prompts** | 23 | One-off workflows: feature delivery, docs ingestion, bug fixing, release notes, CI triage |
 | **Evals** | 13 | Golden tasks with checklists, so "did the agent behave" is gradable rather than felt |
-| **Guardrails** | 11 checks | Manifest, skills, agents, prompts, hooks, MCP posture, markdown, evals, engine — in Bash **and** PowerShell |
+| **Guardrails** | 12 checks | Manifest, skills, agents, prompts, hooks, MCP posture, markdown, evals, engine, driver — in Bash **and** PowerShell |
 
 Every asset is registered in [`.github/starter-modules.json`](.github/starter-modules.json) — 39 modules across core, optional, and overlay. Nothing ships enabled that you did not choose, and a validator fails if an asset exists without being registered.
 
@@ -143,7 +143,7 @@ MCP servers, durable memory, and high-risk automation stay **disabled by default
 
 ## Validation is the point
 
-A guardrail nobody checks is a comment. Eleven contracts run on push and pull request, and every one exists in both Bash and PowerShell so Windows and CI agree.
+A guardrail nobody checks is a comment. Twelve contracts run on push and pull request, and every one exists in both Bash and PowerShell so Windows and CI agree.
 
 | Check | Catches |
 | --- | --- |
@@ -157,6 +157,7 @@ A guardrail nobody checks is a comment. Eleven contracts run on push and pull re
 | `check-markdown-quality` | Trailing whitespace, broken relative links |
 | `check-evals` | Golden tasks without a checklist |
 | `check-agentic-engine` | Policy drift, engine regressions |
+| `check-agentic-driver` | An autonomous executor that would ship enabled, or a gateway that stopped denying |
 | `check-approval-gated-orchestration` | Approval envelopes that skip the gate |
 | `check-starter-workflow` | Runs all of the above |
 
@@ -172,6 +173,7 @@ bash .github/scripts/check-hook-policy.sh
 bash .github/scripts/check-markdown-quality.sh
 bash .github/scripts/check-evals.sh
 bash .github/scripts/check-agentic-engine.sh
+bash .github/scripts/check-agentic-driver.sh
 python .github/scripts/agentic_engine.py selftest
 ```
 

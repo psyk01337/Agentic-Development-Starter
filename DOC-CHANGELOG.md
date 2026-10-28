@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-28 - Document the autonomous execution overlay
+
+- Area: runbooks, README, ADR
+- Change type: docs, runbook
+- Summary: adds `docs/runbooks/autonomous-execution.md` covering the stage permission table, the deny-by-default rules, how `changedFilesFrom: "git"` changes who is authoritative, how to wire an executor, and four known gaps. Registers it in the runbook index, documents `changedFilesFrom` in the engine runbook, records the accepted ADR and its completed rollout steps, and corrects the README check count from eleven to twelve.
+- Reason: the overlay grants a process the ability to edit files and run commands, which is the largest behavioural change the repository has considered. It needs a runbook that states plainly what is and is not enforced, and the README must not claim eleven checks when the suite runs twelve.
+- Affected files: docs/runbooks/autonomous-execution.md, docs/runbooks/agentic-engine.md, docs/runbooks/INDEX.md, docs/adr/0008-autonomous-execution-via-sdk.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-28 - Derive the write set from git and add the driver overlay"
+- Review status: pending-review
+- Discrepancies or follow-up: ADR 0008 is `Accepted` as a design decision while the overlay remains default-disabled and its SDK adapter unimplemented, so rollout step 4 is still outstanding. The runbook's known-gaps section records that the gateway bounds scope rather than judgment, that command execution is guarded but not sandboxed, and that reviewer separation remains a string comparison.
+
 ### 2026-10-28 - Propose autonomous execution through the Copilot SDK
 
 - Area: ADR, module manifest, README roadmap

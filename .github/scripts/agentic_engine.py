@@ -23,6 +23,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -497,6 +498,16 @@ def validate_task(task: dict, policy: dict, repo_root: Path) -> dict:
     task.setdefault("evidenceSurfaces", [])
     if not isinstance(task["evidenceSurfaces"], list):
         raise EngineError("task.evidenceSurfaces must be a list")
+    # changedFilesFrom decides who is authoritative about what changed. The
+    # default keeps the caller's declared list, which is what every existing task
+    # and self-test expects. Setting it to "git" makes the repository
+    # authoritative, so an under-reported filesChanged cannot satisfy the gate.
+    changed_from = task.setdefault("changedFilesFrom", "declared")
+    if changed_from not in ("declared", "git"):
+        raise EngineError(
+            "task.changedFilesFrom must be 'declared' or 'git'; "
+            f"found {changed_from!r}"
+        )
     known_surfaces = set(
         (policy.get("evidenceRequirements", {}) or {}).get("surfaces", {}) or {}
     )
@@ -653,6 +664,58 @@ def _outside_write_set(files: list, write_set: list) -> list:
     return [str(item) for item in files if _normalize_path(str(item)) not in allowed]
 
 
+def _git_changed_files(repo_root: Path) -> list:
+    """Changed paths in the working tree, repo-relative.
+
+    Used when the task sets `changedFilesFrom: git`, so the write-set gate reads
+    the repository instead of trusting the caller self-report. Untracked files
+    are included because a new file is exactly the case an under-report hides.
+
+    Fails closed: if git cannot answer, the caller gets an error rather than an
+    empty set, because an empty set would silently pass every write set.
+    """
+    try:
+        status = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo_root),
+                "status",
+                "--porcelain=v1",
+                "-z",
+                # Without -uall git collapses a fully untracked directory to
+                # "dir/", which can never match a write-set entry.
+                "--untracked-files=all",
+                # Renames emit two NUL-separated paths; --no-renames keeps one.
+                "--no-renames",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise EngineError(
+            f"changedFilesFrom is 'git' but git could not be run: {exc}"
+        ) from exc
+    if status.returncode != 0:
+        detail = (status.stderr or "").strip().splitlines()
+        raise EngineError(
+            "changedFilesFrom is 'git' but the repository could not be read: "
+            + (detail[0] if detail else f"exit {status.returncode}")
+        )
+    changed = []
+    for entry in status.stdout.split("\0"):
+        if not entry or len(entry) < 4:
+            continue
+        # porcelain v1 is "XY <path>": two status characters, a space, the path.
+        path = entry[3:]
+        if path.startswith('"') and path.endswith('"'):
+            path = path[1:-1]
+        changed.append(path.replace("\\", "/"))
+    return sorted(dict.fromkeys(changed))
+
+
 def _handle_failure(state: dict, policy: dict, result: dict, evidence: list) -> tuple[str, str]:
     limits = retry_policy(policy)
     signature = failure_signature(result)
@@ -724,6 +787,25 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
             raise EngineError("filesChanged must be a list")
         if not all(isinstance(item, str) and item.strip() for item in files):
             raise EngineError("filesChanged entries must be non-empty strings")
+        # When the task makes git authoritative, the declared list is replaced by
+        # what the repository says actually changed, and any file the caller
+        # claimed but git does not report is dropped. That is what stops an
+        # under-report from satisfying the gate.
+        declared = [str(item) for item in files]
+        if state["task"].get("changedFilesFrom") == "git":
+            files = _git_changed_files(repo_root)
+            unreported = sorted(
+                set(_normalize_path(item) for item in declared)
+                - set(_normalize_path(item) for item in files)
+            )
+            if unreported:
+                append_history(
+                    state,
+                    stage=args.stage,
+                    action="note",
+                    detail="declared files not reported by git were ignored: "
+                    + ", ".join(unreported),
+                )
         outside = _outside_write_set(files, state["task"]["writeSet"])
         if outside:
             block(
@@ -1213,6 +1295,88 @@ class EngineSelfTest(unittest.TestCase):
 
     def test_relative_file_write_set_entry_accepted(self) -> None:
         self.assertEqual(self._init_with_write_set("src/a.py"), 0)
+
+    # --- changedFilesFrom: git ------------------------------------------------
+    # These cover the promise ADR 0008 depends on: when git is authoritative, a
+    # caller that under-reports what it changed cannot satisfy the write set.
+
+    def _git(self, *args: str) -> None:
+        subprocess.run(
+            ["git", "-C", str(self.root), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def _init_git_repository(self) -> None:
+        self._git("init", "-q")
+        self._git("config", "user.email", "engine-test@example.invalid")
+        self._git("config", "user.name", "engine test")
+        # Keep the fixture scaffolding out of the changed set so only the files a
+        # test creates are reported.
+        (self.root / ".gitignore").write_text(
+            ".agentic/\ntask.json\nresult-*.json\n", encoding="utf-8"
+        )
+        self._git("add", "-A")
+        self._git("commit", "-qm", "fixture baseline")
+
+    def _record_implement_with(self, declared: list) -> tuple[int, dict]:
+        self.init()
+        return self.record(
+            "implement",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": declared,
+                "evidence": ["diff:HEAD"],
+            },
+        )
+
+    def test_git_mode_rejects_under_reported_change(self) -> None:
+        self._init_git_repository()
+        self.write_task(writeSet=["src/a.py"], changedFilesFrom="git")
+        (self.root / "src").mkdir(parents=True, exist_ok=True)
+        (self.root / "src" / "b.py").write_text("x = 1\n", encoding="utf-8")
+        # The caller claims the only file it touched is the one it was allowed.
+        code, payload = self._record_implement_with(["src/a.py"])
+        self.assertEqual(code, 3)
+        self.assertEqual(payload["blocker"]["reason"], "write-set-violation")
+        self.assertIn("src/b.py", payload["blocker"]["detail"])
+
+    def test_git_mode_ignores_declared_files_git_does_not_report(self) -> None:
+        self._init_git_repository()
+        self.write_task(writeSet=["src/a.py"], changedFilesFrom="git")
+        code, payload = self._record_implement_with(["src/a.py"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "verify")
+        state = json.loads((self.state_dir / "r1.json").read_text(encoding="utf-8"))
+        recorded = [entry for entry in state["history"] if entry.get("action") == "recorded"]
+        self.assertEqual(recorded[-1]["files"], [])
+
+    def test_git_mode_accepts_when_repository_agrees(self) -> None:
+        self._init_git_repository()
+        self.write_task(writeSet=["src/a.py"], changedFilesFrom="git")
+        (self.root / "src").mkdir(parents=True, exist_ok=True)
+        (self.root / "src" / "a.py").write_text("x = 1\n", encoding="utf-8")
+        code, payload = self._record_implement_with(["src/a.py"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "verify")
+
+    def test_git_mode_fails_closed_outside_a_repository(self) -> None:
+        self.write_task(writeSet=["src/a.py"], changedFilesFrom="git")
+        code, _ = self._record_implement_with(["src/a.py"])
+        self.assertEqual(code, 1)
+
+    def test_declared_mode_still_trusts_the_caller(self) -> None:
+        self.write_task(writeSet=["src/a.py"])
+        code, payload = self._record_implement_with(["src/a.py"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "verify")
+
+    def test_unknown_changed_files_from_rejected(self) -> None:
+        self.write_task(writeSet=["src/a.py"], changedFilesFrom="svn")
+        code, _ = self.init()
+        self.assertEqual(code, 1)
 
     def test_verify_requires_evidence(self) -> None:
         self.init()

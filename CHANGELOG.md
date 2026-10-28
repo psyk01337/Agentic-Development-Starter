@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-28 - Derive the write set from git and add the driver overlay
+
+- Area: agentic engine, autonomous execution overlay, manifest validators
+- Change type: feature, test, config, docs
+- Summary: adds `task.changedFilesFrom: "git"` so the engine reads `git status --porcelain` instead of trusting the reported `filesChanged`; adds `agentic_driver.py` with a `PermissionGateway` that gates every tool call by stage and write set; adds the default-disabled `overlay-autonomous-execution` module; adds `check-agentic-driver` in both twins and registers it in both umbrellas, taking the suite from eleven checks to twelve.
+- Reason: `filesChanged` was an input, so a caller could under-report its blast radius and still satisfy the write-set gate — the one check whose entire purpose is bounding scope. ADR 0008 depends on closing that, and the driver has no meaning without a permission decision it must obey.
+- Affected files: .github/scripts/agentic_engine.py, .github/scripts/agentic_driver.py, .github/scripts/check-agentic-driver.sh, .github/scripts/check-agentic-driver.ps1, .github/scripts/check-starter-workflow.sh, .github/scripts/check-starter-workflow.ps1, .github/starter-modules.json, docs/adr/0008-autonomous-execution-via-sdk.md, docs/runbooks/agentic-engine.md, docs/runbooks/autonomous-execution.md, docs/runbooks/INDEX.md, README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-28 - Document the autonomous execution overlay"
+- Validation: engine self-tests 62 to 68 and pass under both `python` and `python3`; driver self-tests 23 pass under both; a live run declared only `src/allowed.py` while git reported `src/secret.py` and the engine blocked with `write-set-violation`; both umbrellas pass twelve checks each.
+- Discrepancies or follow-up: the Copilot SDK adapter is unimplemented and raises a clear error, so the loop cannot yet be driven by a model — everything above the adapter is tested, the adapter is not. A caller-supplied declared path that git does not report is dropped rather than treated as a violation. Task specs and result files must stay out of the work tree when `changedFilesFrom` is `git`, or they appear as out-of-scope writes.
+
 ### 2026-10-28 - Register ADR 0008 in the module manifest
 
 - Area: module manifest

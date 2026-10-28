@@ -1,7 +1,8 @@
 # ADR 0008: Autonomous Execution Through The Copilot SDK
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-28
+- Approved: 2026-10-28 by the repository maintainer (user), on the design decision. Acceptance records the chosen architecture; it does not authorize enabling the overlay, which stays gated on the rollout evidence in step 4.
 - Owners: Team
 - Related: `docs/adr/0007-nested-delegation-disabled.md`, `.github/scripts/agentic_engine.py`, `.github/roles/orchestration-policy.json`, `docs/runbooks/agentic-engine.md`, `docs/runbooks/supervisor-orchestration.md`, `README.md`
 
@@ -81,13 +82,13 @@ The overlay is disabled by default because enabling it grants an autonomous proc
 
 ## Rollout Plan
 
-Not authorized by this ADR alone. The sequence, with each step independently revertible:
+The design is accepted; enabling it is not. Each step is independently revertible, and step 5 is the gate on the overlay rather than on this record.
 
-1. Land the derived-write-set change in the engine, with tests. It is useful on its own and removes a weakness this ADR depends on.
-2. Draft the driver behind the overlay, default-disabled, with the permission handler denying unknown tools.
-3. Add a validator that asserts the overlay is disabled by default and that the driver denies by default, so the guardrails are contracts rather than intentions.
+1. **Done.** Land the derived-write-set change in the engine: `task.changedFilesFrom: "git"` makes the repository authoritative about what changed, so an under-reported `filesChanged` cannot satisfy the write-set gate. It is useful on its own and removes a weakness this ADR depends on.
+2. **Done.** Drafted the driver behind the overlay: `agentic_driver.py` with a `PermissionGateway` that denies unclassified tools, unknown stages, writes outside the write set, and commands containing shell metacharacters. The Copilot SDK adapter is deliberately unimplemented and raises rather than pretending.
+3. **Done.** Added `check-agentic-driver` in both twins, registered in both umbrellas. It runs the driver self-tests and asserts the overlay ships disabled and the gateway keeps its denial path.
 4. Run one real feature through it in a scratch repository and compare the outcome against the same feature driven interactively.
-5. Revise this ADR to `Accepted` only after step 4 produces evidence.
+5. Keep the overlay default-disabled until step 4 produces evidence. A maintainer enables it per repository, deliberately, and records that decision.
 
 ## Validation
 
@@ -102,6 +103,6 @@ The decision is only real if these hold:
 
 ## Follow-up
 
-Review after step 4 of the rollout, with the scratch-repository comparison as the input. If the loop cannot be shown to respect the permission handler under adversarial prompting, this ADR moves to `Rejected` and the engine stays a passive record rather than becoming a security theatre.
+Review after step 4 of the rollout, with the scratch-repository comparison as the input. If the loop cannot be shown to respect the permission handler under adversarial prompting, the overlay is withdrawn and this ADR is amended to record that, rather than left as an accepted design that quietly does not work.
 
-Revisit owner: whoever next changes `agentic_engine.py` or introduces the overlay.
+Revisit owner: whoever next changes `agentic_engine.py` or enables the overlay.

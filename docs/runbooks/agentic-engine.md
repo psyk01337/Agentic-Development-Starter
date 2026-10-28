@@ -101,6 +101,27 @@ and `evidenceSurfaces` must use policy surface keys.
 Write-set comparison normalizes separators and a leading `./`. Case is folded
 only on Windows, so a case variant is a distinct file on Linux.
 
+### Who Is Authoritative About What Changed
+
+By default the engine trusts the `filesChanged` a caller reports, which means a
+caller can under-report its blast radius and still satisfy the write-set gate. A
+task can remove that trust:
+
+```json
+"changedFilesFrom": "git"
+```
+
+With that set, the engine reads `git status --porcelain` in the repository and
+uses that as the changed set. Files the caller declared but git does not report
+are dropped from the record, and a `note` entry is added to history saying so.
+
+It fails closed. If git cannot be run, or the directory is not a repository, the
+record is refused rather than treated as "nothing changed", because an empty set
+would pass every write set.
+
+Keep task specs and result files outside the work tree, or ignore them. Otherwise
+they appear as changes and are reported as out-of-scope writes.
+
 Example verification result:
 
 ```json
