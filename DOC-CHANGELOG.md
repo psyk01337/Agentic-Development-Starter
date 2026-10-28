@@ -24,6 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-28 - Rewrite the README around the problem it solves
+
+- Area: README
+- Change type: docs
+- Summary: restructures the README from 439 to 305 lines. Leads with the problem the repository solves instead of an inventory, adds CI and count badges, replaces the 24-entry table of contents with eleven sections, adds a Mermaid diagram of the implement-verify-repair loop, and moves the per-check command list and the agent-registration checklist into collapsible blocks. Content that only existed in the README is preserved: the six-file reading order, the five coordinated agent registrations, and the common-mistakes list.
+- Reason: the README is the first thing a visitor sees and it opened with a 24-item table of contents followed by dense prose, so the reason to care appeared well below the fold. The per-area sections also repeated what the runbooks already own.
+- Affected files: README.md, DOC-CHANGELOG.md
+- Related code: None - documentation only, no behavior change
+- Review status: pending-review
+- Discrepancies or follow-up: the badge count for guardrails is eleven, corrected from an overstatement of twelve made earlier in the day; the umbrella runs eleven checks and is itself the twelfth command. The README now asserts that the five agent registrations appear here and nowhere else, which is true today; if they move into a runbook, that section should become a link. No license badge is shown because the repository has no LICENSE file, which is worth resolving before inviting contributions.
+
+
 ### 2026-10-28 - Replace the app placeholder with an application guide
 
 - Area: app/
