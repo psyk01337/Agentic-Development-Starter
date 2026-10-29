@@ -44,19 +44,48 @@ if (-not (Test-Path $policyScript)) {
 }
 
 function Test-PolicyCommand([string]$Command) {
-  & pwsh -NoProfile -File $policyScript -Command $Command *> $null
-  return $LASTEXITCODE
+  $payload = [ordered]@{
+    sessionId = "fixture"
+    timestamp = 0
+    cwd = [string]$RepoRoot
+    toolName = "runInTerminal"
+    toolArgs = [ordered]@{ command = $Command }
+  } | ConvertTo-Json -Compress -Depth 5
+
+  # The harness delivers the tool call as JSON on stdin and never on argv, so
+  # fixtures must exercise that path or they prove nothing about the deployed hook.
+  $null = $payload | & pwsh -NoProfile -File $policyScript 2>&1
+  $exitCode = $LASTEXITCODE
+  return $exitCode
+}
+
+function Test-PolicyArgv([string]$Command) {
+  $null = & pwsh -NoProfile -File $policyScript -Command $Command 2>&1
+  $exitCode = $LASTEXITCODE
+  return $exitCode
 }
 
 function Expect-Blocked([string]$Command) {
   if ((Test-PolicyCommand -Command $Command) -eq 0) {
-    Add-CheckError("Expected policy to block command: $Command")
+    Add-CheckError("Expected policy to block command via stdin: $Command")
   }
 }
 
 function Expect-Allowed([string]$Command) {
   if ((Test-PolicyCommand -Command $Command) -ne 0) {
-    Add-CheckError("Expected policy to allow command: $Command")
+    Add-CheckError("Expected policy to allow command via stdin: $Command")
+  }
+}
+
+function Expect-BlockedArgv([string]$Command) {
+  if ((Test-PolicyArgv -Command $Command) -eq 0) {
+    Add-CheckError("Expected argv invocation to block: $Command")
+  }
+}
+
+function Expect-AllowedArgv([string]$Command) {
+  if ((Test-PolicyArgv -Command $Command) -ne 0) {
+    Add-CheckError("Expected argv invocation to allow: $Command")
   }
 }
 
@@ -102,6 +131,142 @@ if (Test-Path $policyScript) {
   Expect-Allowed -Command "git lfs status"
   Expect-Allowed -Command "git lfs prune --dry-run"
   Expect-Allowed -Command "git add app/game/assets/runtime/hero.png"
+
+  Expect-BlockedArgv -Command "rm -rf /"
+  Expect-AllowedArgv -Command "git status --short"
+}
+
+# The audit hook is a security control, so a silent failure is a finding. Run it
+# against a scratch log and assert the record is parseable and redacted.
+$auditScript = Join-Path $RepoRoot ".github\hooks\scripts\audit-log.ps1"
+if (-not (Test-Path $auditScript)) {
+  Add-CheckError("Missing hook audit script: .github/hooks/scripts/audit-log.ps1")
+} else {
+  $auditTmp = Join-Path ([System.IO.Path]::GetTempPath()) ("hook-audit-" + [guid]::NewGuid().ToString("N"))
+  New-Item -ItemType Directory -Path $auditTmp -Force | Out-Null
+  $previousLogDir = $env:HOOK_LOG_DIR
+  $env:HOOK_LOG_DIR = $auditTmp
+  try {
+    $auditPayload = '{"sessionId":"fixture","toolName":"runInTerminal","toolArgs":{"command":"deploy --token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456"}}'
+    $null = $auditPayload | & pwsh -NoProfile -File $auditScript 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Add-CheckError("Audit hook failed on a stdin payload")
+    }
+
+    $auditLog = Join-Path $auditTmp "agent-audit.log"
+    if (-not (Test-Path $auditLog)) {
+      Add-CheckError("Audit hook wrote no log record to the configured directory")
+    } else {
+      $records = @(Get-Content -Path $auditLog | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+      if ($records.Count -eq 0) {
+        Add-CheckError("Audit hook wrote an empty log record")
+      }
+      foreach ($line in $records) {
+        try {
+          $record = $line | ConvertFrom-Json
+        } catch {
+          Add-CheckError("Audit record is not valid JSON: $($_.Exception.Message)")
+          continue
+        }
+        if ($record.sessionId -ne "fixture") {
+          Add-CheckError("Audit record did not carry sessionId from stdin")
+        }
+        if ($line -match 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456') {
+          Add-CheckError("Audit record leaked a secret-shaped value")
+        }
+      }
+    }
+  } finally {
+    $env:HOOK_LOG_DIR = $previousLogDir
+    Remove-Item -Path $auditTmp -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+
+# The harness rejects a whole hook file on a bad version and drops malformed
+# items, either of which silently disables the policy. Assert the shape instead
+# of trusting it.
+$policyJson = Join-Path $RepoRoot ".github\hooks\agent-policy.json"
+
+if (-not (Test-Path $policyJson)) {
+  Add-CheckError("Missing hook configuration: .github/hooks/agent-policy.json")
+} else {
+  try {
+    $config = Get-Content -Path $policyJson -Raw | ConvertFrom-Json
+  } catch {
+    Add-CheckError("Hook configuration is not valid JSON: $($_.Exception.Message)")
+    $config = $null
+  }
+
+  if ($null -ne $config) {
+    if ($config.version -ne 1 -or $config.version -isnot [int] -and $config.version -isnot [long]) {
+      Add-CheckError('"version" must be the number 1; a string such as "1.0" rejects the whole file')
+    }
+
+    if ($null -eq $config.hooks -or $config.hooks -isnot [pscustomobject]) {
+      Add-CheckError('"hooks" must be an object')
+    } else {
+      $hookNames = @($config.hooks.PSObject.Properties.Name)
+      if ($hookNames -notcontains "preToolUse") {
+        Add-CheckError('"hooks" must declare preToolUse')
+      }
+
+      foreach ($eventName in $hookNames) {
+        $items = $config.hooks.$eventName
+        if ($items -isnot [array]) {
+          Add-CheckError("hooks.$eventName must be an array")
+          continue
+        }
+        if ($items.Count -eq 0) {
+          Add-CheckError("hooks.$eventName must not be empty")
+          continue
+        }
+
+        for ($index = 0; $index -lt $items.Count; $index++) {
+          $item = $items[$index]
+          $label = "hooks.$eventName[$index]"
+
+          if ($item.type -ne "command") {
+            Add-CheckError("$label.type must be command")
+          }
+
+          $handlers = @($item.command, $item.bash, $item.powershell) | Where-Object {
+            $_ -is [string] -and -not [string]::IsNullOrWhiteSpace($_)
+          }
+          if ($handlers.Count -eq 0) {
+            Add-CheckError("$label must define a string command, bash, or powershell handler")
+          }
+
+          foreach ($key in @("command", "bash", "powershell")) {
+            $value = $item.$key
+            if ($null -ne $value -and $value -isnot [string]) {
+              Add-CheckError("$label.$key must be a string, not a list")
+            }
+          }
+
+          if ($null -ne $item.timeoutSec) {
+            if ($item.timeoutSec -isnot [int] -and $item.timeoutSec -isnot [long]) {
+              Add-CheckError("$label.timeoutSec must be a positive integer")
+            } elseif ($item.timeoutSec -le 0) {
+              Add-CheckError("$label.timeoutSec must be a positive integer")
+            } elseif ($item.timeoutSec -gt 30) {
+              Add-CheckError("$label.timeoutSec must be 30 or less; longer budgets fail open")
+            }
+          }
+
+          foreach ($key in @("command", "bash", "powershell")) {
+            $value = $item.$key
+            if ($value -isnot [string]) { continue }
+            foreach ($match in [regex]::Matches($value, "[\w./\\-]*\.(?:sh|ps1)\b")) {
+              $referenced = Join-Path $RepoRoot $match.Value
+              if (-not (Test-Path $referenced -PathType Leaf)) {
+                Add-CheckError("$label.$key references a missing script: $($match.Value)")
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 if ($errors.Count -gt 0) {

@@ -54,16 +54,58 @@ if ([Console]::IsInputRedirected) {
   }
 }
 
-$candidate = ($ToolName + " " + $Action + " " + $Command + " " + $stdin).Trim()
+# Flatten JSON punctuation to spaces so anchors such as (^|\s) still match a
+# command that arrives inside a JSON string value.
+$flattened = $stdin -replace '[{}\[\]",]', ' '
+
+$candidate = ($ToolName + " " + $Action + " " + $Command + " " + $flattened).Trim()
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
 $rules = Get-PolicyRules -RepoRoot $repoRoot
 
 foreach ($rule in $rules) {
   if ($candidate -match $rule.Pattern) {
+    $decision = @{
+      permissionDecision = "deny"
+      permissionDecisionReason = "$($rule.Reason) $($rule.Safer)"
+    } | ConvertTo-Json -Compress
+    Write-Output $decision
     Write-Error "[BLOCKED] $($rule.Reason)"
     Write-Host "Safer alternative: $($rule.Safer)"
-    exit 1
+    # Exit 2 is an explicit deny for preToolUse, and denies even if stdout is ignored.
+    exit 2
+  }
+}
+
+# The engine owns stage and write-set policy. It is consulted only when a run
+# exists, so ordinary editing never pays for the call and never fails on it.
+$stateDir = Join-Path $repoRoot ".agentic\state"
+$enginePath = Join-Path $repoRoot ".github\scripts\agentic_engine.py"
+
+if ((Test-Path $stateDir -PathType Container) -and (Test-Path $enginePath -PathType Leaf)) {
+  $pythonCmd = Get-Command python3 -ErrorAction SilentlyContinue
+  if (-not $pythonCmd) {
+    $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+  }
+
+  if (-not $pythonCmd) {
+    Write-Output '{"permissionDecision":"deny","permissionDecisionReason":"a run is active but no Python interpreter is available to gate it"}'
+    Write-Error "[BLOCKED] a run is active but no Python interpreter is available to gate it"
+    exit 2
+  }
+
+  $engineOutput = $stdin | & $pythonCmd.Source $enginePath check-tool 2>&1
+  $engineExit = $LASTEXITCODE
+
+  if ($engineExit -ne 0) {
+    $engineText = ($engineOutput | Out-String).Trim()
+    if ($engineText.StartsWith("{")) {
+      Write-Output $engineText
+    } else {
+      Write-Error "[BLOCKED] engine gate failed: $engineText"
+      Write-Output '{"permissionDecision":"deny","permissionDecisionReason":"engine gate failed for an active run"}'
+    }
+    exit 2
   }
 }
 

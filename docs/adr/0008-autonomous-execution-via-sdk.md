@@ -1,10 +1,36 @@
 # ADR 0008: Autonomous Execution Through The Copilot SDK
 
-- Status: Accepted
+- Status: Rejected
 - Date: 2026-10-28
+- Rejected: 2026-10-28 — superseded by `docs/adr/0009-hook-governed-loop.md`. The host provides both a deny seam (`preToolUse`) and a first-party headless host (`code agent host`, with the Agent Host Protocol as an open JSON-RPC protocol), so the SDK dependency, the subscription-or-BYOK credential, and the Python 3.11 floor are no longer justified. The evidence is in the amendment below and in ADR 0009.
+- Amended: 2026-10-28 — the host hook path was found to be a working deny seam and the hook layer itself was broken. Scope narrowed; see [Amendment](#amendment-2026-10-28-the-host-hook-path). Re-approval was required because the premise changed, and was not granted.
 - Approved: 2026-10-28 by the repository maintainer (user), on the design decision. Acceptance records the chosen architecture; it does not authorize enabling the overlay, which stays gated on the rollout evidence in step 4.
 - Owners: Team
-- Related: `docs/adr/0007-nested-delegation-disabled.md`, `.github/scripts/agentic_engine.py`, `.github/roles/orchestration-policy.json`, `docs/runbooks/agentic-engine.md`, `docs/runbooks/supervisor-orchestration.md`, `README.md`
+- Related: `docs/adr/0007-nested-delegation-disabled.md`, `.github/scripts/agentic_engine.py`, `.github/hooks/agent-policy.json`, `.github/roles/orchestration-policy.json`, `docs/runbooks/agentic-engine.md`, `docs/runbooks/hooks.md`, `docs/runbooks/supervisor-orchestration.md`, `README.md`
+
+## Amendment (2026-10-28): The Host Hook Path
+
+This ADR was accepted on the premise that nothing in the repository could deny a tool call, so enforcement required an external executor. That premise was wrong, and the error was in this repository's own files.
+
+The host already provides a deny seam. A `preToolUse` command hook receives `toolName` and `toolArgs` as JSON on stdin, and refuses a call by returning `{"permissionDecision":"deny",...}` or by exiting `2`. For `preToolUse` the exit contract is fail-closed: exit `2`, a crash, or any other non-zero exit denies the call. Only a timeout fails open. `.github/hooks/agent-policy.json` already declared exactly that hook.
+
+It had never run. Two independent defects:
+
+- The declaration was not in the harness schema: `"version": "1.0"` instead of `1`, no `type: "command"`, and `command` given as an array where a string is required. A bad version rejects the whole file and a malformed item is dropped, so no hook was ever registered.
+- Both `pre-tool-policy` implementations read command-line arguments, not stdin. The harness passes nothing on argv, so even a registered hook would have matched against an empty string and allowed every command.
+
+Neither was caught because `check-hook-policy` invoked the scripts on argv, the one path production never uses, while reporting green. A direct comparison made the gap concrete: the same `rm -rf /` payload exited `0` through the harness contract and `1` through the fixture contract.
+
+Both are now fixed. `check-hook-policy` delivers every fixture as stdin JSON and asserts the configuration schema, so the same regressions fail loudly, and `docs/runbooks/hooks.md` records the contract.
+
+What this changes:
+
+- **In-editor enforcement no longer requires the SDK.** Interactive sessions in the host get a real, dependency-free deny path today. The enforcement the SDK option was chosen to provide is already available where the agent actually runs.
+- **The SDK is reduced to headless execution** — scheduled or CI runs with no editor to host the hook. That is a genuine gap and still a reason to keep the option, but a much smaller claim than the one this ADR originally made.
+- **`agentic_driver.py` is reclassified** as the headless substrate rather than the rollout. Its 23 self-tests and the two-run comparison in `docs/runbooks/autonomous-execution.md` remain valid evidence for plumbing; they are no longer evidence for the primary path.
+- **Not yet wired:** the hook does not consult `agentic_engine.py`. It blocks command shape only. Feeding the engine's declared write set into the hook is the natural next step and would close the `filesChanged` gap without a new dependency. It is not implemented.
+
+Re-approval was required because the premise the approval rested on did not hold, and it was not granted. The decision is rejected rather than merely narrowed: the host documentation shows `code agent host` already provides headless execution first-party, over an open protocol, so the SDK buys nothing that would justify a dependency, a credential, or a raised Python floor. `docs/adr/0009-hook-governed-loop.md` records the replacement design.
 
 ## Context
 
@@ -25,6 +51,8 @@ Constraints that frame the decision:
 - The security baseline requires pinned dependencies, reviewed transitive graph, and no untrusted input reaching a shell. A driver that spawns commands is a new boundary.
 
 ## Decision
+
+**Narrowed 2026-10-28.** This decision now applies to headless execution only. Interactive enforcement is provided by the host `preToolUse` hook; see the amendment above.
 
 Adopt the **GitHub Copilot SDK** as the execution substrate, shipped as a **default-disabled optional overlay**, with `agentic_engine.py` acting as the permission handler for every tool call.
 
@@ -55,10 +83,10 @@ The overlay is disabled by default because enabling it grants an autonomous proc
 
 ## Options Considered
 
-1. Copilot SDK driver with engine-mediated permissions (chosen)
+1. Copilot SDK driver with engine-mediated permissions (chosen for headless execution only)
 
 - Pros: enforces the existing gates, reuses the tested repair loop, keeps the harness-agnostic story, needs no optional module, and the permission handler is precisely the seam the engine was built for.
-- Cons: introduces a runtime and a new dependency, requires a subscription or BYOK, and is the largest behavioural change this repository has considered.
+- Cons: introduces a runtime and a new dependency, requires a subscription or BYOK, and is the largest behavioural change this repository has considered. Narrowed 2026-10-28: it no longer covers interactive sessions, which the host hook handles.
 
 2. MCP server exposing engine stages
 
@@ -80,15 +108,21 @@ The overlay is disabled by default because enabling it grants an autonomous proc
 - Pros: no positioning change, no new dependency, no new attack surface.
 - Cons: leaves the central gap in place. The repository can describe a bounded loop but cannot run one, and every guarantee it advertises depends on the operator choosing to honour it.
 
+6. Host `preToolUse` command hook calling the policy (added 2026-10-28; primary for interactive use)
+
+- Pros: no new dependency, no credential, no Python version floor, and it runs wherever the agent runs. It is fail-closed by contract, so a refusal survives an agent that ignores the message. It was already declared in this repository, which is why the gap went unnoticed.
+- Cons: it observes one tool call at a time and cannot drive a loop, so it enforces but does not execute. It is host-specific in practice even though the hook file lives in the shared `.github/` tree. Not usable for unattended runs, because there is no editor to host it.
+- Rejected as the whole answer, accepted as the interactive answer.
+
 ## Rollout Plan
 
-The design is accepted; enabling it is not. Each step is independently revertible, and step 5 is the gate on the overlay rather than on this record.
+The steps below are recorded work, not a standing approval. Steps 1 to 4 were delivered while the wider decision held; following the amendment the decision is `Proposed` again, so step 5 is the gate on the overlay and re-approval is the gate on the record itself. Each step is independently revertible.
 
 1. **Done.** Land the derived-write-set change in the engine: `task.changedFilesFrom: "git"` makes the repository authoritative about what changed, so an under-reported `filesChanged` cannot satisfy the write-set gate. It is useful on its own and removes a weakness this ADR depends on.
 2. **Done.** Drafted the driver behind the overlay: `agentic_driver.py` with a `PermissionGateway` that denies unclassified tools, unknown stages, writes outside the write set, and commands containing shell metacharacters. The Copilot SDK adapter is deliberately unimplemented and raises rather than pretending.
 3. **Done.** Added `check-agentic-driver` in both twins, registered in both umbrellas. It runs the driver self-tests and asserts the overlay ships disabled and the gateway keeps its denial path.
 4. **Done.** Ran one real feature both ways in a scratch repository. Both reached `DONE` with the same stages, the same 7 passing tests, and byte-identical files. The driver additionally denied a write at `verify` and recorded the denial. Results and the limits of the comparison are in `docs/runbooks/autonomous-execution.md` under Rollout Evidence. The run also exposed a real defect: importing the driver wrote `__pycache__`, which the git scan reported and the write-set gate rejected, so every git-mode run blocked. Fixed with a regression test.
-5. **Still open.** The overlay stays default-disabled. Step 4 produced evidence for the plumbing and none for the open question, because both runs used scripted executors. A maintainer may enable it per repository today, deliberately and with that gap recorded, but the capability should not be recommended for unattended use until a model-driven run shows the gateway being obeyed.
+5. **Still open, and now gated on re-approval.** The overlay stays default-disabled. Step 4 produced evidence for the plumbing and none for the open question, because both runs used scripted executors. Following the amendment, the decision itself is `Proposed` again: the SDK now buys headless execution only, which is a narrower and separately-approvable claim than the original.
 
 ## Validation
 
@@ -115,4 +149,10 @@ The one requirement that cannot be met without the SDK adapter is the adversaria
 
 Review after step 4 of the rollout, with the scratch-repository comparison as the input. If the loop cannot be shown to respect the permission handler under adversarial prompting, the overlay is withdrawn and this ADR is amended to record that, rather than left as an accepted design that quietly does not work.
 
-Revisit owner: whoever next changes `agentic_engine.py` or enables the overlay.
+From the 2026-10-28 amendment:
+
+- ~~Re-approve or reject the narrowed scope.~~ Rejected; see the status line. `docs/adr/0009-hook-governed-loop.md` supersedes this record.
+- The engine's write set should be enforced through the `preToolUse` hook rather than the SDK. ADR 0009 owns that work and reports it as unverified until a real run exercises it.
+- `agentic_driver.py` is now a parked experiment with no owner. Either delete it or keep it only as a headless option, but do not present it as the path. Its 23 self-tests remain valid evidence for the permission-gateway design, which is why deletion is not automatic.
+
+Revisit owner: none. The decision is closed; ADR 0009 carries the work.

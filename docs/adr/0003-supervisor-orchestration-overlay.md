@@ -167,7 +167,7 @@ Phase 2, registration across existing assets
 1. Add the overlay entry to `.github/starter-modules.json` and bump the manifest minor version.
 2. Add the supervisor to `agentCapabilityMatrix` and `agentRoleHints` in `.github/roles/tool-access.json`.
 3. Update `.github/agent-catalog.md`: agent set, ownership map, sequencing shortcuts, and the narrowed `:206` exclusion. Leave `:209` unchanged.
-4. Align `rolePolicyGuidance` in `.github/hooks/agent-policy.json`.
+4. Align the role guidance in `docs/runbooks/hooks.md` with `.github/roles/tool-access.json`.
 5. Add the agent to `docs/runbooks/agentic-dev.md` chain and handoff-memory lists.
 6. Register the new runbook in `docs/runbooks/INDEX.md` in both lists.
 7. Add migration guidance to `MIGRATION.md` and the overlay to `docs/runbooks/starter-composition.md`.

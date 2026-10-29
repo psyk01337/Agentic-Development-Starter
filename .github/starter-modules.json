@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "maintainerAssetScan": true,
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
@@ -48,6 +48,7 @@
         ".github/scripts/check-agentic-engine.sh",
         ".github/scripts/agentic_engine.py",
         "docs/adr/0000-template.md",
+        "docs/adr/0009-hook-governed-loop.md",
         "docs/inputs.md",
         "docs/runbooks/adopting-existing-github.md",
         "docs/runbooks/agentic-dev.md",

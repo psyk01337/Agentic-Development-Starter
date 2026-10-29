@@ -3,6 +3,16 @@ param(
   [string]$UserName = ""
 )
 
+if ([Console]::IsInputRedirected) {
+  try {
+    $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json
+    if ([string]::IsNullOrWhiteSpace($SessionId) -and $payload.sessionId) {
+      $SessionId = [string]$payload.sessionId
+    }
+  } catch {
+  }
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
 $logDir = Join-Path $repoRoot ".github\hooks\logs"
 $logPath = Join-Path $logDir "session.log"

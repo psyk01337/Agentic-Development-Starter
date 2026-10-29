@@ -975,6 +975,163 @@ def cmd_approve(args: argparse.Namespace) -> int:
     return 0
 
 
+TOOL_REGISTRY_PATH = Path(".github") / "roles" / "tool-access.json"
+
+# A done or blocked run bounds nothing, so only these stages restrict tools.
+ACTIVE_STAGES = ("approval", "implement", "verify", "repair", "review")
+
+# Only `edit` changes working-tree files, so only `edit` is checked against the
+# write set. The other kinds cannot widen the change.
+WRITE_KINDS = frozenset({"edit"})
+
+# Writes and delegation are what a stage actually gates. Reading, searching, and
+# todo tracking stay available everywhere because they cannot widen the change.
+STAGE_TOOL_PROFILES = {
+    "approval": {"read": True, "search": True, "execute": False, "edit": False, "todo": True, "delegate-agent": False},
+    "implement": {"read": True, "search": True, "execute": True, "edit": True, "todo": True, "delegate-agent": False},
+    "verify": {"read": True, "search": True, "execute": True, "edit": False, "todo": True, "delegate-agent": False},
+    "repair": {"read": True, "search": True, "execute": True, "edit": True, "todo": True, "delegate-agent": False},
+    "review": {"read": True, "search": True, "execute": True, "edit": False, "todo": True, "delegate-agent": False},
+}
+
+# Host argument shapes for file targets. A write that names no path is denied
+# rather than assumed safe, because "no path" is exactly what an escape looks like.
+WRITE_PATH_KEYS = ("filePath", "path", "file", "targetFile", "dirPath")
+WRITE_PATH_LIST_KEYS = ("files", "paths", "edits")
+
+
+def load_tool_kinds(repo_root: Path) -> dict:
+    """Map concrete host tool name to capability kind.
+
+    The role registry is the single source of truth for the vocabulary, so this
+    gate cannot drift from the matrix the supervisor validator already reads.
+    """
+    registry_path = repo_root / TOOL_REGISTRY_PATH
+    if not registry_path.is_file():
+        raise EngineError(f"missing tool registry: {TOOL_REGISTRY_PATH.as_posix()}")
+    definitions = read_json_file(str(registry_path)).get("toolDefinitions")
+    if not isinstance(definitions, dict):
+        raise EngineError("tool registry is missing toolDefinitions")
+    kinds = {}
+    for kind, definition in definitions.items():
+        examples = definition.get("examples") if isinstance(definition, dict) else None
+        if not isinstance(examples, list):
+            continue
+        for name in examples:
+            # delegate-agent documents a platform mapping, not a literal name.
+            if isinstance(name, str) and name and " " not in name:
+                kinds[name] = kind
+    return kinds
+
+
+def active_runs(state_dir: Path) -> list:
+    """Runs whose stage still bounds an agent."""
+    if not state_dir.is_dir():
+        return []
+    runs = []
+    for path in sorted(state_dir.glob("*.json")):
+        # atomic_write stages through .tmp-*.json; a half-written file is not a run.
+        if path.name.startswith(".tmp-"):
+            continue
+        state = validate_state(read_state_file(path), path.stem)
+        if state["stage"] in ACTIVE_STAGES:
+            runs.append(state)
+    return runs
+
+
+def write_paths(tool_args: dict) -> list:
+    found = []
+    for key in WRITE_PATH_KEYS:
+        value = tool_args.get(key)
+        if isinstance(value, str) and value.strip():
+            found.append(value.strip())
+    for key in WRITE_PATH_LIST_KEYS:
+        value = tool_args.get(key)
+        if not isinstance(value, list):
+            continue
+        for item in value:
+            if isinstance(item, str) and item.strip():
+                found.append(item.strip())
+            elif isinstance(item, dict):
+                for inner in WRITE_PATH_KEYS:
+                    nested = item.get(inner)
+                    if isinstance(nested, str) and nested.strip():
+                        found.append(nested.strip())
+    return found
+
+
+def check_tool_call(repo_root: Path, state_dir: Path, payload: dict) -> tuple:
+    """Decide a preToolUse payload. Returns (allowed, reason).
+
+    With no active run the answer is always yes: ordinary editing is unbounded,
+    and inventing a bound nobody declared would break every normal session.
+    """
+    if not isinstance(payload, dict):
+        return False, "hook payload must be a JSON object"
+
+    runs = active_runs(state_dir)
+    if not runs:
+        return True, ""
+
+    tool_name = payload.get("toolName")
+    if not isinstance(tool_name, str) or not tool_name:
+        return False, "hook payload has no toolName"
+
+    kind = load_tool_kinds(repo_root).get(tool_name)
+    if kind is None:
+        return False, (
+            f"tool {tool_name!r} is not classified in {TOOL_REGISTRY_PATH.as_posix()}; "
+            "classify it before running an agent under the engine"
+        )
+
+    tool_args = payload.get("toolArgs")
+    if tool_args is None:
+        tool_args = {}
+    if not isinstance(tool_args, dict):
+        return False, "toolArgs must be a JSON object"
+
+    for state in runs:
+        profile = STAGE_TOOL_PROFILES[state["stage"]]
+        if not profile.get(kind, False):
+            return False, (
+                f"{tool_name!r} is a {kind} call and run {state['runId']} is at stage "
+                f"{state['stage']!r}, which does not permit {kind}"
+            )
+        if kind in WRITE_KINDS:
+            paths = write_paths(tool_args)
+            if not paths:
+                return False, f"{tool_name!r} is a write call but reported no file path"
+            allowed = {_normalize_path(item) for item in state["task"]["writeSet"]}
+            outside = sorted({path for path in paths if _normalize_path(path) not in allowed})
+            if outside:
+                return False, (
+                    f"write outside the declared write set for run {state['runId']}: "
+                    + ", ".join(outside)
+                )
+    return True, ""
+
+
+def cmd_check_tool(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    state_dir = state_dir_for(repo_root, args.state_dir)
+    raw = sys.stdin.read().strip()
+    if not raw:
+        return 0
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        emit({"permissionDecision": "deny", "permissionDecisionReason": f"hook payload is not valid JSON: {exc}"})
+        return 2
+    try:
+        allowed, reason = check_tool_call(repo_root, state_dir, payload)
+    except EngineError as exc:
+        allowed, reason = False, str(exc)
+    if allowed:
+        return 0
+    emit({"permissionDecision": "deny", "permissionDecisionReason": reason})
+    return 2
+
+
 class EngineSelfTest(unittest.TestCase):
     def setUp(self) -> None:
         self.root = Path(tempfile.mkdtemp(prefix="agentic-engine-test-"))
@@ -1015,6 +1172,83 @@ class EngineSelfTest(unittest.TestCase):
         }
         task.update(overrides)
         self.task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    def write_tool_registry(self) -> None:
+        definitions = {
+            "read": {"examples": ["read_file"]},
+            "search": {"examples": ["grep_search"]},
+            "edit": {"examples": ["create_file", "replace_string_in_file"]},
+            "execute": {"examples": ["run_in_terminal"]},
+            "todo": {"examples": ["manage_todo_list"]},
+            "delegate-agent": {"examples": ["platform-mapped, not a literal tool name"]},
+        }
+        (self.root / ".github" / "roles" / "tool-access.json").write_text(
+            json.dumps({"toolDefinitions": definitions}), encoding="utf-8"
+        )
+
+    def check(self, tool_name: str, tool_args: dict) -> tuple:
+        return check_tool_call(
+            self.root, self.state_dir, {"toolName": tool_name, "toolArgs": tool_args}
+        )
+
+    def test_check_tool_allows_everything_when_no_run_exists(self) -> None:
+        self.write_tool_registry()
+        allowed, reason = self.check("mystery_tool", {})
+        self.assertTrue(allowed, reason)
+
+    def test_check_tool_allows_write_inside_the_write_set(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        allowed, reason = self.check("replace_string_in_file", {"filePath": "./src/a.py"})
+        self.assertTrue(allowed, reason)
+
+    def test_check_tool_denies_write_outside_the_write_set(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        allowed, reason = self.check("create_file", {"filePath": "src/b.py"})
+        self.assertFalse(allowed)
+        self.assertIn("outside the declared write set", reason)
+
+    def test_check_tool_denies_write_at_verify(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        self.implement()
+        allowed, reason = self.check("create_file", {"filePath": "src/a.py"})
+        self.assertFalse(allowed)
+        self.assertIn("does not permit edit", reason)
+
+    def test_check_tool_allows_execute_at_verify(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        self.implement()
+        allowed, reason = self.check("run_in_terminal", {"command": "pytest"})
+        self.assertTrue(allowed, reason)
+
+    def test_check_tool_denies_unclassified_tool_during_a_run(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        allowed, reason = self.check("mystery_tool", {})
+        self.assertFalse(allowed)
+        self.assertIn("not classified", reason)
+
+    def test_check_tool_denies_write_without_a_path(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        allowed, reason = self.check("create_file", {"contents": "x"})
+        self.assertFalse(allowed)
+        self.assertIn("reported no file path", reason)
+
+    def test_check_tool_ignores_finished_runs(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        allowed, reason = self.check("create_file", {"filePath": "src/z.py"})
+        self.assertTrue(allowed, reason)
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
         buffer = io.StringIO()
@@ -2463,6 +2697,12 @@ def build_parser() -> argparse.ArgumentParser:
     approve_parser.add_argument("--approver", required=True)
     approve_parser.add_argument("--note", default="")
     approve_parser.set_defaults(func=cmd_approve)
+
+    check_tool_parser = subparsers.add_parser(
+        "check-tool", help="decide a preToolUse payload read from stdin"
+    )
+    _add_location_options(check_tool_parser)
+    check_tool_parser.set_defaults(func=cmd_check_tool)
 
     return parser
 

@@ -24,6 +24,28 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-28 - Gate tool calls against the engine write set
+
+- Area: agentic engine, hooks, module manifest
+- Change type: feature, config
+- Summary: adds `check-tool` to `agentic_engine.py`, which reads a `preToolUse` payload on stdin, classifies the tool from `toolDefinitions` in `.github/roles/tool-access.json`, applies a per-stage profile, and refuses an `edit` outside `task.writeSet` by emitting a deny decision and exiting `2`. Wires it into `pre-tool-policy.sh` and `pre-tool-policy.ps1` after the rule loop, guarded by the existence of `.agentic/state` so ordinary editing makes no subprocess call. Adds eight engine self-tests. Manifest version goes to `2.3.0`.
+- Reason: the rule list only judges command shape. Nothing bounded which files an agent could change, so a run under the engine had no write-scope control at all — the one gate ADR 0008 depended on. With the `preToolUse` hook now proven to deny, the engine can supply that decision without a dependency.
+- Affected files: .github/scripts/agentic_engine.py, .github/hooks/scripts/pre-tool-policy.sh, .github/hooks/scripts/pre-tool-policy.ps1, .github/starter-modules.json, docs/adr/0008-autonomous-execution-via-sdk.md, docs/adr/0009-hook-governed-loop.md, docs/runbooks/hooks.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-28 - Record the hook-governed loop decision"
+- Validation: `python .github/scripts/agentic_engine.py selftest` ran 77 tests, OK, including the eight new `check_tool` cases. `check-hook-policy` and both umbrella suites had not been run against the wiring at the time of writing, so the hook-level path is untested end to end; the gate is inert in this repository because `.agentic/state` does not exist, which is why that gap is tolerable rather than blocking.
+- Discrepancies or follow-up: the gate is inert in this repository because `.agentic/state` does not exist, so it cannot break an ordinary session, but it is also therefore unexercised. `agentStop` is deliberately not implemented — its deny contract is documented, but whether a blocked turn actually steers the agent, and how credits behave across repeated blocks, needs a live probe first. The write-tool argument shapes (`filePath`, `files`, `edits`) are read from the host documentation, not from an observed payload.
+
+### 2026-10-28 - Make the hook policy actually run
+
+- Area: hooks, hook policy validators, module manifest
+- Change type: fix, config, test
+- Summary: makes the guardrail in `.github/hooks/` execute for the first time. `agent-policy.json` is brought into the harness schema — `version` is the number `1`, every entry declares `type: "command"` with string `bash` and `powershell` handlers and a 10 second `timeoutSec` — and the non-schema metadata keys are removed. Both `pre-tool-policy` variants now read the tool call from stdin as JSON and flatten JSON punctuation so rule anchors still match, return `{"permissionDecision":"deny"}` and exit `2` instead of exiting `1`, and both `audit-log` variants read `toolName`, `toolArgs`, and `sessionId` from stdin, redact secret-shaped values, and escape the preview so each record stays valid JSON. `check-hook-policy` in both twins now delivers every fixture as stdin JSON and asserts the configuration schema. Manifest version goes to `2.2.1`.
+- Reason: the redeclared `preToolUse` guardrail had never fired. The declaration was not in the harness schema (a string `version`, no `type`, an array `command`), so the file was rejected or every item was dropped, and both scripts read argv while the harness only ever writes stdin. `check-hook-policy` reported green throughout because it invoked the scripts on argv, the one path production never takes. The same `rm -rf /` payload exited `0` through the harness contract and `1` through the fixture contract.
+- Affected files: .github/hooks/agent-policy.json, .github/hooks/scripts/pre-tool-policy.sh, .github/hooks/scripts/pre-tool-policy.ps1, .github/hooks/scripts/audit-log.sh, .github/hooks/scripts/audit-log.ps1, .github/hooks/scripts/session-banner.sh, .github/hooks/scripts/session-banner.ps1, .github/scripts/check-hook-policy.sh, .github/scripts/check-hook-policy.ps1, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-28 - Document the hook runtime contract and the narrowed SDK scope"
+- Validation: `rm -rf /` delivered as stdin JSON now exits `2` and emits the deny decision from both twins, and `git status --short` still exits `0`; the audit hooks produce parseable JSONL with the token replaced by `[REDACTED]`; five injected regressions (string `version`, array `command`, missing `type`, missing script, `timeoutSec` above 30) each fail `check-hook-policy.sh` with a specific message and each is restored to green afterwards; `check-hook-policy.sh` and `.ps1` both pass.
+- Discrepancies or follow-up: the hook still matches command shape only and does not consult `agentic_engine.py`, so write-scope enforcement through the hook is not implemented. Redaction in the audit log is best-effort pattern matching, not a guarantee, and the log is treated as sensitive. `preToolUse` is fail-closed, so a hook that cannot start denies every tool call; the validator asserts referenced scripts exist to keep a bad path from bricking a session.
+
 ### 2026-10-28 - Skip generated artifacts in the git changed-file scan
 
 - Area: agentic engine

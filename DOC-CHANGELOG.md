@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-28 - Record the hook-governed loop decision
+
+- Area: ADR 0008, ADR 0009, hooks runbook
+- Change type: docs, adr, runbook
+- Summary: adds `docs/adr/0009-hook-governed-loop.md`, which records the stage-to-hook mapping, the four hooks, the credit-burn risk of blocking a turn end, and the per-harness limit on the hook contract. Rejects `docs/adr/0008-autonomous-execution-via-sdk.md` and records why: the host provides both a fail-closed `preToolUse` deny seam and a first-party headless host, so the SDK dependency, credential, and Python 3.11 floor are unjustifiable. Adds an Engine Gate section and a troubleshooting entry to `docs/runbooks/hooks.md`, and replaces the now-false claim that wiring the engine into the hook is not implemented.
+- Reason: ADR 0008 had been amended to `Proposed` because its premise had failed, and leaving it there implied pending work. Two documentation checks settled it: `agentStop` accepts `decision: "block"` with a required `reason`, and `code agent host` runs sessions independently of an editor. The decision is therefore closed rather than deferred, and the replacement design gets its own record.
+- Affected files: docs/adr/0009-hook-governed-loop.md, docs/adr/0008-autonomous-execution-via-sdk.md, docs/runbooks/hooks.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-28 - Gate tool calls against the engine write set"
+- Review status: reviewed
+- Discrepancies or follow-up: ADR 0009 states plainly that none of its validation requirements have been run. `docs/runbooks/autonomous-execution.md` still scopes the SDK overlay as a live option; it should be re-scoped or archived now that ADR 0008 is rejected, which is deferred rather than done here.
+
+### 2026-10-28 - Document the hook runtime contract and the narrowed SDK scope
+
+- Area: hooks runbook, ADR 0008, ADR 0003, autonomous execution runbook
+- Change type: docs, runbook, adr
+- Summary: adds a Runtime Contract section to `docs/runbooks/hooks.md` covering stdin JSON input, the fail-closed `preToolUse` exit contract, and fail-open timeouts; adds a Policy Metadata section holding the role guidance that was removed from `agent-policy.json`; adds a Troubleshooting section for a hook that denies everything, one that blocks nothing, and one that blocks intermittently; and moves `.sh` from an "optional WSL" note to a first-class handler. Appends an amendment to ADR 0008 recording that the host hook was a working deny seam all along, that the hook layer was broken in two independent ways, and that the SDK decision now covers headless execution only — with the status returned to `Proposed`. Retargets the ADR 0003 step that named `rolePolicyGuidance` in the JSON.
+- Reason: the runbook described argv invocation and a `.ps1`-only wiring, which is not how the harness calls a hook, so following it could not have produced a working policy. ADR 0008's decision rested on a premise the hook layer disproved, and leaving it `Accepted` would record a design as approved on a false basis.
+- Affected files: docs/runbooks/hooks.md, docs/runbooks/autonomous-execution.md, docs/adr/0008-autonomous-execution-via-sdk.md, docs/adr/0003-supervisor-orchestration-overlay.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-28 - Make the hook policy actually run"
+- Review status: reviewed
+- Discrepancies or follow-up: ADR 0008 is now `Proposed` and needs a maintainer decision on whether a headless executor is wanted at all. The runbook states that wiring the engine's write set into the hook is not implemented. ADR 0008 was `Accepted` while `README.md` already described it as `Proposed`; both now agree.
+
 ### 2026-10-28 - Record the autonomous execution rollout evidence
 
 - Area: autonomous execution runbook, ADR 0008

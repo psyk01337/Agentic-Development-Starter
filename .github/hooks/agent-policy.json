@@ -1,52 +1,28 @@
 {
-  "version": "1.0",
-  "description": "Deterministic hook policy for agent safety and auditability.",
-  "rulesPath": ".github/hooks/policy-rules.tsv",
-  "rolePolicyGuidance": {
-    "source": ".github/roles/tool-access.json",
-    "executeCapableRoles": [
-      "analysis",
-      "planning",
-      "implementation"
-    ],
-    "notes": "preToolUse command-pattern blocking is most relevant for roles that can execute commands. Review and workflow-maintenance roles are still subject to hooks but normally do not invoke execute tools. The orchestration role is not execute-capable and is the only role that holds delegate-agent; it never runs commands or edits files directly."
-  },
-  "logging": {
-    "path": ".github/hooks/logs/agent-audit.log",
-    "format": "jsonl"
-  },
+  "version": 1,
   "hooks": {
     "sessionStart": [
       {
-        "name": "session-banner",
-        "command": [
-          "pwsh",
-          "-NoProfile",
-          "-File",
-          ".github/hooks/scripts/session-banner.ps1"
-        ]
+        "type": "command",
+        "bash": "bash .github/hooks/scripts/session-banner.sh",
+        "powershell": "pwsh -NoProfile -File .github/hooks/scripts/session-banner.ps1",
+        "timeoutSec": 10
       }
     ],
     "preToolUse": [
       {
-        "name": "pre-tool-policy",
-        "command": [
-          "pwsh",
-          "-NoProfile",
-          "-File",
-          ".github/hooks/scripts/pre-tool-policy.ps1"
-        ]
+        "type": "command",
+        "bash": "bash .github/hooks/scripts/pre-tool-policy.sh",
+        "powershell": "pwsh -NoProfile -File .github/hooks/scripts/pre-tool-policy.ps1",
+        "timeoutSec": 10
       }
     ],
     "postToolUse": [
       {
-        "name": "audit-log",
-        "command": [
-          "pwsh",
-          "-NoProfile",
-          "-File",
-          ".github/hooks/scripts/audit-log.ps1"
-        ]
+        "type": "command",
+        "bash": "bash .github/hooks/scripts/audit-log.sh",
+        "powershell": "pwsh -NoProfile -File .github/hooks/scripts/audit-log.ps1",
+        "timeoutSec": 10
       }
     ]
   }

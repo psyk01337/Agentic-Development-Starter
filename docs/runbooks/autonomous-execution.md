@@ -2,7 +2,7 @@
 
 The optional overlay that lets a process run the implement-verify-repair loop itself, with `agentic_engine.py` deciding what it is allowed to do.
 
-Disabled by default. `docs/adr/0008-autonomous-execution-via-sdk.md` records the decision and its rejected alternatives.
+**Scope: headless runs only, disabled by default.** For interactive sessions in the host, enforcement comes from the `preToolUse` hook in `.github/hooks/agent-policy.json` and needs no overlay — see `docs/runbooks/hooks.md`. This overlay exists for the case the hook cannot serve: a scheduled or CI run with no editor to host it. `docs/adr/0008-autonomous-execution-via-sdk.md` records the decision, its 2026-10-28 amendment, and its rejected alternatives.
 
 ## What It Is And Is Not
 

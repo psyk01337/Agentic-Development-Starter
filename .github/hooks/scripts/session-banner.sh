@@ -7,7 +7,19 @@ LOG_DIR="${REPO_ROOT}/.github/hooks/logs"
 LOG_PATH="${LOG_DIR}/session.log"
 
 mkdir -p "${LOG_DIR}"
-SESSION_ID="${1:-$(date +%s)}"
+
+PAYLOAD=""
+if [[ ! -t 0 ]]; then
+  PAYLOAD="$(cat)"
+fi
+
+json_field() {
+  # A missing field must not fail the hook: these scripts run under set -e.
+  printf '%s' "${PAYLOAD}" | grep -oP "\"$1\"\s*:\s*\"\K[^\"]*" | head -n 1 || true
+}
+
+SESSION_ID="${1:-$(json_field sessionId)}"
+SESSION_ID="${SESSION_ID:-$(date +%s)}"
 USER_NAME="${USER:-unknown}"
 NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
