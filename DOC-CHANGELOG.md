@@ -24,6 +24,27 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Document the vendored pstack subset
+
+- Area: vendor/, third-party notices
+- Change type: docs, reference
+- Summary: adds `vendor/pstack/README.md` recording what was vendored, what was deliberately left out, why the directory is inert, and how to activate a skill one at a time; adds a root `THIRD_PARTY_NOTICES.md` naming the source, copyright and licence so the MIT attribution requirement is visible without opening the vendored tree.
+- Reason: a vendored directory with no note becomes indistinguishable from first-party code within a month, and "why is nothing here loaded" is the first question it raises. The exclusion of the other 53 upstream skills is the non-obvious decision and deserves the reason next to it.
+- Affected files: vendor/pstack/README.md, THIRD_PARTY_NOTICES.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Vendor the pstack principle and verification skills"
+- Review status: reviewed
+- Discrepancies or follow-up: the activation instructions describe copying a skill into `.github/skills/` and registering it, which no validator enforces. If a copied skill drifts from its vendored original, nothing detects it.
+
+### 2026-10-31 - Reset the PRD to a template and annotate removed samples
+
+- Area: docs/prd.md, docs/runs
+- Change type: docs
+- Summary: replaces the game PRD with a project template carrying the sections the workflow expects - problem, target user, goals, functional and non-functional requirements, decisions, traceability, verification, out of scope - and adds a "Removed Samples" section to `docs/runs/README.md` explaining that archives are not edited when the code they describe is deleted.
+- Reason: `docs/prd.md` is routed repo truth, so deleting the application without replacing it would have left the starter's one required document describing a game that no longer exists. The traceability table is the part that matters: it states that a requirement is delivered when its slice is recorded and archived, not when a file is named.
+- Affected files: docs/prd.md, docs/runs/README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Remove the sample application"
+- Review status: reviewed
+- Discrepancies or follow-up: the template is unvalidated as a template. No check confirms a filled-in PRD kept the required sections, so a project can delete the traceability table and nothing notices.
 ### 2026-10-31 - Document the doctor command
 
 - Area: engine runbook
