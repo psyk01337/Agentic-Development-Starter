@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Document the doctor command
+
+- Area: engine runbook
+- Change type: docs, runbook
+- Summary: adds `doctor` to the command list in `docs/runbooks/agentic-engine.md` and a section explaining what each check means, that the exit code is usable as a gate, and why an unarchived run is reported without failing.
+- Reason: the runbook explained how to drive the engine but never how to confirm it is wired, so a user could follow every step in it against a checkout where the hooks do nothing.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Add a doctor command that checks the wiring instead of assuming it"
+- Review status: reviewed
+- Discrepancies or follow-up: neither the runbook nor `doctor` can confirm the harness honours a denial in a given client; that depends on the host and was observed separately for `agentStop`.
 ### 2026-10-31 - Record the measured hook cost
 
 - Area: hooks runbook

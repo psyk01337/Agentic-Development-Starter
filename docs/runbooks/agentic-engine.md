@@ -56,6 +56,7 @@ python .github/scripts/agentic_engine.py approve --run-id feature-123 --approver
 python .github/scripts/agentic_engine.py status --run-id feature-123
 python .github/scripts/agentic_engine.py report --run-id feature-123
 python .github/scripts/agentic_engine.py archive --run-id feature-123
+python .github/scripts/agentic_engine.py doctor
 python .github/scripts/agentic_engine.py selftest
 ```
 
@@ -108,6 +109,20 @@ python .github/scripts/agentic_engine.py archive --run-id ember-s3
 ```
 
 Archive a run before deleting its state. Deleting `.agentic/` first destroys the history the archive would have captured.
+
+### `doctor`
+
+`doctor` answers one question: is this workflow wired in *this* checkout, or does it only look installed?
+
+```bash
+python .github/scripts/agentic_engine.py doctor
+```
+
+Every entry carries `ok`, `required`, and a `detail` naming what was inspected. It exits `0` when all required checks pass and `1` otherwise, so it can gate a setup step or a CI job.
+
+It checks the failures this repository has actually had, rather than the ones that are easy to test: the hook policy parses and sits inside the harness schema, `preToolUse` and `agentStop` are both declared, every handler is a `command` entry whose referenced script exists on disk, and `build-feature` mentions both the engine and the archive step. A handler pointing at a renamed script is the case that matters most, because the policy then looks installed while enforcing nothing.
+
+A finished run with no archive is reported but not fatal. The run completed; missing evidence is a process gap rather than a broken install.
 
 Exit codes: `0` success, `1` invalid input or transition, `3` blocked or
 escalated. `next`, `status`, and `report` all return `3` for a blocked run.

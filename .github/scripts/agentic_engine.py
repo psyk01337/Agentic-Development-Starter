@@ -933,6 +933,141 @@ def _result_from_flags(args: argparse.Namespace) -> dict:
     raise EngineError(f"no flag mapping for stage {args.stage}")
 
 
+def _doctor_check(name: str, ok: bool, detail: str, required: bool = True) -> dict:
+    return {"name": name, "ok": bool(ok), "required": bool(required), "detail": detail}
+
+
+def doctor_checks(repo_root: Path, state_dir: Path) -> list:
+    """Report whether the workflow is actually wired, not whether it is documented.
+
+    Every check here corresponds to a way this repository has silently done
+    nothing: a hook config outside the harness schema, a handler pointing at a
+    script that was renamed, a prompt that never mentions the engine, a finished
+    run whose evidence was deleted with its state.
+    """
+    checks = []
+
+    policy_path = repo_root / HOOK_POLICY_PATH
+    if not policy_path.is_file():
+        checks.append(_doctor_check("hook-policy", False, f"{HOOK_POLICY_PATH.as_posix()} is missing"))
+    else:
+        try:
+            policy = read_json_file(str(policy_path))
+        except EngineError as exc:
+            checks.append(_doctor_check("hook-policy", False, f"cannot be parsed: {exc}"))
+            policy = None
+        if policy is not None:
+            # A string "version" and an array-valued handler are both outside the
+            # schema, and both leave the file looking correct while nothing runs.
+            version = policy.get("version")
+            checks.append(_doctor_check(
+                "hook-policy-version",
+                isinstance(version, int) and not isinstance(version, bool),
+                f"version is {version!r}; the schema expects an integer",
+            ))
+            hooks = policy.get("hooks")
+            if not isinstance(hooks, dict):
+                checks.append(_doctor_check("hook-policy-events", False, "hooks is not an object"))
+            else:
+                for event in REQUIRED_HOOK_EVENTS:
+                    handlers = hooks.get(event)
+                    ok = isinstance(handlers, list) and len(handlers) > 0
+                    checks.append(_doctor_check(
+                        f"hook-policy-{event}",
+                        ok,
+                        "declared" if ok else f"no {event} handler; the harness would never call it",
+                    ))
+                for event, handlers in hooks.items():
+                    if not isinstance(handlers, list):
+                        continue
+                    for index, handler in enumerate(handlers):
+                        label = f"{event}[{index}]"
+                        if not isinstance(handler, dict) or handler.get("type") != "command":
+                            checks.append(_doctor_check(
+                                f"hook-handler-{label}", False, "handler is not a command entry"
+                            ))
+                            continue
+                        for shell in ("bash", "powershell"):
+                            command = handler.get(shell)
+                            if not isinstance(command, str) or not command.strip():
+                                checks.append(_doctor_check(
+                                    f"hook-handler-{label}-{shell}", False, f"no {shell} command"
+                                ))
+                                continue
+                            found = HOOK_SCRIPT_PATTERN.findall(command)
+                            if not found:
+                                checks.append(_doctor_check(
+                                    f"hook-handler-{label}-{shell}", False,
+                                    f"command names no script under .github/hooks/scripts: {command!r}",
+                                ))
+                                continue
+                            for relative in found:
+                                checks.append(_doctor_check(
+                                    f"hook-script-{relative}",
+                                    (repo_root / relative).is_file(),
+                                    f"{relative} referenced by {label}",
+                                ))
+
+    prompt_path = repo_root / BUILD_PROMPT_PATH
+    if not prompt_path.is_file():
+        checks.append(_doctor_check("prompt-wiring", False, f"{BUILD_PROMPT_PATH.as_posix()} is missing"))
+    else:
+        text = prompt_path.read_text(encoding="utf-8")
+        checks.append(_doctor_check(
+            "prompt-wiring",
+            "agentic_engine.py" in text and "archive" in text,
+            "build-feature opens a run and archives it" if "agentic_engine.py" in text and "archive" in text
+            else "build-feature does not reference the engine and the archive step",
+        ))
+
+    states = [path for path in sorted(state_dir.glob("*.json")) if not path.name.startswith(".tmp-")] if state_dir.is_dir() else []
+    active = 0
+    finished = 0
+    for path in states:
+        try:
+            state = validate_state(read_state_file(path), path.stem)
+        except EngineError:
+            continue
+        if state["stage"] in ACTIVE_STAGES:
+            active += 1
+        else:
+            finished += 1
+    checks.append(_doctor_check(
+        "run-state",
+        True,
+        f"{active} active, {finished} finished under {'.agentic/state'}",
+    ))
+
+    missing_archives = []
+    for path in states:
+        try:
+            state = validate_state(read_state_file(path), path.stem)
+        except EngineError:
+            continue
+        if state["stage"] not in ACTIVE_STAGES and not (repo_root / ARCHIVE_DIR / f"{state['runId']}.md").is_file():
+            missing_archives.append(state["runId"])
+    checks.append(_doctor_check(
+        "run-archives",
+        not missing_archives,
+        "every finished run has an archive" if not missing_archives
+        else "finished with no archive in docs/runs: " + ", ".join(missing_archives),
+        required=False,
+    ))
+
+    return checks
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    state_dir = state_dir_for(repo_root, args.state_dir)
+    checks = doctor_checks(repo_root, state_dir)
+    failed = [item for item in checks if item["required"] and not item["ok"]]
+    emit({
+        "ok": not failed,
+        "failed": [item["name"] for item in failed],
+        "checks": checks,
+    })
+    return 0 if not failed else 1
 def cmd_archive(args: argparse.Namespace) -> int:
     """Write a run's history into the repository as reviewable Markdown.
 
@@ -1186,6 +1321,16 @@ def cmd_approve(args: argparse.Namespace) -> int:
 
 
 TOOL_REGISTRY_PATH = Path(".github") / "roles" / "tool-access.json"
+HOOK_POLICY_PATH = Path(".github") / "hooks" / "agent-policy.json"
+BUILD_PROMPT_PATH = Path(".github") / "prompts" / "build-feature.prompt.md"
+ARCHIVE_DIR = Path("docs") / "runs"
+
+# The two events that make this workflow more than documentation: one can stop a
+# tool call, the other can refuse to end a turn. A policy file that declares
+# neither would look installed and enforce nothing.
+REQUIRED_HOOK_EVENTS = ("preToolUse", "agentStop")
+
+HOOK_SCRIPT_PATTERN = re.compile(r"\.github/hooks/scripts/[A-Za-z0-9._-]+\.(?:sh|ps1)")
 
 # Observed Copilot harness tool names, mapped to the registry's capability kinds.
 # These are not guesses: they come from the tool names the harness actually sent,
@@ -1944,7 +2089,117 @@ class EngineSelfTest(unittest.TestCase):
         code, _ = self.quiet_cli("archive", "--run-id", "nope")
         self.assertEqual(code, 1)
 
+    def doctor_policy(self) -> dict:
+        handler = lambda name: {
+            "type": "command",
+            "bash": f"bash .github/hooks/scripts/{name}.sh",
+            "powershell": f"powershell -File .github/hooks/scripts/{name}.ps1",
+        }
+        return {
+            "version": 1,
+            "hooks": {
+                "preToolUse": [handler("pre-tool-policy")],
+                "agentStop": [handler("agent-stop")],
+            },
+        }
+
+    def write_doctor_fixture(self, policy: dict = None, prompt: str = None) -> None:
+        scripts = self.root / ".github" / "hooks" / "scripts"
+        scripts.mkdir(parents=True, exist_ok=True)
+        for name in ("pre-tool-policy", "agent-stop"):
+            (scripts / f"{name}.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+            (scripts / f"{name}.ps1").write_text("# fixture\n", encoding="utf-8")
+        policy_path = self.root / ".github" / "hooks" / "agent-policy.json"
+        policy_path.write_text(json.dumps(self.doctor_policy() if policy is None else policy), encoding="utf-8")
+        prompts = self.root / ".github" / "prompts"
+        prompts.mkdir(parents=True, exist_ok=True)
+        (prompts / "build-feature.prompt.md").write_text(
+            prompt if prompt is not None
+            else "python .github/scripts/agentic_engine.py start ... then archive",
+            encoding="utf-8",
+        )
+
+    def test_doctor_passes_on_a_wired_repository(self) -> None:
+        self.write_doctor_fixture()
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 0)
+        self.assertTrue(payload["ok"])
+        names = {item["name"] for item in payload["checks"]}
+        self.assertIn("hook-policy-preToolUse", names)
+        self.assertIn("hook-policy-agentStop", names)
+        self.assertIn("prompt-wiring", names)
+
+    def test_doctor_fails_when_a_handler_names_a_missing_script(self) -> None:
+        # The failure this exists for: a handler renamed on one side leaves a
+        # policy that looks installed and enforces nothing.
+        self.write_doctor_fixture()
+        (self.root / ".github" / "hooks" / "scripts" / "agent-stop.sh").unlink()
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 1)
+        self.assertIn("agent-stop.sh", " ".join(payload["failed"]))
+
+    def test_doctor_rejects_a_version_outside_the_schema(self) -> None:
+        policy = self.doctor_policy()
+        policy["version"] = "1.0"
+        self.write_doctor_fixture(policy=policy)
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 1)
+        self.assertIn("hook-policy-version", payload["failed"])
+
+    def test_doctor_requires_the_stop_hook(self) -> None:
+        policy = self.doctor_policy()
+        del policy["hooks"]["agentStop"]
+        self.write_doctor_fixture(policy=policy)
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 1)
+        self.assertIn("hook-policy-agentStop", payload["failed"])
+
+    def test_doctor_rejects_a_handler_that_is_not_a_command(self) -> None:
+        policy = self.doctor_policy()
+        policy["hooks"]["preToolUse"] = [{"type": "shell", "bash": "bash .github/hooks/scripts/pre-tool-policy.sh"}]
+        self.write_doctor_fixture(policy=policy)
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 1)
+        self.assertTrue(any("not a command entry" in item["detail"] for item in payload["checks"]))
+
+    def test_doctor_reports_a_prompt_that_never_mentions_the_engine(self) -> None:
+        self.write_doctor_fixture(prompt="Write the feature and open a PR.")
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 1)
+        self.assertIn("prompt-wiring", payload["failed"])
+
+    def test_doctor_flags_a_finished_run_with_no_archive(self) -> None:
+        self.write_doctor_fixture()
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 0, "a missing archive is a warning, not a failure")
+        archive = next(item for item in payload["checks"] if item["name"] == "run-archives")
+        self.assertFalse(archive["ok"])
+        self.assertIn("r1", archive["detail"])
+
+    def test_doctor_is_satisfied_once_the_run_is_archived(self) -> None:
+        self.write_doctor_fixture()
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        self.run_cli(["archive", "--run-id", "r1"])
+        code, payload = self.run_cli(["doctor"])
+        self.assertEqual(code, 0)
+        archive = next(item for item in payload["checks"] if item["name"] == "run-archives")
+        self.assertTrue(archive["ok"])
+
     def run_cli(self, argv: list) -> tuple[int, dict]:
+
         buffer = io.StringIO()
         with contextlib.redirect_stdout(buffer):
             code = main(argv + ["--repo-root", str(self.root), "--state-dir", str(self.state_dir)])
@@ -3394,6 +3649,11 @@ def build_parser() -> argparse.ArgumentParser:
     allow_write_parser.add_argument("--reason", required=True)
     allow_write_parser.set_defaults(func=cmd_allow_write)
 
+    doctor_parser = subparsers.add_parser(
+        "doctor", help="report whether the workflow is wired, and exit 1 when it is not"
+    )
+    _add_location_options(doctor_parser)
+    doctor_parser.set_defaults(func=cmd_doctor)
     archive_parser = subparsers.add_parser(
         "archive", help="write a run's history into the repository as Markdown"
     )

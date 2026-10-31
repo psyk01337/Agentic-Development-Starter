@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Add a doctor command that checks the wiring instead of assuming it
+
+- Area: agentic engine, engine runbook
+- Change type: feature, test, docs
+- Summary: adds `doctor`, which reports whether the workflow is wired in the current checkout and exits `1` when a required check fails. It verifies that `.github/hooks/agent-policy.json` parses, carries an integer `version`, declares `preToolUse` and `agentStop`, and that every handler is a `command` entry whose referenced script exists; that `build-feature.prompt.md` mentions the engine and the archive step; and reports active and finished runs, flagging any finished run with no archive in `docs/runs/`. Eight self-tests take the suite from 108 to 116.
+- Reason: this repository has now spent most of its life with a guardrail that looked installed and enforced nothing - a policy file outside the harness schema, then handlers reading argv while the host wrote stdin, then a shell twin that denied every hand invocation once a run existed. Each was found by hand, after the fact. A single command that states what is wired turns that from an investigation into a check, and it is the first thing a new user should run instead of trusting that the workflow is live.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the doctor command"
+- Validation: engine selftest 116/116. Run against this repository it reports 14 checks passing, 1 active and 1 finished run, and confirms the finished run has an archive. Each failure mode has a test: a missing handler script, a string `version`, a missing `agentStop`, a handler that is not a `command`, and a prompt that never mentions the engine.
+- Discrepancies or follow-up: `doctor` verifies that a hook handler names an existing script, not that the script behaves correctly - that is `check-hook-policy`'s job. The `run-archives` check is advisory by design and does not change the exit code, so a repository that never archives still reports healthy; that judgement is deliberate but arguable.
 ### 2026-10-31 - Stop paying for the engine gate when no run is active
 
 - Area: hook scripts, hook validators, hooks runbook
