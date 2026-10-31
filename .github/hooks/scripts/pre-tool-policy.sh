@@ -124,12 +124,45 @@ fi
 # safety control and has already run; the engine gate is a governance control,
 # and denying every tool call because of a missing interpreter makes the whole
 # policy get switched off - which is how this guardrail died once already.
+
+# The stage list mirrors ACTIVE_STAGES in the engine. check-hook-policy asserts
+# that an active run is still gated, so a stage missing here cannot put the gate
+# to sleep silently.
+any_active_run() {
+  local dir="$1" file stage
+  for file in "${dir}"/*.json; do
+    [[ -e "${file}" ]] || continue
+    case "${file}" in */.tmp-*) continue ;; esac
+    # The top-level stage is the only occurrence at exactly two spaces of indent;
+    # the history entries that also carry a stage key sit deeper, and reading the
+    # first match would report the stage a run started at rather than where it is.
+    # No match means the format moved, and an unknown answer consults the engine
+    # rather than assuming no run is live.
+    stage="$(grep -m1 -E '^  "stage": "[a-z]+"' "${file}" | sed -E 's/.*"([a-z]+)".*/\1/' || true)"
+    if [[ -z "${stage}" ]]; then
+      return 0
+    fi
+    case "${stage}" in
+      approval|implement|verify|repair|review) return 0 ;;
+    esac
+  done
+  return 1
+}
+
 engine_gate() {
   local state_dir="${AGENTIC_STATE_DIR:-${REPO_ROOT}/.agentic/state}"
   local engine="${REPO_ROOT}/.github/scripts/agentic_engine.py"
   local python_bin engine_out engine_status
 
   if [[ ! -d "${state_dir}" || ! -f "${engine}" ]]; then
+    return 0
+  fi
+
+  # Asking the engine costs two process spawns - the interpreter probe and the
+  # engine itself - and the answer is always "allow" once no run is in an active
+  # stage. Deciding that here costs a few milliseconds, so a session holding only
+  # finished runs pays nothing per tool call after the rules have been checked.
+  if ! any_active_run "${state_dir}"; then
     return 0
   fi
 

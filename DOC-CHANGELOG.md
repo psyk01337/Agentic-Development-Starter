@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Record the measured hook cost
+
+- Area: hooks runbook
+- Change type: docs, runbook
+- Summary: replaces the cost table in `docs/runbooks/hooks.md` with measured figures for both handlers across three states - no state directory, state present with no active run, and a run active - and explains why the engine gate is now skipped unless a run is in an active stage. Records that `Get-Content` costs ~65ms more than `[IO.File]::ReadAllLines` and that `pwsh` 7 measured slower than Windows PowerShell 5.1 for the same script, so the handler stays as it is for its guaranteed presence.
+- Reason: the old table described a hook that always paid an engine call once a state directory existed, which is no longer what the code does, and it gave no way to notice a regression in the per-call cost. The `pwsh` finding is worth writing down because the opposite is usually assumed.
+- Affected files: docs/runbooks/hooks.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Stop paying for the engine gate when no run is active"
+- Review status: reviewed
+- Discrepancies or follow-up: figures come from one machine and vary by roughly 20% between runs, so they describe magnitude rather than a benchmark. The numbers were taken under Windows PowerShell 5.1 and WSL bash; other hosts will differ.
 ### 2026-10-31 - Document the argv and stdin split in the hook runbook
 
 - Area: hooks runbook

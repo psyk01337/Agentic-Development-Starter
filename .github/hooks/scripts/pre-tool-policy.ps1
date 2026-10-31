@@ -39,7 +39,9 @@ function Get-PolicyRules([string]$RepoRoot) {
   }
 
   $parsedRules = @()
-  foreach ($line in Get-Content -Path $rulesPath) {
+  # Get-Content costs about 65ms more than this on every tool call, which is a
+  # first-use cmdlet cost rather than file size: the rules file is 27 lines.
+  foreach ($line in [IO.File]::ReadAllLines($rulesPath)) {
     if ([string]::IsNullOrWhiteSpace($line) -or $line.TrimStart().StartsWith("#")) {
       continue
     }
@@ -132,7 +134,29 @@ foreach ($rule in $rules) {
 $stateDir = if (-not [string]::IsNullOrWhiteSpace($env:AGENTIC_STATE_DIR)) { $env:AGENTIC_STATE_DIR } else { Join-Path $repoRoot ".agentic\state" }
 $enginePath = Join-Path $repoRoot ".github\scripts\agentic_engine.py"
 
-if ((Test-Path $stateDir -PathType Container) -and (Test-Path $enginePath -PathType Leaf)) {
+# The stage list mirrors ACTIVE_STAGES in the engine. check-hook-policy asserts
+# that an active run is still gated, so a stage missing here cannot put the gate
+# to sleep silently.
+function Test-AnyActiveRun([string]$Dir) {
+  $activeStages = @("approval", "implement", "verify", "repair", "review")
+  foreach ($file in [IO.Directory]::GetFiles($Dir, "*.json")) {
+    if ([IO.Path]::GetFileName($file).StartsWith(".tmp-")) { continue }
+    try {
+      $state = [IO.File]::ReadAllText($file) | ConvertFrom-Json
+    } catch {
+      # Unreadable state might be a live run mid-write. Ask the engine.
+      return $true
+    }
+    if ($activeStages -contains [string]$state.stage) { return $true }
+  }
+  return $false
+}
+
+# Asking the engine costs two process spawns - the interpreter probe and the
+# engine itself - and the answer is always "allow" once no run is in an active
+# stage. Deciding that here costs a few milliseconds, so a session holding only
+# finished runs pays nothing per tool call after the rules have been checked.
+if ((Test-Path $stateDir -PathType Container) -and (Test-Path $enginePath -PathType Leaf) -and (Test-AnyActiveRun $stateDir)) {
   $pythonExe = Find-UsablePython
 
   if (-not $pythonExe) {

@@ -140,6 +140,20 @@ if (Test-Path $policyScript) {
   Expect-BlockedArgv -Command "rm -rf /"
   Expect-AllowedArgv -Command "git status --short"
 
+  # The hook decides "is a run active?" itself, without asking the engine, so its
+  # stage list has to equal the engine's ACTIVE_STAGES. A stage present in one and
+  # not the other would leave the write-set gate asleep for exactly the runs that
+  # need it, and nothing else in this check would notice.
+  $hookText = [IO.File]::ReadAllText((Join-Path $RepoRoot ".github/hooks/scripts/pre-tool-policy.ps1"))
+  $hookStages = (([regex]::Match($hookText, '\$activeStages = @\(([^)]*)\)')).Groups[1].Value -split "," |
+    ForEach-Object { $_.Trim().Trim('"') } | Where-Object { $_ } | Sort-Object) -join " "
+  $engineText2 = [IO.File]::ReadAllText((Join-Path $RepoRoot ".github/scripts/agentic_engine.py"))
+  $engineStages = (([regex]::Match($engineText2, 'ACTIVE_STAGES = \(([^)]*)\)')).Groups[1].Value -split "," |
+    ForEach-Object { $_.Trim().Trim('"') } | Where-Object { $_ } | Sort-Object) -join " "
+  if ([string]::IsNullOrWhiteSpace($hookStages) -or [string]::IsNullOrWhiteSpace($engineStages) -or $hookStages -ne $engineStages) {
+    Add-CheckError("Hook active-stage list '$hookStages' does not match engine ACTIVE_STAGES '$engineStages'")
+  }
+
   # CRLF in a .sh makes bash fail on line 2 with a misleading "invalid option
   # name", which presents as the hook being broken rather than the file being
   # wrong. .gitattributes normalises on checkout, but a file written by an editor
@@ -209,6 +223,26 @@ if (Test-Path $policyScript) {
         $null = & $policyHost -NoProfile -ExecutionPolicy Bypass -File $policyScript -Command "git status --short" 2>&1
         if ($LASTEXITCODE -ne 0) {
           Add-CheckError("Engine gate denied an argv invocation while a run was active")
+        }
+
+        # A finished run must release the session, and the hook must not spend an
+        # engine call proving that on every tool call afterwards. The path below is
+        # outside every write set, so this also fails if the fast path ever treats a
+        # finished run as active.
+        # Built by the engine rather than hand-written: a state file the engine
+        # cannot validate makes check-tool deny every call, so a hand-written
+        # fixture would test the deny path instead of the release path.
+        $doneState = Join-Path $gateDir "done-state"
+        New-Item -ItemType Directory -Path $doneState -Force | Out-Null
+        $null = & $pythonExe $engine init --run-id donefx --task $taskFile --repo-root $RepoRoot --state-dir $doneState 2>&1
+        $null = & $pythonExe $engine record --run-id donefx --stage implement --summary fixture --by fixture --file src/allowed.py --evidence cmd:fixture --repo-root $RepoRoot --state-dir $doneState 2>&1
+        $null = & $pythonExe $engine record --run-id donefx --stage verify --verdict VERIFIED --check "fixture=ok" --evidence "cmd:fixture" --repo-root $RepoRoot --state-dir $doneState 2>&1
+        $null = & $pythonExe $engine record --run-id donefx --stage review --decision pass --reviewer reviewer --evidence "cmd:fixture" --repo-root $RepoRoot --state-dir $doneState 2>&1
+        $env:AGENTIC_STATE_DIR = $doneState
+        $doneExit = & $gateCall '{"toolName":"create_file","toolArgs":{"filePath":"src/outside.py"}}'
+        $env:AGENTIC_STATE_DIR = $gateState
+        if ($doneExit -ne 0) {
+          Add-CheckError("A finished run must release the write-set gate")
         }
       } finally {
         $env:AGENTIC_STATE_DIR = $previousGateState

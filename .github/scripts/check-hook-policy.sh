@@ -139,6 +139,16 @@ fi
 expect_blocked_argv "rm -rf /"
 expect_allowed_argv "git status --short"
 
+# The hook decides "is a run active?" itself, without asking the engine, so its
+# stage list has to equal the engine's ACTIVE_STAGES. A stage present in one and
+# not the other would leave the write-set gate asleep for exactly the runs that
+# need it, and nothing else in this check would notice.
+hook_stages="$(grep -E '^ *approval\|implement\|verify\|repair\|review\)' "${POLICY_SCRIPT}" | head -n 1 | sed -E 's/.*(approval.*review).*/\1/' | tr '|' '\n' | sort | tr '\n' ' ')"
+engine_stages="$(grep -E '^ACTIVE_STAGES = \(' "${REPO_ROOT}/.github/scripts/agentic_engine.py" | head -n 1 | grep -oE '"[a-z]+"' | tr -d '"' | sort | tr '\n' ' ')"
+if [[ -z "${hook_stages}" || "${hook_stages}" != "${engine_stages}" ]]; then
+  report_error "Hook active-stage list '${hook_stages}' does not match engine ACTIVE_STAGES '${engine_stages}'"
+fi
+
 # The engine gate is the one code path that can deny every tool call in a
 # session, so it is exercised here rather than trusted. The earlier version
 # picked python3 off PATH, which on Windows is often a Microsoft Store stub that
@@ -216,6 +226,33 @@ else
   fi
   if AGENTIC_STATE_DIR="${gate_state}" bash "${POLICY_SCRIPT}" "rm -rf /" </dev/null >/dev/null 2>&1; then
     report_error "Argv invocation skipped the rule layer while a run was active"
+  fi
+
+  # A finished run must release the session, and the hook must not spend an
+  # engine call proving that on every tool call afterwards. The path below is
+  # outside every write set, so this also fails if the fast path ever treats a
+  # finished run as active.
+  # Built by the engine rather than hand-written: a state file the engine cannot
+  # validate makes check-tool deny every call, so a hand-written fixture would
+  # test the deny path instead of the release path.
+  done_state="${gate_dir}/done-state"
+  mkdir -p "${done_state}"
+  if ! "${gate_python}" "${engine}" init --run-id donefx --task "${task_file}" \
+      --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1 \
+    || ! "${gate_python}" "${engine}" record --run-id donefx --stage implement \
+      --summary fixture --by fixture --file src/allowed.py --evidence cmd:fixture \
+      --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1 \
+    || ! "${gate_python}" "${engine}" record --run-id donefx --stage verify \
+      --verdict VERIFIED --check "fixture=ok" --evidence "cmd:fixture" \
+      --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1 \
+    || ! "${gate_python}" "${engine}" record --run-id donefx --stage review \
+      --decision pass --reviewer reviewer --evidence "cmd:fixture" \
+      --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1; then
+    report_error "Could not drive the finished-run fixture to done"
+  fi
+  if ! printf '{"toolName":"create","toolArgs":{"path":"src/outside.py"}}' \
+    | AGENTIC_STATE_DIR="${done_state}" bash "${POLICY_SCRIPT}" >/dev/null 2>&1; then
+    report_error "A finished run must release the write-set gate"
   fi
 
   # A gate that cannot run must allow. Denying every tool call because an

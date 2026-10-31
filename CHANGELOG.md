@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Stop paying for the engine gate when no run is active
+
+- Area: hook scripts, hook validators, hooks runbook
+- Change type: fix, test, docs
+- Summary: `pre-tool-policy.{sh,ps1}` now decide "is any run in an active stage?" themselves by reading the state files, and only consult the engine when the answer is yes, so a repository holding nothing but finished runs stops spawning an interpreter and the engine on every tool call. The PowerShell twin reads the rules with `[IO.File]::ReadAllLines` instead of `Get-Content`. Both validators assert that the hook's stage list equals the engine's `ACTIVE_STAGES`, that an active run still denies an out-of-set write, and that a finished run releases the gate.
+- Reason: measured at ~1016ms per tool call on the PowerShell handler once a state directory existed, against ~577ms without one, and the shell twin went from ~44ms to ~285ms. The difference was two process spawns - the interpreter probe and the engine - producing an answer that is always "allow" once no run is active. A completed run left in `.agentic/state` held that cost for the rest of the session, which is most of a session that has already shipped something.
+- Affected files: .github/hooks/scripts/pre-tool-policy.sh, .github/hooks/scripts/pre-tool-policy.ps1, .github/scripts/check-hook-policy.sh, .github/scripts/check-hook-policy.ps1, docs/runbooks/hooks.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Record the measured hook cost"
+- Validation: ten calls per case, before and after. Shell done-only 285ms to 60ms; PowerShell done-only ~1016ms to ~640ms; live-run cases unchanged at ~300ms and ~990ms. `check-hook-policy.sh` and `check-hook-policy.ps1` both pass. Both stage-list extractions were printed and confirmed to yield `approval implement repair review verify`, so the new invariant is not passing vacuously.
+- Discrepancies or follow-up: two of my own mistakes, both caught by running rather than reading. The first benchmark ran both handlers concurrently, so every figure was contention noise and two numbers got worse. The first stage detection took the first `"stage"` in the file, which is a history entry rather than the current stage, so a finished run looked active; the anchor is now the two-space indent the engine writes for top-level keys, and an unmatched format falls back to the engine rather than assuming no run is live. A third finding came from the new assertion failing: a state file the engine cannot validate makes `check-tool` deny every call, so the finished-run fixture is now built by the engine instead of hand-written. The remaining cost is process startup - ~290ms for Windows PowerShell alone plus ~190ms of .NET first-use - which this repository cannot remove.
 ### 2026-10-31 - Stop the shell hook twin from denying every hand invocation while a run exists
 
 - Area: hook scripts, hook validators, hooks runbook

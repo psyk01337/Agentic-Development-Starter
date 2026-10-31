@@ -183,17 +183,24 @@ The same escape exists for the write-set gate specifically: a finished or `block
 
 The hook runs on every tool call, so its latency matters:
 
+Measured on this repository's development machine, ten calls per row:
+
 | layer | measured cost |
 |---|---|
-| bash handler, no active run | ~265ms per call |
-| PowerShell handler, no active run | ~640ms per call |
-| one Python engine call | ~120ms, only when a run exists |
+| bash handler, no state directory | ~45ms per call |
+| bash handler, state present, no active run | ~60ms per call |
+| bash handler, run active | ~300ms per call |
+| PowerShell handler, no state directory | ~580-690ms per call |
+| PowerShell handler, state present, no active run | ~640ms per call |
+| PowerShell handler, run active | ~990ms per call |
 
 The rule probe is the part that can be tuned and has been: 27 rules matched individually cost ~150ms because each is a separate `grep` process, while one combined alternation costs ~16ms. The shell walks the rules in file order only after the combined probe matches, so the first matching rule still wins and its reason is still the one reported.
 
-The remaining cost is process startup, not logic — PowerShell 5.1 alone accounts for most of the Windows figure. Avoid adding work to these scripts; if a hook needs to do more, it should hand off rather than grow.
+The engine gate is skipped unless a run is in an active stage. Deciding that costs a few milliseconds because it reads the state files directly, and asking the engine costs two process spawns — the interpreter probe and the engine itself. Before that change a repository holding a single finished run paid ~310ms extra on every tool call, which is most tool calls in a session that has already shipped something. An unreadable state file is not treated as "no run": it falls back to the engine, which denies.
 
-The cost is also why the engine gate is skipped entirely when `.agentic/state` is absent. Ordinary editing pays only the rule layer.
+Two other things measured rather than assumed. `Get-Content` costs ~65ms more than `[IO.File]::ReadAllLines` over a noop baseline, so the rules are read directly. And `pwsh` 7 is *slower* here than Windows PowerShell 5.1 — 487ms against 377ms for the same script — so the handler is not the performance knob it looks like, and 5.1 stays for its guaranteed presence on Windows.
+
+What remains is process startup: ~290ms for Windows PowerShell alone, plus roughly 190ms of .NET first-use inside the script that does not come back. Avoid adding work to these scripts; if a hook needs to do more, it should hand off rather than grow.
 
 ### Vocabulary Contract
 
