@@ -1,5 +1,5 @@
 {
-  "version": "2.6.0",
+  "version": "2.7.0",
   "maintainerAssetScan": true,
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
@@ -440,6 +440,7 @@
         "docs/runbooks/supervisor-orchestration.md",
         "docs/runbooks/engineering-team.md",
         "docs/runbooks/agentic-engine.md",
+        "docs/runs/README.md",
         "docs/adr/0003-supervisor-orchestration-overlay.md",
         "docs/adr/0007-nested-delegation-disabled.md",
         "docs/adr/0004-adapter-bound-delegation.md",

@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Close a slice without hand-written JSON, and keep the record
+
+- Area: agentic engine, build-feature prompt, docs
+- Change type: feature, test, docs
+- Summary: `record` now accepts a stage result as flags (`--summary`, `--by`, `--file`, `--verdict`, `--check name=ok|fail:message`, `--decision`, `--reviewer`, `--finding`) instead of requiring a JSON file, and both paths run through the same validation. Adds `archive`, which writes a run's task, acceptance criteria, write set and full history to `docs/runs/<run-id>.md` so it can be committed. The `action` field in every stage payload now prints the exact flag form rather than `--result <file>`, and `docs/runs/README.md` records the convention. Seven self-tests take the suite from 101 to 108. Manifest version goes to `2.7.0`.
+- Reason: two frictions kept the loop from being used. Three hand-written JSON files per slice meant fifteen for the six-slice game, and each one was an opportunity to misremember a field name — the exact failure the engine exists to prevent. Separately, `.agentic/` is gitignored, so archiving history was the only way to keep evidence and I deleted every run instead, leaving nothing to show that a gate had ever bound. An audit trail that is discarded is not an audit trail.
+- Affected files: .github/scripts/agentic_engine.py, .github/prompts/build-feature.prompt.md, docs/runbooks/agentic-engine.md, docs/runs/README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the flags-based record path and run archives"
+- Validation: engine selftest 108/108. Exercised against a scratch state directory: `start` created a run, `record --stage implement` with flags advanced it to `verify`, a `VERIFIED` verdict over `--check "node --test=fail:1 failing"` was refused with exit 1, and `archive` wrote the history. The test for the archive asserts the file survives deletion of the state directory, which is the property that makes it worth committing.
+- Discrepancies or follow-up: `archive` is a manual step at the end of a slice, so a run whose state is deleted unarchived is still lost; nothing prevents that. The flags path cannot express a result shape the engine adds later, so `--result <file>` is kept as the escape hatch. Whether an agent follows the flag form in practice is unobserved — as with the rest of this workflow, the command is documented and validated, not enforced.
+
 ### 2026-10-31 - Give the engine a usable front door
 
 - Area: agentic engine, workflow prompts, docs

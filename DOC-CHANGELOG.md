@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Document the flags-based record path and run archives
+
+- Area: engine runbook, build-feature prompt, docs/runs
+- Change type: docs, runbook
+- Summary: `docs/runbooks/agentic-engine.md` gains "record From Flags" (a stage-to-flag table and the note that `--result <file>` remains the escape hatch) and "archive" (why gitignored state has to be written into the repository, and the warning to archive before deleting state). The command list now leads with the flag form. `build-feature.prompt.md` replaces the prose "close the slice in order" sentence with the four copyable commands ending in `archive`. Adds `docs/runs/README.md` recording the archive convention and stating that entries are generated, not hand-written.
+- Reason: the runbook documented `record --result <file>` as the only path, so an agent reading it would keep producing hand-written JSON even after the flags existed. Documentation that contradicts the code is worse than documentation that omits it, because it is followed.
+- Affected files: docs/runbooks/agentic-engine.md, .github/prompts/build-feature.prompt.md, docs/runs/README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Close a slice without hand-written JSON, and keep the record"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook still describes `--result <file>` only as an escape hatch in prose; it does not enumerate the JSON schema for each stage, which is now the secondary path. No archive exists yet for the runs created during the game build, because their state was deleted before the command did.
+
 ### 2026-10-31 - Document the engine entry points
 
 - Area: engine runbook, build-feature prompt

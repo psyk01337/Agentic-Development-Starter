@@ -107,7 +107,10 @@ STAGE_INSTRUCTIONS = {
     },
     "implement": {
         "objective": "Implement the smallest slice that satisfies the acceptance criteria.",
-        "action": "Record with: record --run-id <id> --stage implement --result <file>",
+        "action": (
+            "Record with: record --run-id <id> --stage implement "
+            "--summary <what changed> --by <who> --file <path> [--file <path>...] --evidence <pointer>"
+        ),
         "requiredResult": {
             "status": "done",
             "summary": "string",
@@ -118,7 +121,10 @@ STAGE_INSTRUCTIONS = {
     },
     "repair": {
         "objective": "Fix only the recorded blocking findings, then re-verify.",
-        "action": "Record with: record --run-id <id> --stage repair --result <file>",
+        "action": (
+            "Record with: record --run-id <id> --stage repair "
+            "--summary <what changed> --by <who> --file <path> [--file <path>...] --evidence <pointer>"
+        ),
         "requiredResult": {
             "status": "done",
             "summary": "string",
@@ -129,7 +135,11 @@ STAGE_INSTRUCTIONS = {
     },
     "verify": {
         "objective": "Run the real verification for the touched surfaces and report the result.",
-        "action": "Record with: record --run-id <id> --stage verify --result <file>",
+        "action": (
+            "Record with: record --run-id <id> --stage verify "
+            "--verdict VERIFIED|NOT_VERIFIED|INCONCLUSIVE --check <name>=ok|<name>=fail:<message> "
+            "--evidence <pointer>"
+        ),
         "requiredResult": {
             "result": "VERIFIED | NOT_VERIFIED | INCONCLUSIVE",
             "checks": [{"name": "string", "ok": True, "message": "string"}],
@@ -138,7 +148,11 @@ STAGE_INSTRUCTIONS = {
     },
     "review": {
         "objective": "Review the change and return a pass or needs-revision decision.",
-        "action": "Record with: record --run-id <id> --stage review --result <file>",
+        "action": (
+            "Record with: record --run-id <id> --stage review "
+            "--decision pass|needs-revision --reviewer <who> [--finding severity:summary...] "
+            "--evidence <pointer>"
+        ),
         "requiredResult": {
             "decision": "pass | needs-revision",
             "reviewedBy": "agent or person distinct from every implementer",
@@ -861,6 +875,113 @@ def _handle_failure(state: dict, policy: dict, result: dict, evidence: list) -> 
     return "repair", "repair-scheduled"
 
 
+def _result_from_flags(args: argparse.Namespace) -> dict:
+    """Build a stage result from flags instead of a hand-written JSON file.
+
+    Three result files per slice was the remaining reason the workflow did not
+    feel like a workflow: `start` removed the task file, and this removes the
+    rest. The built dict goes through exactly the same validation as a file, so
+    the two paths cannot accept different things.
+    """
+    if args.stage in ("implement", "repair"):
+        if not args.summary or not args.by or not args.file:
+            raise EngineError(
+                "implement and repair need --summary, --by and at least one --file "
+                "(or use --result with a JSON file)"
+            )
+        return {
+            "status": "done",
+            "summary": args.summary,
+            "implementedBy": args.by,
+            "filesChanged": list(args.file),
+            "evidence": list(args.evidence or []),
+        }
+
+    if args.stage == "verify":
+        if not args.verdict:
+            raise EngineError("verify needs --verdict VERIFIED|NOT_VERIFIED|INCONCLUSIVE")
+        checks = []
+        for spec in args.check or []:
+            # "name=ok" or "name=fail:message"
+            name, _, rest = spec.partition("=")
+            if not name or not rest:
+                raise EngineError(f"--check must look like name=ok or name=fail:message; got {spec!r}")
+            ok, _, message = rest.partition(":")
+            checks.append({"name": name, "ok": ok.strip().lower() == "ok", "message": message.strip()})
+        return {
+            "result": args.verdict,
+            "checks": checks,
+            "evidence": list(args.evidence or []),
+        }
+
+    if args.stage == "review":
+        if not args.decision or not args.reviewer:
+            raise EngineError("review needs --decision pass|needs-revision and --reviewer")
+        findings = []
+        for spec in args.finding or []:
+            severity, _, summary = spec.partition(":")
+            if not severity or not summary:
+                raise EngineError(f"--finding must look like severity:summary; got {spec!r}")
+            findings.append({"severity": severity.strip(), "summary": summary.strip()})
+        return {
+            "decision": args.decision,
+            "reviewedBy": args.reviewer,
+            "findings": findings,
+            "evidence": list(args.evidence or []),
+        }
+
+    raise EngineError(f"no flag mapping for stage {args.stage}")
+
+
+def cmd_archive(args: argparse.Namespace) -> int:
+    """Write a run's history into the repository as reviewable Markdown.
+
+    Run state lives in `.agentic/state/`, which is gitignored, so the history of
+    how a change was reached disappears with it. That history is the only record
+    that a run happened at all, and a commit shows what changed without showing
+    why it was accepted.
+    """
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    state_dir = state_dir_for(repo_root, args.state_dir)
+    state = load_state(state_dir, args.run_id)
+    task = state["task"]
+
+    out_path = Path(args.out) if args.out else repo_root / "docs" / "runs" / f"{args.run_id}.md"
+    if not out_path.is_absolute():
+        out_path = repo_root / out_path
+
+    lines = [
+        f"# Run {state['runId']}",
+        "",
+        f"- Task: {task.get('taskId')} — {task.get('title')}",
+        f"- Status: {state['status']}",
+        f"- Final stage: {state.get('lastStage') or state['stage']}",
+        f"- Created: {state.get('createdAt')}",
+        f"- Updated: {state.get('updatedAt')}",
+        "",
+        "## Acceptance criteria",
+        "",
+    ]
+    lines += [f"- {item}" for item in task.get("acceptanceCriteria", [])]
+    lines += ["", "## Write set", ""]
+    lines += [f"- `{item}`" for item in task.get("writeSet", [])]
+    lines += ["", "## History", "", "| # | stage | action | detail |", "| --- | --- | --- | --- |"]
+    for index, entry in enumerate(state.get("history", []), start=1):
+        detail = {k: v for k, v in entry.items() if k not in ("stage", "action", "at")}
+        rendered = json.dumps(detail, sort_keys=True) if detail else ""
+        lines.append(
+            f"| {index} | {entry.get('stage', '')} | {entry.get('action', '')} | {rendered.replace('|', '/')} |"
+        )
+    if state.get("blocker"):
+        lines += ["", "## Blocker", "", f"- {state['blocker'].get('reason')}: {state['blocker'].get('detail')}"]
+    lines.append("")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    emit({"runId": state["runId"], "archivedTo": out_path.relative_to(repo_root).as_posix()})
+    return 0
+
+
 def cmd_record(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
     policy = load_policy(repo_root)
@@ -883,7 +1004,7 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
         save_state(state_dir, state)
         emit(next_payload(state))
         return 3
-    result = read_json_file(args.result)
+    result = read_json_file(args.result) if args.result else _result_from_flags(args)
     evidence = validate_evidence(result.get("evidence"), repo_root)
     state["lastEvidence"] = evidence
     state["lastEvidenceStage"] = args.stage
@@ -1713,6 +1834,114 @@ class EngineSelfTest(unittest.TestCase):
         code, _ = self.start_cli(
             "allow-write", "--run-id", "r1", "--path", "src/b.py", "--reason", "late",
         )
+        self.assertEqual(code, 1)
+
+    def quiet_cli(self, *argv: str) -> tuple[int, dict]:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(io.StringIO()):
+            code = main(list(argv) + ["--repo-root", str(self.root), "--state-dir", str(self.state_dir)])
+        text = buffer.getvalue().strip()
+        return code, (json.loads(text) if text else {})
+
+    def test_record_from_flags_reaches_the_same_state_as_a_file(self) -> None:
+        # The flags path exists so a slice does not need three hand-written JSON
+        # files. If it diverged from the file path the workflow would be quietly
+        # weaker, so drive a whole run both ways and compare the observable state.
+        self.init()
+        code, payload = self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "implement",
+            "--summary", "added a", "--by", "engineer", "--file", "src/a.py",
+            "--evidence", "diff:HEAD",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "verify")
+        code, payload = self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "verify",
+            "--verdict", "VERIFIED", "--check", "pytest=ok",
+            "--evidence", "cmd:pytest",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "review")
+        code, payload = self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "review",
+            "--decision", "pass", "--reviewer", "reviewer", "--evidence", "cmd:review",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "done")
+        state = load_state(self.state_dir, "r1")
+        self.assertEqual(state["status"], "DONE")
+        self.assertEqual(state["lastEvidence"], ["cmd:review"])
+
+    def test_record_from_flags_is_validated_like_a_file(self) -> None:
+        # A VERIFIED verdict over a failing check must be refused on both paths.
+        self.init()
+        self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "implement",
+            "--summary", "s", "--by", "engineer", "--file", "src/a.py",
+        )
+        code, _ = self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "verify",
+            "--verdict", "VERIFIED", "--check", "pytest=fail:boom",
+            "--evidence", "cmd:pytest",
+        )
+        self.assertEqual(code, 1)
+
+    def test_record_from_flags_requires_the_fields_the_stage_needs(self) -> None:
+        self.init()
+        for argv in (
+            ("record", "--run-id", "r1", "--stage", "implement", "--by", "engineer", "--file", "src/a.py"),
+            ("record", "--run-id", "r1", "--stage", "implement", "--summary", "s", "--by", "engineer"),
+            ("record", "--run-id", "r1", "--stage", "verify", "--evidence", "cmd:pytest"),
+            ("record", "--run-id", "r1", "--stage", "review", "--decision", "pass"),
+        ):
+            code, _ = self.quiet_cli(*argv)
+            self.assertEqual(code, 1, f"expected refusal for {argv!r}")
+
+    def test_record_from_flags_rejects_a_malformed_check(self) -> None:
+        self.init()
+        self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "implement",
+            "--summary", "s", "--by", "engineer", "--file", "src/a.py",
+        )
+        code, _ = self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "verify",
+            "--verdict", "VERIFIED", "--check", "pytest", "--evidence", "cmd:pytest",
+        )
+        self.assertEqual(code, 1)
+
+    def test_archive_writes_the_history_that_state_deletion_would_erase(self) -> None:
+        # `.agentic/` is gitignored, so without an archive a completed run leaves
+        # no trace at all: the commit shows the diff and nothing about the gates.
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        code, payload = self.quiet_cli("archive", "--run-id", "r1")
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["archivedTo"], "docs/runs/r1.md")
+        written = (self.root / "docs" / "runs" / "r1.md").read_text(encoding="utf-8")
+        self.assertIn("# Run r1", written)
+        self.assertIn("it works", written)
+        self.assertIn("| 1 |", written)
+        self.assertIn("verify", written)
+        self.assertIn("review", written)
+        self.assertNotIn("\r\n", written)
+
+        shutil.rmtree(self.state_dir, ignore_errors=True)
+        self.assertTrue((self.root / "docs" / "runs" / "r1.md").is_file())
+
+    def test_archive_accepts_an_explicit_output_path(self) -> None:
+        self.init()
+        code, payload = self.quiet_cli("archive", "--run-id", "r1", "--out", "docs/runs/custom.md")
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["archivedTo"], "docs/runs/custom.md")
+        self.assertTrue((self.root / "docs" / "runs" / "custom.md").is_file())
+
+    def test_archive_refuses_an_unknown_run(self) -> None:
+        code, _ = self.quiet_cli("archive", "--run-id", "nope")
         self.assertEqual(code, 1)
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
@@ -3165,6 +3394,14 @@ def build_parser() -> argparse.ArgumentParser:
     allow_write_parser.add_argument("--reason", required=True)
     allow_write_parser.set_defaults(func=cmd_allow_write)
 
+    archive_parser = subparsers.add_parser(
+        "archive", help="write a run's history into the repository as Markdown"
+    )
+    _add_location_options(archive_parser)
+    archive_parser.add_argument("--run-id", required=True)
+    archive_parser.add_argument("--out", default=None, help="default: docs/runs/<run-id>.md")
+    archive_parser.set_defaults(func=cmd_archive)
+
     next_parser = subparsers.add_parser("next", help="show the next action")
     _add_location_options(next_parser)
     next_parser.add_argument("--run-id", required=True)
@@ -3184,7 +3421,16 @@ def build_parser() -> argparse.ArgumentParser:
     _add_location_options(record_parser)
     record_parser.add_argument("--run-id", required=True)
     record_parser.add_argument("--stage", required=True, choices=["implement", "repair", "verify", "review"])
-    record_parser.add_argument("--result", required=True)
+    record_parser.add_argument("--result", default=None, help="JSON result file; omit to use the flags below")
+    record_parser.add_argument("--summary", default=None)
+    record_parser.add_argument("--by", default=None, help="who implemented this (implement/repair)")
+    record_parser.add_argument("--file", action="append", default=None, help="changed file; repeat")
+    record_parser.add_argument("--evidence", action="append", default=None, help="evidence pointer, e.g. cmd:npm test; repeat")
+    record_parser.add_argument("--verdict", default=None, choices=["VERIFIED", "NOT_VERIFIED", "INCONCLUSIVE"])
+    record_parser.add_argument("--check", action="append", default=None, help="name=ok or name=fail:message; repeat")
+    record_parser.add_argument("--decision", default=None, choices=["pass", "needs-revision"])
+    record_parser.add_argument("--reviewer", default=None)
+    record_parser.add_argument("--finding", action="append", default=None, help="severity:summary; repeat")
     record_parser.set_defaults(func=cmd_record)
 
     approve_parser = subparsers.add_parser("approve", help="record human approval")

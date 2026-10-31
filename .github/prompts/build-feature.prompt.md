@@ -32,7 +32,24 @@ If the work discovers a file the plan did not predict, extend the set deliberate
 python .github/scripts/agentic_engine.py allow-write --run-id <slice-id> --path <path> --reason "<why>"
 ```
 
-Then close the slice in order: `record --stage implement`, `record --stage verify` (refused unless every check passes), `record --stage review` with a reviewer distinct from the implementer. The run releases the write bound when it reaches `done`.
+Then close the slice in order. Each step is one command — no hand-written JSON:
+
+```bash
+python .github/scripts/agentic_engine.py record --run-id <slice-id> --stage implement \
+  --summary "<what changed>" --by <agent> --file <path> --evidence <pointer>
+
+python .github/scripts/agentic_engine.py record --run-id <slice-id> --stage verify \
+  --verdict VERIFIED --check "<check>=ok" --evidence "cmd:<command>"
+
+python .github/scripts/agentic_engine.py record --run-id <slice-id> --stage review \
+  --decision pass --reviewer <agent distinct from the implementer> --evidence <pointer>
+
+python .github/scripts/agentic_engine.py archive --run-id <slice-id>
+```
+
+`verify` is refused unless every `--check` reports `ok`. Report `NOT_VERIFIED` with `--check "<name>=fail:<message>"` instead of claiming success. `archive` writes the run history to `docs/runs/<slice-id>.md` before the state is discarded; commit it with the change so the gates leave a trace.
+
+The run releases the write bound when it reaches `done`.
 
 Without a run the hooks stay inert and the repository falls back to conventions. That is a valid way to work, but it is not this workflow — if you skip the run, say so rather than implying the gates applied.
 

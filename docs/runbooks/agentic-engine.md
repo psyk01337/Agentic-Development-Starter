@@ -49,13 +49,13 @@ python .github/scripts/agentic_engine.py start --run-id feature-123 --title "Add
 python .github/scripts/agentic_engine.py allow-write --run-id feature-123 --path src/b.py --reason "helper discovered during implementation"
 python .github/scripts/agentic_engine.py init --run-id feature-123 --task task.json
 python .github/scripts/agentic_engine.py next --run-id feature-123
-python .github/scripts/agentic_engine.py record --run-id feature-123 --stage implement --result implement.json
-python .github/scripts/agentic_engine.py record --run-id feature-123 --stage verify --result verify.json
-python .github/scripts/agentic_engine.py record --run-id feature-123 --stage repair --result repair.json
-python .github/scripts/agentic_engine.py record --run-id feature-123 --stage review --result review.json
+python .github/scripts/agentic_engine.py record --run-id feature-123 --stage implement --summary "added a" --by alice --file src/a.py --evidence diff:HEAD
+python .github/scripts/agentic_engine.py record --run-id feature-123 --stage verify --verdict VERIFIED --check "pytest=ok" --evidence "cmd:pytest"
+python .github/scripts/agentic_engine.py record --run-id feature-123 --stage review --decision pass --reviewer bob --evidence "cmd:review"
 python .github/scripts/agentic_engine.py approve --run-id feature-123 --approver alice --note "approved"
 python .github/scripts/agentic_engine.py status --run-id feature-123
 python .github/scripts/agentic_engine.py report --run-id feature-123
+python .github/scripts/agentic_engine.py archive --run-id feature-123
 python .github/scripts/agentic_engine.py selftest
 ```
 
@@ -84,6 +84,30 @@ python .github/scripts/agentic_engine.py allow-write --run-id ember-s3 --path ap
 ```
 
 Without it the only options are a uselessly broad write set or stalling on a refusal, and both push people to disable the gate. Adding a path that is already present is a no-op, and a finished or blocked run refuses the change.
+
+### `record` From Flags
+
+`record` also accepts the stage result as flags, so a run needs no hand-written JSON. The built result goes through the same validation as a file, so both paths accept and refuse exactly the same things; `--result <file>` still works and remains the escape hatch for a result the flags cannot express.
+
+| Stage | Flags |
+| --- | --- |
+| `implement`, `repair` | `--summary`, `--by`, `--file` (repeat) |
+| `verify` | `--verdict`, `--check name=ok` or `--check name=fail:<message>` (repeat) |
+| `review` | `--decision`, `--reviewer`, `--finding severity:summary` (repeat) |
+
+Every stage also takes `--evidence <pointer>` (repeat). The `action` field the engine returns prints the exact flag form for the current stage, so the next command is copyable rather than remembered.
+
+### `archive`
+
+Run state lives under `.agentic/`, which is gitignored. A completed run therefore leaves no trace once the working copy moves on: the commit shows the diff and nothing about which gates it passed, what evidence was recorded, or why a repair happened.
+
+`archive` writes the run to `docs/runs/<run-id>.md` — task, acceptance criteria, write set, and the full stage history — so the record can be committed alongside the change. `--out <path>` overrides the destination.
+
+```bash
+python .github/scripts/agentic_engine.py archive --run-id ember-s3
+```
+
+Archive a run before deleting its state. Deleting `.agentic/` first destroys the history the archive would have captured.
 
 Exit codes: `0` success, `1` invalid input or transition, `3` blocked or
 escalated. `next`, `status`, and `report` all return `3` for a blocked run.
