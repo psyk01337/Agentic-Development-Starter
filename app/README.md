@@ -33,9 +33,16 @@ The single most useful thing in this file is the command that proves the applica
 Replace this block with the project's real commands:
 
 ```bash
-# app checks - replace with the real ones
-python3 -m unittest discover -s app/tests -t .
+cd app/game && node --test
 ```
+
+That is the Ember Run suite: `node --test` with no arguments auto-discovers
+`*.test.mjs` under the directory. Passing the directory instead
+(`node --test tests/`) fails on Windows, so use the bare form.
+
+`npm test` in `app/game` runs the same thing. That is the command that proves
+the current slice works, and it is the one to run before reporting anything as
+done.
 
 Rules that matter for those commands:
 

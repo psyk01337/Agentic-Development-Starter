@@ -88,14 +88,27 @@ choice costs a rewrite and because only one engine overlay may be enabled at a t
 
 Requirements map to slices in this order. Each slice is one `build-feature` run.
 
-| Slice | Covers | Depends on |
-| --- | --- | --- |
-| S1 Deterministic simulation core | FR-2, NFR-1, NFR-6 | Decision 1 |
-| S2 Input and jump physics | FR-1, FR-9 | S1 |
-| S3 Collision, scoring, run end | FR-3, FR-4 | S1, S2 |
-| S4 Persistence and clamping | FR-5, NFR-5 | S3, Decision 3 |
-| S5 Difficulty ramp and mute | FR-7, FR-8 | S3 |
-| S6 Perf pass and build prep | NFR-2, NFR-3 | S1-S5 |
+| Slice | Covers | Depends on | Status |
+| --- | --- | --- | --- |
+| S1 Deterministic simulation core | FR-2, NFR-1, NFR-6 | Decision 1 | Delivered — `src/rng.js`, `src/loop.js`, 9 tests |
+| S2 Auto-run and jump physics | FR-1 (physics half), NFR-1 | S1 | Delivered — `src/player.js`, 10 tests. Input binding still open |
+| S3 Collision, scoring, run end | FR-3, FR-4 | S1, S2 | Not started |
+| S4 Persistence and clamping | FR-5, NFR-5 | S3, Decision 3 | Not started |
+| S5 Difficulty ramp and mute | FR-7, FR-8 | S3 | Not started |
+| S6 Perf pass and build prep | NFR-2, NFR-3 | S1-S5 | Not started |
+
+S1 and S2 are deliberately engine-agnostic, so they were built before Decision 1
+was settled. Everything from S3 that touches rendering is blocked on it.
+
+FR-9 (touch, keyboard, pointer) is not covered by any slice yet: it needs a DOM
+harness, which the starter does not provide. Track it as S2b when an engine is
+chosen and a browser-based check exists.
+
+## Verification
+
+`cd app/game && node --test` runs the whole application suite. A slice is only
+done when that command passes and its result is recorded, not when the code
+merely exists.
 
 ## Out of scope for v1
 
