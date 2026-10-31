@@ -24,7 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
-### 2026-10-31 - Document the doctor command
+### 2026-10-31 - Document executed verify checks
+
+- Area: engine runbook, build-feature prompt
+- Change type: docs, runbook
+- Summary: the stage contract in `docs/runbooks/agentic-engine.md` records that a verify check carrying a `command` is executed and its exit code decides `ok`, and draws the distinction the whole change rests on: a check with a command is a measurement, a check without one is a claim. It states the allowlist rule, both command forms, and that removing the escape hatch is deliberately not part of this change. `build-feature.prompt.md` switches the verify example to the `cmd:` form.
+- Reason: the prompt previously taught the claim form, so an agent following it would keep producing assertions after the engine learned to measure. Documentation that contradicts the code is worse than none, because it is followed.
+- Affected files: docs/runbooks/agentic-engine.md, .github/prompts/build-feature.prompt.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Make verify run its checks instead of recording claims"
+- Review status: reviewed
+- Discrepancies or follow-up: no worked example of a real `cmd:` check is included, and the runbook does not yet say what happens to a check that times out beyond naming the timeout. Both would help an agent comply on the first attempt.
+
+
 
 - Area: engine runbook
 - Change type: docs, runbook

@@ -875,6 +875,76 @@ def _handle_failure(state: dict, policy: dict, result: dict, evidence: list) -> 
     return "repair", "repair-scheduled"
 
 
+def check_command_argv(check: dict) -> list:
+    """Turn a check's `command` into an argv list.
+
+    A list is used exactly as given. A string is split on whitespace with no
+    shell and no quoting support, because pretending to parse shell syntax is how
+    a "safe" splitter turns into a bug; callers with spaces in a path use the list
+    form.
+    """
+    command = check.get("command")
+    if isinstance(command, list) and command and all(isinstance(item, str) and item for item in command):
+        return list(command)
+    if isinstance(command, str) and command.strip():
+        return command.split()
+    raise EngineError("a check command must be a non-empty string or a list of strings")
+
+
+def execute_check_commands(checks: list, repo_root: Path, policy: dict) -> list:
+    """Run the checks that name a command and let the exit code decide `ok`.
+
+    A check the caller asserts is a claim; a check the engine runs is a
+    measurement, and that difference is the whole value of the verify stage. The
+    command text originates with an agent, so it is allowlisted by executable in
+    `verificationCommands` and executed without a shell: this process is trusted,
+    and running arbitrary text from it would turn the gate into an execution hole.
+    """
+    declared = policy.get("verificationCommands")
+    allowed = []
+    if isinstance(declared, list):
+        allowed = [item.strip() for item in declared if isinstance(item, str) and item.strip()]
+    timeout = retry_policy(policy).get("maxCheckCommandSeconds", 600)
+    results = []
+    for check in checks:
+        if check.get("command") is None:
+            results.append(check)
+            continue
+        argv = check_command_argv(check)
+        names = {argv[0], os.path.basename(argv[0])}
+        if not names & set(allowed):
+            raise EngineError(
+                f"check command {argv[0]!r} is not allowlisted by verificationCommands "
+                "in .github/roles/orchestration-policy.json"
+            )
+        observed = dict(check)
+        # The observation replaces the claim: a caller passing ok:true alongside a
+        # failing command must not win.
+        observed.pop("ok", None)
+        try:
+            completed = subprocess.run(
+                argv, cwd=str(repo_root), capture_output=True, text=True,
+                timeout=timeout, shell=False,
+            )
+        except subprocess.TimeoutExpired:
+            observed["ok"] = False
+            observed["message"] = f"timed out after {timeout}s"
+        except OSError as exc:
+            observed["ok"] = False
+            observed["message"] = f"could not run: {exc}"
+        else:
+            observed["ok"] = completed.returncode == 0
+            observed["exitCode"] = completed.returncode
+            output = ((completed.stdout or "") + (completed.stderr or "")).strip()
+            tail = output.splitlines()
+            if completed.returncode == 0:
+                observed["message"] = "exit 0"
+            else:
+                observed["message"] = f"exit {completed.returncode}" + (f": {tail[-1]}" if tail else "")
+        results.append(observed)
+    return results
+
+
 def _result_from_flags(args: argparse.Namespace) -> dict:
     """Build a stage result from flags instead of a hand-written JSON file.
 
@@ -907,7 +977,12 @@ def _result_from_flags(args: argparse.Namespace) -> dict:
             if not name or not rest:
                 raise EngineError(f"--check must look like name=ok or name=fail:message; got {spec!r}")
             ok, _, message = rest.partition(":")
-            checks.append({"name": name, "ok": ok.strip().lower() == "ok", "message": message.strip()})
+            if ok.strip().lower() == "cmd":
+                # `name=cmd:<command>` asks the engine to run it and believe the
+                # exit code, rather than recording what the caller claims.
+                checks.append({"name": name, "command": message.strip()})
+            else:
+                checks.append({"name": name, "ok": ok.strip().lower() == "ok", "message": message.strip()})
         return {
             "result": args.verdict,
             "checks": checks,
@@ -1209,13 +1284,14 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
             raise EngineError("verify result must include at least one check")
         if not all(isinstance(check, dict) and isinstance(check.get("name"), str) and check["name"].strip() for check in checks):
             raise EngineError("every check must have a non-empty name")
+        checks = execute_check_commands(checks, repo_root, policy)
         failing = [check for check in checks if check.get("ok") is not True]
         if verdict == "VERIFIED" and failing:
             raise EngineError(
                 "VERIFIED is refused while checks report failures: "
                 + ", ".join(str(check.get("name")) for check in failing)
             )
-        append_history(state, stage="verify", action="recorded", result=verdict, evidence=evidence)
+        append_history(state, stage="verify", action="recorded", result=verdict, evidence=evidence, checks=checks)
         state["lastStage"] = "verify"
         if verdict == "VERIFIED":
             state["stage"] = "review"
@@ -2197,6 +2273,120 @@ class EngineSelfTest(unittest.TestCase):
         self.assertEqual(code, 0)
         archive = next(item for item in payload["checks"] if item["name"] == "run-archives")
         self.assertTrue(archive["ok"])
+
+    def allow_check_executable(self, name: str) -> None:
+        policy_path = self.root / ".github" / "roles" / "orchestration-policy.json"
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        policy["verificationCommands"] = [name]
+        policy_path.write_text(json.dumps(policy), encoding="utf-8")
+
+    def test_verify_runs_an_allowlisted_check_command(self) -> None:
+        # The point of the change: the engine observes the exit code instead of
+        # accepting a claim about it.
+        self.init()
+        self.implement()
+        self.allow_check_executable(os.path.basename(sys.executable))
+        code, payload = self.record(
+            "verify",
+            {
+                "result": "VERIFIED",
+                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "pass"]}],
+                "evidence": ["cmd:session"],
+            },
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "review")
+
+    def test_verify_refuses_a_failing_check_command(self) -> None:
+        self.init()
+        self.implement()
+        self.allow_check_executable(os.path.basename(sys.executable))
+        code, _ = self.record(
+            "verify",
+            {
+                "result": "VERIFIED",
+                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "raise SystemExit(1)"]}],
+                "evidence": ["cmd:session"],
+            },
+        )
+        self.assertEqual(code, 1)
+
+    def test_verify_observation_overrides_a_reported_ok(self) -> None:
+        # A caller asserting ok:true next to a command that fails must not win.
+        self.init()
+        self.implement()
+        self.allow_check_executable(os.path.basename(sys.executable))
+        code, _ = self.record(
+            "verify",
+            {
+                "result": "VERIFIED",
+                "checks": [
+                    {
+                        "name": "interpreter",
+                        "ok": True,
+                        "command": [sys.executable, "-c", "raise SystemExit(1)"],
+                    }
+                ],
+                "evidence": ["cmd:session"],
+            },
+        )
+        self.assertEqual(code, 1)
+
+    def test_verify_refuses_a_command_outside_the_allowlist(self) -> None:
+        # The command text comes from an agent, so this process only runs what the
+        # repository declared it may run.
+        self.init()
+        self.implement()
+        self.allow_check_executable("definitely-not-allowlisted")
+        code, _ = self.record(
+            "verify",
+            {
+                "result": "VERIFIED",
+                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "pass"]}],
+                "evidence": ["cmd:session"],
+            },
+        )
+        self.assertEqual(code, 1)
+
+    def test_verify_records_the_executed_checks_in_history(self) -> None:
+        self.init()
+        self.implement()
+        self.allow_check_executable(os.path.basename(sys.executable))
+        self.record(
+            "verify",
+            {
+                "result": "VERIFIED",
+                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "pass"]}],
+                "evidence": ["cmd:session"],
+            },
+        )
+        state = load_state(self.state_dir, "r1")
+        entry = [item for item in state["history"] if item.get("stage") == "verify"][-1]
+        self.assertEqual(entry["checks"][0]["exitCode"], 0)
+        self.assertIs(entry["checks"][0]["ok"], True)
+
+    def test_verify_leaves_a_reported_check_unchanged(self) -> None:
+        # Checks the engine cannot run stay as claims; this change adds
+        # measurement, it does not remove the escape hatch.
+        self.init()
+        self.implement()
+        code, _ = self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.assertEqual(code, 0)
+
+    def test_flags_can_request_an_executed_check(self) -> None:
+        if " " in sys.executable:
+            self.skipTest("the whitespace-split string form cannot express a path with spaces")
+        self.init()
+        self.implement()
+        self.allow_check_executable(os.path.basename(sys.executable))
+        code, payload = self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "verify",
+            "--verdict", "VERIFIED",
+            "--check", f"interpreter=cmd:{sys.executable} -c pass",
+            "--evidence", "cmd:session",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "review")
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
 

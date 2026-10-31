@@ -39,7 +39,7 @@ python .github/scripts/agentic_engine.py record --run-id <slice-id> --stage impl
   --summary "<what changed>" --by <agent> --file <path> --evidence <pointer>
 
 python .github/scripts/agentic_engine.py record --run-id <slice-id> --stage verify \
-  --verdict VERIFIED --check "<check>=ok" --evidence "cmd:<command>"
+  --verdict VERIFIED --check "<name>=cmd:<command>" --evidence "cmd:<command>"
 
 python .github/scripts/agentic_engine.py record --run-id <slice-id> --stage review \
   --decision pass --reviewer <agent distinct from the implementer> --evidence <pointer>

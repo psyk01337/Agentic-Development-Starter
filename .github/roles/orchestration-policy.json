@@ -67,6 +67,14 @@
       "description": "Work that grows beyond the requested slice or the declared write set."
     }
   ],
+  "verificationCommands": [
+    "node",
+    "python",
+    "python3",
+    "bash",
+    "pwsh",
+    "powershell"
+  ],
   "retryPolicy": {
     "maxRepairAttempts": 3,
     "identicalFailureThreshold": 2,

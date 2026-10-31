@@ -24,7 +24,18 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-10-31 - Add a doctor command that checks the wiring instead of assuming it
+### 2026-10-31 - Make verify run its checks instead of recording claims
+
+- Area: agentic engine, orchestration policy, engine runbook, build-feature prompt
+- Change type: feature, test, docs
+- Summary: a verify check may now carry a `command`. The engine runs it in the repository root with `shell=False`, sets `ok` from the exit code, and records `exitCode` and the last output line on the history entry. The executable must appear in the new `verificationCommands` key in `.github/roles/orchestration-policy.json`, by name or basename; anything else is refused rather than run. `--check "<name>=cmd:<command>"` requests an executed check from the flags form. A reported `ok` sitting next to a `command` is discarded so a claim cannot override an observation. Seven self-tests take the suite from 116 to 123. Manifest version goes to `2.8.0`.
+- Reason: the verify stage was the weakest point in the workflow and every other gate inherited that weakness. `--check "node --test=ok"` recorded an assertion, never a measurement, so `VERIFIED` meant "the agent said so" and the review that followed was checking a claim. A factory line that accepts the worker's word for the part being good is not a quality gate; this is the one change that turns the trust stack from prose into instrumentation.
+- Affected files: .github/scripts/agentic_engine.py, .github/roles/orchestration-policy.json, docs/runbooks/agentic-engine.md, .github/prompts/build-feature.prompt.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document executed verify checks"
+- Validation: **Not run.** No shell was available while this was written, so nothing was executed. Commands to run before trusting it: `python .github/scripts/agentic_engine.py selftest` (expect 123), `bash .github/scripts/check-starter-workflow.sh`, `.github/scripts/check-starter-workflow.ps1`. This is read-reviewed only, which is exactly the claim this repository tells people not to make.
+- Discrepancies or follow-up: a run can still reach `VERIFIED` with zero executed checks, because reported checks remain legal. Requiring at least one executed check is the next step and would invalidate roughly a dozen fixtures. `argv[0]` allowlisting stops an unknown executable but does not constrain arguments, so an allowlisted interpreter can still be asked to do something undesirable; the real boundary is that this process is already trusted. Adding `verificationCommands` to a policy file with 18 KB of existing keys is the change most likely to trip a stricter schema check elsewhere.
+
+
 
 - Area: agentic engine, engine runbook
 - Change type: feature, test, docs
