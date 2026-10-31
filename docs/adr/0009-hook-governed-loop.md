@@ -1,8 +1,9 @@
 # ADR 0009: Govern The Agent Loop With Hooks
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-28
-- Amended: 2026-10-31 — `agentStop` implemented and verified against a live run; the Agent Host option was investigated and dropped, with the reason recorded. Status stays `Proposed` because whether the host fires `agentStop` is still unobserved.
+- Accepted: 2026-10-31 — the host was observed firing `agentStop`, refusing the turn, and delivering `stop_hook_active: true` on the continuation. The loop is enforced by the host, not merely written.
+- Amended: 2026-10-31 — `agentStop` implemented and verified against a live run; the Agent Host option was investigated and dropped, with the reason recorded.
 - Amended: 2026-10-31 — the stop output shape was corrected from the legacy Local form to the top-level `decision`/`reason` shape the Copilot harness reads, and hook configuration was found to be read at session start. See [Amendment: The Stop Contract](#amendment-2026-10-31-the-stop-contract).
 - Owners: Team
 - Related: `docs/adr/0008-autonomous-execution-via-sdk.md`, `.github/scripts/agentic_engine.py`, `.github/hooks/agent-policy.json`, `.github/roles/tool-access.json`, `docs/runbooks/hooks.md`, `docs/runbooks/agentic-engine.md`
@@ -22,6 +23,29 @@ The operational consequence: **adding, removing, or changing a hook event requir
 The event is now instrumented. Every invocation writes one line to `.github/hooks/logs/agent-stop.log`, including when no run is armed. Before that, "the hook never fired" and "the hook fired and its decision was ignored" were indistinguishable from outside.
 
 Status: the decision shape is verified by self-test and by invoking the script directly. Whether the host fires the event is still unobserved, because it could not be observed in the session that added it.
+
+### Observed, 2026-10-31
+
+A fresh session was opened with the configuration already declaring `agentStop` and a run armed at stage `implement`. The turn ended and the host refused it. The trace recorded exactly two lines:
+
+```
+18:47:16  armed:true   stopHookActive:false  decision:block
+18:49:10  armed:false  stopHookActive:true   decision:skipped
+```
+
+What this establishes:
+
+| question | answer | evidence |
+| --- | --- | --- |
+| Does the harness fire `agentStop`? | Yes | Trace line written at turn end |
+| Is a top-level `decision: block` honoured? | Yes | The turn was refused and the reason was returned to the agent verbatim, including the `requiredResult` schema |
+| Does the reason reach the agent intact? | Yes | Quoted in full by the continuing agent |
+| Is `stop_hook_active` delivered? | Yes | The second line carries `true` on the turn following the block |
+| Does it loop? | No | The hook yields once `stop_hook_active` is true, which is why line 2 is `skipped` rather than another `block` |
+
+The last two rows are the ones that were genuinely uncertain. An empty stdin also produces a block, because a missing `stop_hook_active` is falsy, so the first block on its own proved nothing about delivery. The second line is what settles it.
+
+The gap is closed. The loop is enforced by the host.
 
 ## Context
 
@@ -111,7 +135,7 @@ Tool classification reads `toolDefinitions` from `.github/roles/tool-access.json
 
 1. **Done.** `check-tool` on the engine, reading a `preToolUse` payload from stdin, classifying tools from the role registry, and returning a deny decision with exit `2`. Wired into `pre-tool-policy.{sh,ps1}` behind an `.agentic/state` existence check, so it is inert until a run exists.
 2. **Done.** `check-stop` on the engine plus `agent-stop.{sh,ps1}`, registered as the `agentStop` event. The hook returns `{"hookSpecificOutput":{"decision":"block","reason":...}}` while a stage is unfinished and stays silent once `stop_hook_active` is set. Verified against a live run: an `implement` stage produced a block carrying the required result schema, and the same payload with `stop_hook_active: true` produced nothing.
-3. **Open.** Confirm the `agentStop` event actually fires in the host. The block output is correct when the script is invoked directly; whether the harness delivers the event has not been observed. This is the difference between a working loop and a correct-looking script.
+3. **Done.** Confirmed the `agentStop` event fires in the host and that its block is honoured. A fresh session with the configuration in place refused a turn end and returned the required result schema; the trace shows one `block` followed by a `skipped` with `stopHookActive: true`, so the hook yields instead of looping.
 4. **Open.** `sessionStart` context injection, so the agent starts at the engine's stage instead of discovering it on the first refused turn end.
 5. **Dropped.** A standalone client over the Agent Host Protocol. A Node client authenticates and handshakes against the editor host over its named pipe, but `createSession` never progresses past `lifecycle: "creating"` — observed for 180 seconds on an already-authenticated host, with two `session/metaChanged` actions and no further events. The substrate is real; the missing piece is undocumented session initialisation, not something this ADR should depend on.
 
@@ -133,7 +157,8 @@ Status as of 2026-10-31:
 - **Observed.** The hook rule layer denies a command containing a destructive pattern and allows an edit whose *content* mentions it — the defect that forced a maintainer to disable the guardrail.
 - **Observed.** `agent-stop.sh` returns the block payload with the required result schema for an active `implement` run, and returns nothing when `stop_hook_active` is true.
 - **Observed with a real client.** A `preToolUse` denial was returned to a live tool call twice during this work, once for a probe and once for a cleanup command containing a blocked pattern. The guardrail is live, not merely loadable.
-- **Not observed.** That the host fires `agentStop`. Everything above about the stop decision was measured by invoking the script, not by ending a real turn.
+- **Observed through the host.** `agentStop` fired, the turn end was refused, and the reason reached the agent intact. The trace recorded `decision: block` with `stopHookActive: false`, followed on the next turn end by `decision: skipped` with `stopHookActive: true`, so the continuation guard works and the hook does not loop.
+- **Not observed.** The `sessionStart` context injection and `postToolUse` evidence relay, which remain unimplemented. Nothing depends on them for enforcement.
 - **Not observed.** Any behaviour of these hooks in a session created over the Agent Host Protocol. Rollout step 5 was dropped for that reason.
 
 ## Follow-up

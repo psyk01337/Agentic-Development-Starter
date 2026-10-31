@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Record that the stop hook is enforced by the host
+
+- Area: hooks runbook, ADR 0009
+- Change type: docs, runbook, adr
+- Summary: ADR 0009 moves from `Proposed` to `Accepted` on observed evidence. A fresh session with `agentStop` configured at startup refused a turn end, returned the engine's required result schema to the agent verbatim, and traced `decision: block`; the following turn end traced `stopHookActive: true` and was allowed, so the continuation guard works. Rollout step 3 is marked done, and `docs/runbooks/hooks.md` records the observed two-line sequence and the reason an empty stdin cannot be used to prove field delivery.
+- Reason: the ADR had been held at `Proposed` since the event was written because the host had never been seen firing it. Holding it open after the observation would leave the repository's central claim unrecorded; the evidence table makes the basis for acceptance checkable rather than assertable.
+- Affected files: docs/adr/0009-hook-governed-loop.md, docs/runbooks/hooks.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Correct the agentStop decision shape and instrument it"
+- Review status: reviewed
+- Discrepancies or follow-up: `sessionStart` context injection and the `postToolUse` evidence relay remain unimplemented, and nothing depends on them for enforcement. The probe also confirmed the earlier diagnosis that hook configuration is read at session start: the first attempt in the session that added the event produced no invocation at all.
+
 ### 2026-10-31 - Document the stop contract and the session-start rule
 
 - Area: hooks runbook, ADR 0009

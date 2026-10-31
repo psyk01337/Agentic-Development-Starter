@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Record the observed agentStop enforcement
+
+- Area: documentation
+- Change type: docs
+- Summary: ADR 0009 accepted on observed evidence: a fresh session refused a turn end via `agentStop`, delivered the engine's required result schema to the agent, and traced `stopHookActive: true` on the following turn end so the hook yields instead of looping. No runtime code changed.
+- Reason: the admission vehicle for the loop's central claim. The claim is now checkable from two trace lines rather than from a description of what the script does.
+- Affected files: docs/adr/0009-hook-governed-loop.md, docs/runbooks/hooks.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Record that the stop hook is enforced by the host"
+- Validation: the probe session is the evidence; its two trace lines are quoted in both documents. `check-markdown-quality` and `check-starter-manifest` pass after the edits.
+- Discrepancies or follow-up: `sessionStart` context injection and the `postToolUse` evidence relay stay unimplemented; they are enhancements, not enforcement.
+
 ### 2026-10-31 - Correct the agentStop decision shape and instrument it
 
 - Area: agentic engine, hooks

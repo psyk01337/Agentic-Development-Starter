@@ -68,6 +68,17 @@ Every invocation writes one line to `.github/hooks/logs/agent-stop.log`:
 
 This is recorded even when no run is armed (`armed: false`, `decision: skipped`). Without it, "the hook never fired" and "the hook fired and its decision was ignored" are indistinguishable from the outside, which is exactly the state this hook sat in while it looked correct.
 
+Observed on 2026-10-31 in a session that had the event configured at startup:
+
+```
+18:47:16  armed:true   stopHookActive:false  decision:block
+18:49:10  armed:false  stopHookActive:true   decision:skipped
+```
+
+The first line is the block; the turn was refused and the reason reached the agent. The second is the next turn end, carrying `stop_hook_active: true` because the previous turn was blocked — which is what makes the hook yield instead of looping. The run was disarmed between the two lines, so the second decision reads `skipped` rather than `allow`.
+
+Note that an empty stdin also produces a block, since a missing `stop_hook_active` reads as false. The first line therefore proves the event fired but not that the field is delivered; the second line is what proves delivery.
+
 A blocked turn consumes AI credits, so the engine's repair budget and identical-failure escalation are the real bound. Once a run reaches `blocked`, `agentStop` stops objecting.
 
 The engine owns both decisions. `check-tool` answers `preToolUse`; `check-stop` answers `agentStop`. Neither reimplements the other.
