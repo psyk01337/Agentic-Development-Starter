@@ -24,7 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
-### 2026-10-31 - Document executed verify checks
+### 2026-10-31 - Document the observed-check requirement
+
+- Area: engine runbook
+- Change type: docs, runbook
+- Summary: the stage contract in `docs/runbooks/agentic-engine.md` now states that `VERIFIED` is refused unless at least one check was executed, and the surrounding prose explains that reported checks are still recorded but cannot carry a passing verdict alone. Also repairs the stage table, which a previous edit had split in two by inserting prose between the `verify` and `repair` rows.
+- Reason: the runbook said the opposite of the code within the same hour it was written, and the broken table meant the `repair` and `review` contract rows were rendering outside the table entirely. Both are the kind of drift that makes a reader trust the wrong document.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Require an observed check before VERIFIED"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook does not yet give a worked example of a real `cmd:` check for a JavaScript or Python repository, so an agent still has to infer the exact form from the flags table.
+
+
 
 - Area: engine runbook, build-feature prompt
 - Change type: docs, runbook

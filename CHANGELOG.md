@@ -24,7 +24,18 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-10-31 - Make verify run its checks instead of recording claims
+### 2026-10-31 - Require an observed check before VERIFIED
+
+- Area: agentic engine, engine runbook
+- Change type: fix, test, docs
+- Summary: `VERIFIED` is now refused unless at least one check was executed. Reported checks are still recorded so a manual observation can be noted, but they cannot carry a passing verdict alone. The fixture helper supplies an executable check so existing tests keep their meaning, and the two fixtures that relied on claims alone now request an executed one. Manifest version goes to `2.9.0`.
+- Reason: the previous change made measurement possible; this makes it mandatory. Without it a run could still reach `review` on assertions, which is the exact gap the workflow exists to close. "Verified" should mean observed, and an escape hatch that nobody removes becomes the path of least resistance.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the observed-check requirement"
+- Validation: engine selftest 123/123 and both umbrella suites pass. Run through the real CLI: a passing executed check advances the run to `review`, a failing command with `--verdict VERIFIED` exits 1, and a non-allowlisted executable exits 1.
+- Discrepancies or follow-up: turning this on exposed a defect in the previous commit. `execute_check_commands` returned a new list but the original `result` dict was left untouched, so `failure_signature` saw an executed check with no `ok` key, scored it as failing, produced a different signature each attempt, and defeated the identical-failure stop. `test_supplied_signature_cannot_defeat_repeat_guard` caught it; the observed checks are now written back to `result`. This is the argument for running the suite rather than reading the diff. The requirement is still satisfiable with a meaningless command such as `python -c pass`, so it raises the floor rather than guaranteeing a meaningful check.
+
+
 
 - Area: agentic engine, orchestration policy, engine runbook, build-feature prompt
 - Change type: feature, test, docs

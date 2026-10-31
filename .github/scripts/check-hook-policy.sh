@@ -237,13 +237,18 @@ else
   # test the deny path instead of the release path.
   done_state="${gate_dir}/done-state"
   mkdir -p "${done_state}"
+  # The verify result is a file rather than flags because a check command is a
+  # list: the flags form splits on whitespace, which cannot survive an
+  # interpreter path containing a space.
+  printf '{"result":"VERIFIED","checks":[{"name":"fixture","command":["%s","-c","pass"]}],"evidence":["cmd:fixture"]}' \
+    "${gate_python}" > "${gate_dir}/verify.json"
   if ! "${gate_python}" "${engine}" init --run-id donefx --task "${task_file}" \
       --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1 \
     || ! "${gate_python}" "${engine}" record --run-id donefx --stage implement \
       --summary fixture --by fixture --file src/allowed.py --evidence cmd:fixture \
       --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1 \
     || ! "${gate_python}" "${engine}" record --run-id donefx --stage verify \
-      --verdict VERIFIED --check "fixture=ok" --evidence "cmd:fixture" \
+      --result "${gate_dir}/verify.json" \
       --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1 \
     || ! "${gate_python}" "${engine}" record --run-id donefx --stage review \
       --decision pass --reviewer reviewer --evidence "cmd:fixture" \

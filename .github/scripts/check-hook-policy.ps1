@@ -236,7 +236,16 @@ if (Test-Path $policyScript) {
         New-Item -ItemType Directory -Path $doneState -Force | Out-Null
         $null = & $pythonExe $engine init --run-id donefx --task $taskFile --repo-root $RepoRoot --state-dir $doneState 2>&1
         $null = & $pythonExe $engine record --run-id donefx --stage implement --summary fixture --by fixture --file src/allowed.py --evidence cmd:fixture --repo-root $RepoRoot --state-dir $doneState 2>&1
-        $null = & $pythonExe $engine record --run-id donefx --stage verify --verdict VERIFIED --check "fixture=ok" --evidence "cmd:fixture" --repo-root $RepoRoot --state-dir $doneState 2>&1
+        # The verify result is a file rather than flags because a check command is
+        # a list: the flags form splits on whitespace, which cannot survive an
+        # interpreter path containing a space.
+        $verifyPayload = @{
+          result = "VERIFIED"
+          checks = @(@{ name = "fixture"; command = @($pythonExe, "-c", "pass") })
+          evidence = @("cmd:fixture")
+        } | ConvertTo-Json -Depth 5 -Compress
+        [IO.File]::WriteAllText((Join-Path $gateDir "verify.json"), $verifyPayload)
+        $null = & $pythonExe $engine record --run-id donefx --stage verify --result (Join-Path $gateDir "verify.json") --repo-root $RepoRoot --state-dir $doneState 2>&1
         $null = & $pythonExe $engine record --run-id donefx --stage review --decision pass --reviewer reviewer --evidence "cmd:fixture" --repo-root $RepoRoot --state-dir $doneState 2>&1
         $env:AGENTIC_STATE_DIR = $doneState
         $doneExit = & $gateCall '{"toolName":"create_file","toolArgs":{"filePath":"src/outside.py"}}'

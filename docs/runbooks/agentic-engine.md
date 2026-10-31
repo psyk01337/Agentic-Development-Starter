@@ -133,7 +133,9 @@ escalated. `next`, `status`, and `report` all return `3` for a blocked run.
 | --- | --- |
 | `approval` | Use `approve`, not `record`; the task must declare `requestedBy`, and the approver must differ from it |
 | `implement` | `status: done`, `implementedBy`, `filesChanged`, `evidence` |
-| `verify` | `result: VERIFIED \| NOT_VERIFIED \| INCONCLUSIVE`, at least one named `check`, `evidence`; `VERIFIED` is refused while any check reports `ok: false`. A check carrying a `command` is executed and its exit code decides `ok` |
+| `verify` | `result: VERIFIED \| NOT_VERIFIED \| INCONCLUSIVE`, at least one named `check`, `evidence`; `VERIFIED` is refused while any check reports `ok: false`, and refused unless at least one check was executed. A check carrying a `command` is executed and its exit code decides `ok` |
+| `repair` | `status: done`, `implementedBy`, `filesChanged`, `evidence` |
+| `review` | `decision: pass \| needs-revision`, `reviewedBy`, `findings`, `evidence`; `needs-revision` must name at least one finding |
 
 A check with a `command` is a measurement; a check without one is a claim. The
 engine runs the command in the repository root with no shell, sets `ok` from the
@@ -147,12 +149,11 @@ basename. Anything else is refused rather than run. A command is either a JSON
 list, used as exact argv, or a string split on whitespace, which cannot express a
 path containing spaces.
 
-Checks with no `command` are still accepted. Removing the escape hatch would stop
-a repository recording a manual observation, but it also means a run can still
-reach `VERIFIED` on claims alone; requiring at least one executed check is the
-next step, not this one.
-| `repair` | `status: done`, `implementedBy`, `filesChanged`, `evidence` |
-| `review` | `decision: pass \| needs-revision`, `reviewedBy`, `findings`, `evidence`; `needs-revision` must name at least one finding |
+Checks with no `command` are still recorded, so a run can note a manual
+observation. They cannot carry a `VERIFIED` on their own: at least one check must
+have been executed, because "verified" has to mean observed. A repository that
+genuinely cannot run anything can still record `NOT_VERIFIED` and escalate,
+which is the honest outcome rather than a passed gate.
 
 `reviewedBy` must not match any `implementedBy` recorded during the run, so one
 agent cannot implement and approve its own change. Identity is self-declared;

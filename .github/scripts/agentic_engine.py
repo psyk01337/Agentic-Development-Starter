@@ -1285,6 +1285,16 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
         if not all(isinstance(check, dict) and isinstance(check.get("name"), str) and check["name"].strip() for check in checks):
             raise EngineError("every check must have a non-empty name")
         checks = execute_check_commands(checks, repo_root, policy)
+        # Write the observations back. failure_signature and _handle_failure read
+        # this dict, so leaving the caller's checks here would score an executed
+        # check as failing (it carries no `ok` key before execution) and defeat
+        # the identical-failure guard.
+        result["checks"] = checks
+        if verdict == "VERIFIED" and not any("exitCode" in check for check in checks):
+            raise EngineError(
+                "VERIFIED needs at least one executed check: give a check a command so the engine "
+                "observes the result instead of recording what the caller asserts"
+            )
         failing = [check for check in checks if check.get("ok") is not True]
         if verdict == "VERIFIED" and failing:
             raise EngineError(
@@ -1687,6 +1697,7 @@ class EngineSelfTest(unittest.TestCase):
         self.root = Path(tempfile.mkdtemp(prefix="agentic-engine-test-"))
         (self.root / ".github" / "roles").mkdir(parents=True)
         policy = {
+            "verificationCommands": [os.path.basename(sys.executable)],
             "retryPolicy": {
                 "maxRepairAttempts": 3,
                 "identicalFailureThreshold": 2,
@@ -2076,9 +2087,11 @@ class EngineSelfTest(unittest.TestCase):
         )
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "verify")
+        if " " in sys.executable:
+            self.skipTest("the whitespace-split string form cannot express a path with spaces")
         code, payload = self.quiet_cli(
             "record", "--run-id", "r1", "--stage", "verify",
-            "--verdict", "VERIFIED", "--check", "pytest=ok",
+            "--verdict", "VERIFIED", "--check", f"fixture-executed=cmd:{sys.executable} -c pass",
             "--evidence", "cmd:pytest",
         )
         self.assertEqual(code, 0)
@@ -2419,8 +2432,11 @@ class EngineSelfTest(unittest.TestCase):
         )
 
     def verify(self, result: str, checks: list) -> tuple[int, dict]:
+        # Every VERIFIED needs something the engine actually observed, so the
+        # helper supplies one executable check the fixture policy allows.
+        observed = list(checks) + [{"name": "fixture-executed", "command": [sys.executable, "-c", "pass"]}]
         return self.record(
-            "verify", {"result": result, "checks": checks, "evidence": ["cmd:pytest"]}
+            "verify", {"result": result, "checks": observed, "evidence": ["cmd:pytest"]}
         )
 
     def test_happy_path(self) -> None:
