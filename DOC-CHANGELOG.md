@@ -24,6 +24,28 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Document the argv and stdin split in the hook runbook
+
+- Area: hooks runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/hooks.md` states that only the host payload on stdin reaches the engine, and that a hand invocation is checked by the rule layer alone, with the reason the shell twin never worked that way. Corrects the decision table, which said an unclassified tool is denied when the engine deliberately allows it and records a note instead.
+- Reason: the table is what someone reads before deciding whether the gate is safe to leave on, and one of its six outcomes was the opposite of the code. The argv rule was undocumented entirely, so the only way to learn that hand invocation bypasses the engine was to read the script.
+- Affected files: docs/runbooks/hooks.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Stop the shell hook twin from denying every hand invocation while a run exists"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook still does not describe what `check-tool` does with a payload that is valid JSON but carries no `toolName` beyond the classification note. That path denies, and a hand-written payload missing the field would hit it.
+
+### 2026-10-31 - Record S7 and correct the remaining FR gaps
+
+- Area: project PRD traceability
+- Change type: docs
+- Summary: `docs/prd.md` gains an S7 row for the input slice, updates the suite count to 78 and the shipped size to 30 KB, and replaces the "FR-9 has no automated coverage" note with what is now true — the decisions are covered, the DOM binding is not. The stale duplicate paragraph that scheduled FR-9 as future S2b is removed, and S2's row no longer says input binding is open. Adds a note that FR-8 is only half delivered: the mute preference persists but no sound exists to mute.
+- Reason: the traceability table is the one place that states what is finished, so it is the place most damaging to leave optimistic. Three claims in it had drifted from the code: FR-9 was listed as uncovered after the input decisions became testable, the suite count was stale, and FR-8 was implied complete by an S5 row that names only the persistence half.
+- Affected files: docs/prd.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Route input through one tested decision, and stop auto-repeat restarting a run"
+- Review status: reviewed
+- Discrepancies or follow-up: FR-8 stays open with no slice assigned, because audio has no testable surface without a DOM and adding it is a decision, not a chore.
+
 ### 2026-10-31 - Document the flags-based record path and run archives
 
 - Area: engine runbook, build-feature prompt, docs/runs

@@ -147,13 +147,17 @@ The former `rolePolicyGuidance` and `logging` keys were removed from `agent-poli
 .agentic/state missing        -> allow, no engine call at all
 .agentic/state present        -> preToolUse: python agentic_engine.py check-tool
                                  agentStop : python agentic_engine.py check-stop
-  tool not classified         -> deny
+  tool not classified         -> allow, with a note; the write set is the real bound
   stage forbids the tool kind -> deny
   write outside the write set -> deny
   stage unfinished            -> block the turn end, with the required result
   no working interpreter      -> allow, with a warning on stderr
   engine fails for any reason -> allow, with a warning on stderr
 ```
+
+Only the host payload on stdin reaches the engine. A hand invocation — `bash .github/hooks/scripts/pre-tool-policy.sh "git status --short"` — is checked by the rule layer alone, because it is a command being inspected by a person rather than a tool call from the harness. The shell twin once piped argv to the engine as well, so every hand invocation failed JSON parsing and was denied whenever a run existed, which made `check-hook-policy` unable to pass in the state a user is actually in: mid-run.
+
+An unclassified tool allows because denying an unknown name is not a policy. That behaviour once denied every tool call in a live session, since the harness's real tool names shared nothing with the registry's examples. The write set is enforced from the tool arguments and again from git at `record` time, so an out-of-scope change is caught whatever the tool was called.
 
 The asymmetry in the last two lines is deliberate. A `preToolUse` failure allows, because a governance control that cannot run must not brick the editor; the rule layer above has already run and still applies. An `agentStop` failure also allows, because a hook that cannot decide must not trap the agent. Neither direction should ever produce an unhandled exit code — anything other than `0` or `2` is reported by the harness as `hook errored` and treated as a denial for `preToolUse`.
 

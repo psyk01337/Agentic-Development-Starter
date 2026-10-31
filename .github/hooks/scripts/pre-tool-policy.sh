@@ -7,16 +7,35 @@ RULES_PATH="${REPO_ROOT}/.github/hooks/policy-rules.tsv"
 
 # The harness delivers the tool call as JSON on stdin. Argv stays supported so
 # the policy can still be exercised by hand and by check-hook-policy.
-collect_input() {
-  if [[ "$#" -gt 0 ]]; then
-    printf '%s\n' "$*"
-  fi
+#
+# Argv and stdin are kept apart on purpose. The rule layer scans both, so a
+# command can still be checked by hand. Only stdin is a host payload, and only a
+# host payload goes to the engine: feeding argv to it as well made every hand
+# invocation fail JSON parsing and get denied whenever a run existed, which meant
+# this validator could not pass in the state a user is actually in - mid-run.
+collect_stdin() {
   if [[ ! -t 0 ]]; then
     cat
   fi
 }
 
-RAW_INPUT="$(collect_input "$@")"
+ARGV_INPUT=""
+if [[ "$#" -gt 0 ]]; then
+  ARGV_INPUT="$*"
+fi
+
+HOST_INPUT="$(collect_stdin)"
+
+# Joined only for the rule layer. When argv is absent the host payload must stay
+# byte-identical, because the `{` check below is what routes it to the JSON path.
+RAW_INPUT="${ARGV_INPUT}"
+if [[ -n "${HOST_INPUT}" ]]; then
+  if [[ -n "${RAW_INPUT}" ]]; then
+    RAW_INPUT="${RAW_INPUT}"$'\n'"${HOST_INPUT}"
+  else
+    RAW_INPUT="${HOST_INPUT}"
+  fi
+fi
 
 # Being on PATH is not the same as working. Windows ships a python3.exe App
 # Execution Alias that is a stub which fails at runtime, so every candidate is
@@ -121,7 +140,7 @@ engine_gate() {
   fi
 
   engine_status=0
-  engine_out="$(printf '%s' "${RAW_INPUT}" | "${python_bin}" "${engine}" check-tool --state-dir "${state_dir}" 2>&1)" || engine_status=$?
+  engine_out="$(printf '%s' "${HOST_INPUT}" | "${python_bin}" "${engine}" check-tool --state-dir "${state_dir}" 2>&1)" || engine_status=$?
 
   if [[ "${engine_status}" -eq 0 ]]; then
     return 0

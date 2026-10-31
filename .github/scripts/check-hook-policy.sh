@@ -207,6 +207,17 @@ else
     report_error "Engine gate denied an unclassified tool; it must allow and record"
   fi
 
+  # Hand invocation must keep working while a run exists. Argv used to be piped
+  # into the engine as if it were a host payload, so every argv call failed JSON
+  # parsing and was denied - which meant this validator could not pass in the
+  # state a user is actually in: mid-run.
+  if ! AGENTIC_STATE_DIR="${gate_state}" bash "${POLICY_SCRIPT}" "git status --short" </dev/null >/dev/null 2>&1; then
+    report_error "Engine gate denied an argv invocation while a run was active"
+  fi
+  if AGENTIC_STATE_DIR="${gate_state}" bash "${POLICY_SCRIPT}" "rm -rf /" </dev/null >/dev/null 2>&1; then
+    report_error "Argv invocation skipped the rule layer while a run was active"
+  fi
+
   # A gate that cannot run must allow. Denying every tool call because an
   # interpreter is missing is how this guardrail gets switched off entirely.
   shadow_bin="${gate_dir}/bin"

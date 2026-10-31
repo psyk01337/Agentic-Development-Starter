@@ -202,6 +202,14 @@ if (Test-Path $policyScript) {
         if ((& $gateCall '{"toolName":"create_file","toolArgs":{"filePath":"src/outside.py"}}') -eq 0) {
           Add-CheckError("Engine gate allowed a write outside the declared write set")
         }
+
+        # Hand invocation must keep working while a run exists. The shell twin
+        # once piped argv into the engine as if it were a host payload, so every
+        # argv call failed JSON parsing and was denied while a run was active.
+        $null = & $policyHost -NoProfile -ExecutionPolicy Bypass -File $policyScript -Command "git status --short" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+          Add-CheckError("Engine gate denied an argv invocation while a run was active")
+        }
       } finally {
         $env:AGENTIC_STATE_DIR = $previousGateState
       }

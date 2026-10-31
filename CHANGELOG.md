@@ -24,6 +24,28 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Stop the shell hook twin from denying every hand invocation while a run exists
+
+- Area: hook scripts, hook validators, hooks runbook
+- Change type: fix, test, docs
+- Summary: `pre-tool-policy.sh` now keeps argv and stdin apart. Argv is joined into the text the rule layer scans; only the host payload on stdin is sent to `agentic_engine.py check-tool`. Both `check-hook-policy.{sh,ps1}` gain an assertion that an argv invocation is allowed while an active run is present in a scratch state directory, and that the rule layer still blocks a destructive command on that path. `docs/runbooks/hooks.md` records the split and corrects a line that claimed an unclassified tool is denied when the engine deliberately allows it.
+- Reason: `collect_input` concatenated argv into the value that was also piped to the engine, so `bash pre-tool-policy.sh "git status --short"` reached `check-tool` as invalid JSON and was denied — but only once a state directory existed. The consequence was that `check-hook-policy.sh` failed whenever a run was open, which is the state a user is in while working, and a validator that fails during normal use is a validator people stop reading. The PowerShell twin never had the bug because it passed `$stdin` alone, so nothing caught the divergence until a run existed in the working tree.
+- Affected files: .github/hooks/scripts/pre-tool-policy.sh, .github/scripts/check-hook-policy.sh, .github/scripts/check-hook-policy.ps1, docs/runbooks/hooks.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the argv and stdin split in the hook runbook"
+- Validation: `bash .github/scripts/check-hook-policy.sh` and `check-hook-policy.ps1` both pass with a live run present in `.agentic/state`. Before the fix the shell validator reported `Expected argv invocation to allow: git status --short`. Repro confirms `rm -rf /` still blocks on the argv path and a JSON payload with an out-of-set path still denies on stdin.
+- Discrepancies or follow-up: the first attempt at this fix built the joined payload with `$'\n'` inside double quotes, which is literal text in bash, so every stdin fixture stopped matching and the validator reported nine new failures. Caught by running the validator immediately; the payload is now joined with an explicit branch so the host payload stays byte-identical when argv is absent. Absolute-path handling and the CRLF guard are untouched.
+
+### 2026-10-31 - Route input through one tested decision, and stop auto-repeat restarting a run
+
+- Area: app/game input, PRD traceability
+- Change type: fix, refactor, test, docs
+- Summary: adds `app/game/src/input.js`, holding every input decision as a pure function over an event-shaped object — `isJumpRequest`, `createJumpQueue`, `isRestartRequest` — and rewires `main.js` to use it. Keyboard, pointer and touch listeners now all ask the same function instead of duplicating their own key checks, and the hold-to-restart path is gated on a consumed request. 13 tests in `app/game/tests/input.test.mjs` take the game suite from 65 to 78.
+- Reason: FR-9 was the last uncovered requirement and the PRD said so — the listeners lived in `main.js` where no test could reach them, because they need a DOM the starter does not provide. Moving the decision out of the listener makes the requirement testable without a DOM harness. Reading that code to extract it also exposed a real defect: `keydown` fires repeatedly while a key is held, and every repeat was latched as a jump, so a player holding jump through a collision restarted the run on the next frame without pressing again.
+- Affected files: app/game/src/input.js, app/game/tests/input.test.mjs, app/game/src/main.js, docs/prd.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Record S7 and correct the remaining FR gaps"
+- Validation: `cd app/game && node --test` 78/78. `node --check` on `main.js` and `input.js`. Payload measured at 29899 bytes against the 512000 byte budget. The auto-repeat defect has a regression test that offers sixty repeated `keydown` events and asserts the run stays over.
+- Discrepancies or follow-up: the listener registration and `preventDefault` calls remain in `main.js` and remain untested; only the decisions they delegate to are covered. FR-8 is unchanged and still half delivered — the mute preference persists but nothing produces sound, so no control reads it.
+
 ### 2026-10-31 - Close a slice without hand-written JSON, and keep the record
 
 - Area: agentic engine, build-feature prompt, docs

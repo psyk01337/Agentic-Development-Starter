@@ -114,26 +114,29 @@ Requirements map to slices in this order. Each slice is one `build-feature` run.
 | Slice | Covers | Depends on | Status |
 | --- | --- | --- | --- |
 | S1 Deterministic simulation core | FR-2, NFR-1, NFR-6 | Decision 1 | Delivered — `src/rng.js`, `src/loop.js`, 9 tests |
-| S2 Auto-run and jump physics | FR-1 (physics half), NFR-1 | S1 | Delivered — `src/player.js`, 10 tests. Input binding still open |
+| S2 Auto-run and jump physics | FR-1 (physics half), NFR-1 | S1 | Delivered — `src/player.js`, 10 tests. Input binding delivered in S7 |
 | S3 Collision, scoring, run end | FR-3, FR-4 | S1, S2 | Delivered — `src/world.js`, `src/score.js`, 20 tests |
 | S4 Persistence and clamping | FR-5, NFR-5 | S3, Decision 3 | Delivered — `src/storage.js`, clamping half in `score.js` |
 | S5 Difficulty ramp and mute | FR-7, FR-8 | S3 | Delivered — `src/difficulty.js`, mute in `storage.js` |
-| S6 Perf pass and build prep | NFR-2, NFR-3 | S1-S5 | Delivered — `src/renderer.js`, `src/main.js`, `index.html`. 26 KB shipped against a 500 KB budget |
+| S6 Perf pass and build prep | NFR-2, NFR-3 | S1-S5 | Delivered — `src/renderer.js`, `src/main.js`, `index.html`. 30 KB shipped against a 500 KB budget |
+| S7 Input decision and auto-repeat fix | FR-9, NFR-6 | S2 | Delivered — `src/input.js`, 13 tests, wired through `main.js` |
 
-S1 to S6 are all delivered. 65 tests pass under `cd app/game && node --test`.
+S1 to S7 are all delivered. 78 tests pass under `cd app/game && node --test`.
 
-**Still not delivered:** FR-9 (touch, keyboard, pointer input) has listeners wired in
-`main.js` but no automated coverage, because it needs a DOM harness the starter does
-not provide. Everything the tests cover is pure logic; the Canvas adapter, the input
-listeners and `requestAnimationFrame` are verified by hand-loading the page, not by CI.
-Treat a green suite as proof of the simulation, never of the rendering.
+**Still not delivered:** the DOM binding itself. S7 moves every input decision into
+`src/input.js`, which is pure and fully tested: which events mean jump, how a press is
+latched and consumed, and when a press means restart. What is still uncovered is the
+thin layer in `main.js` that registers those listeners and calls `preventDefault`,
+because that needs a DOM harness the starter does not provide. The Canvas adapter and
+`requestAnimationFrame` are in the same position. Treat a green suite as proof of the
+decisions, never of the event wiring or the rendering.
+
+FR-8 is also only half delivered: the mute preference persists through
+`storage.js` but there is no sound and no player-facing control, so nothing reads it
+yet. It stays open until the game has audio to mute.
 
 S1 and S2 are deliberately engine-agnostic, so they were built before Decision 1
 was settled. Everything from S3 that touches rendering is blocked on it.
-
-FR-9 (touch, keyboard, pointer) is not covered by any slice yet: it needs a DOM
-harness, which the starter does not provide. Track it as S2b when an engine is
-chosen and a browser-based check exists.
 
 ## Verification
 
