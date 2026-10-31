@@ -46,11 +46,27 @@ agent works -> preToolUse denies writes outside task.writeSet
                   yes -> the turn ends
 ```
 
-`agentStop` is what makes this a loop rather than a guardrail. When the engine reports an unfinished stage the hook refuses the turn end and returns the engine's own `requiredResult` schema as the reason, so the agent is told exactly what to produce next. Three properties keep it safe:
+`agentStop` is what makes this a loop rather than a guardrail. When the engine reports an unfinished stage the hook refuses the turn end and returns the engine's own `requiredResult` schema as the reason, so the agent is told exactly what to produce next. The output is:
+
+```json
+{ "decision": "block", "reason": "Run <id> is at stage 'implement' ..." }
+```
+
+`decision` and `reason` are **top-level** fields for the Copilot harness. The `hookSpecificOutput` wrapper belongs to the legacy Local harness, and the Copilot harness ignores unsupported fields — so emitting the Local shape would silently allow a stop the hook meant to block.
+
+Three properties keep it safe:
 
 - **Inert without a run.** No `.agentic/state`, no subprocess, no behaviour change.
 - **It blocks once, not forever.** `stop_hook_active` is true on the turn after a block, and the hook then allows the stop. Repeating the refusal would only burn credits.
 - **A failure allows the stop.** A missing interpreter, a non-zero exit, or unparseable output all fall through to "allow", because a broken hook must not trap the agent in a loop.
+
+Every invocation writes one line to `.github/hooks/logs/agent-stop.log`:
+
+```json
+{"at":"...","event":"agentStop","armed":true,"stopHookActive":false,"decision":"block"}
+```
+
+This is recorded even when no run is armed (`armed: false`, `decision: skipped`). Without it, "the hook never fired" and "the hook fired and its decision was ignored" are indistinguishable from the outside, which is exactly the state this hook sat in while it looked correct.
 
 A blocked turn consumes AI credits, so the engine's repair budget and identical-failure escalation are the real bound. Once a run reaches `blocked`, `agentStop` stops objecting.
 

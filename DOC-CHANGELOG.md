@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Document the stop contract and the session-start rule
+
+- Area: hooks runbook, ADR 0009
+- Change type: docs, runbook, adr
+- Summary: records the exact `agentStop` output shape with a warning that the `hookSpecificOutput` wrapper belongs to the legacy Local harness and is ignored by the Copilot harness; adds the per-invocation trace line and explains why it exists; and states that hook configuration is read at session start, so a changed hook needs a new session. Amends ADR 0009 with both findings and adds the session-start rule to its consequences.
+- Reason: the failure mode here was invisible rather than wrong. A hook that is never loaded and a hook whose decision is dropped both present as "nothing happened", and without a record of the two rules a maintainer will change a hook, see no effect, and conclude the feature does not exist.
+- Affected files: docs/runbooks/hooks.md, docs/adr/0009-hook-governed-loop.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Correct the agentStop decision shape and instrument it"
+- Review status: reviewed
+- Discrepancies or follow-up: ADR 0009 keeps status `Proposed` because the host has still not been observed firing `agentStop`. The runbook now describes the trace file as the way to tell a missing event from an ignored decision, which is the probe procedure for closing that gap.
+
 ### 2026-10-31 - Record the vocabulary contract
 
 - Area: hooks runbook, ADR 0009

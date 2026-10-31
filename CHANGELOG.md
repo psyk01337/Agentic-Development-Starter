@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Correct the agentStop decision shape and instrument it
+
+- Area: agentic engine, hooks
+- Change type: fix, test, docs
+- Summary: `check-stop` now emits `{"decision": "block", "reason": ...}` with `decision` at the top level. It previously emitted `{"hookSpecificOutput": {"hookEventName": "Stop", ...}}`, which is the legacy Local harness shape; the Copilot harness reads the top-level fields and ignores unsupported ones, so the block would have been silently dropped. `agent-stop.{sh,ps1}` now append one line to `.github/hooks/logs/agent-stop.log` on every invocation, including when no run is armed. Two self-tests pin the output shape and the silence-on-continuing case. Manifest version goes to `2.4.3`.
+- Reason: a live probe armed a run and ended the turn. No `agentStop` invocation occurred. Comparing timestamps showed the session started at 11:35 and `agentStop` was added to `agent-policy.json` at 13:26, while `postToolUse` fired normally throughout — so the event was never registered, and even if it had been, the wrong output shape would have allowed the stop anyway.
+- Affected files: .github/scripts/agentic_engine.py, .github/hooks/scripts/agent-stop.sh, .github/hooks/scripts/agent-stop.ps1, .github/starter-modules.json, docs/runbooks/hooks.md, docs/adr/0009-hook-governed-loop.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the stop contract and the session-start rule"
+- Validation: engine selftest 89/89. Invoked directly with an armed run, `agent-stop.sh` writes `{"decision":"block","reason":"..."}` to stdout and traces `decision: block`; with `stop_hook_active: true` it writes nothing and traces `allow`; with no run it traces `skipped`. Both twins verified. The block path has still not been observed through the harness.
+- Discrepancies or follow-up: whether the host fires `agentStop` remains unobserved and cannot be tested in the session that added the event. The correct test is a fresh session with the configuration already in place. Until that runs, the loop's self-healing half rests on script-level evidence only.
+
 ### 2026-10-31 - Classify the tool names the harness actually sends
 
 - Area: agentic engine, hook policy validators

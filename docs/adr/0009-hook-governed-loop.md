@@ -3,8 +3,25 @@
 - Status: Proposed
 - Date: 2026-10-28
 - Amended: 2026-10-31 — `agentStop` implemented and verified against a live run; the Agent Host option was investigated and dropped, with the reason recorded. Status stays `Proposed` because whether the host fires `agentStop` is still unobserved.
+- Amended: 2026-10-31 — the stop output shape was corrected from the legacy Local form to the top-level `decision`/`reason` shape the Copilot harness reads, and hook configuration was found to be read at session start. See [Amendment: The Stop Contract](#amendment-2026-10-31-the-stop-contract).
 - Owners: Team
 - Related: `docs/adr/0008-autonomous-execution-via-sdk.md`, `.github/scripts/agentic_engine.py`, `.github/hooks/agent-policy.json`, `.github/roles/tool-access.json`, `docs/runbooks/hooks.md`, `docs/runbooks/agentic-engine.md`
+
+## Amendment (2026-10-31): The Stop Contract
+
+The first `agentStop` implementation could not have worked, for two reasons found after it was written.
+
+**The output shape came from the wrong harness.** The hook emitted `{"hookSpecificOutput": {"hookEventName": "Stop", "decision": "block", "reason": "..."}}`, which is the legacy **Local** harness shape. The Copilot harness reads `decision` and `reason` as **top-level** fields and ignores unsupported ones, so the wrapper would have been dropped and the stop allowed. The engine now emits `{"decision": "block", "reason": "..."}`, and a self-test asserts the top-level shape and the absence of `hookSpecificOutput`.
+
+This is the same failure as the tool vocabulary and the path shape: a format taken from the wrong surface, correct-looking, and untested. Three instances of one class is the finding.
+
+**Hook configuration is read at session start.** A live probe armed a run, ended the turn, and produced no `agentStop` invocation at all. The timestamps settle it: the session started at 11:35, `agentStop` was added to `agent-policy.json` at 13:26, and `postToolUse` was firing normally throughout. The running session held a configuration that predated the event, so the event was never registered.
+
+The operational consequence: **adding, removing, or changing a hook event requires a new session.** Editing `agent-policy.json` mid-session changes nothing. That is why this looked like a platform limitation rather than a stale configuration, and why the first probe attempt was misread.
+
+The event is now instrumented. Every invocation writes one line to `.github/hooks/logs/agent-stop.log`, including when no run is armed. Before that, "the hook never fired" and "the hook fired and its decision was ignored" were indistinguishable from outside.
+
+Status: the decision shape is verified by self-test and by invoking the script directly. Whether the host fires the event is still unobserved, because it could not be observed in the session that added it.
 
 ## Context
 
@@ -58,7 +75,8 @@ Tool classification reads `toolDefinitions` from `.github/roles/tool-access.json
 - Positive: with no active run the gate allows everything and calls nothing, so ordinary editing is unaffected in behaviour and in latency.
 - Positive: the write set is already derived from git when `changedFilesFrom: "git"`, so an under-reported change cannot satisfy the gate.
 - Positive: self-healing needs no new mechanism. The engine already schedules `repair`, and `agentStop` is what makes the agent act on it instead of declaring victory.
-- Trade-off: blocked turns consume AI credits. The engine's repair budget and identical-failure stop become the credit bound, and `stop_hook_active` must be honoured so a hook cannot spin forever.
+- **Blocked turns consume AI credits.** The engine's repair budget and identical-failure stop become the credit bound, and `stop_hook_active` must be honoured so a hook cannot spin forever.
+- **Hook configuration is loaded at session start.** Changing `agent-policy.json` mid-session has no effect until a new session begins. A hook that "does not fire" after an edit is stale configuration, not a missing platform feature.
 - Risk: `preToolUse` timeouts fail open, so a slow gate protects nothing. An engine gate that *fails* now allows with a warning rather than denying, because a governance control that bricks the editor gets switched off entirely — as happened twice to this guardrail. That means a run's write bounds are unenforced while the engine is unreachable; the rule layer still applies, and the kill switch is documented in `docs/runbooks/hooks.md`.
 - Risk: "Sharing a host does not give harnesses a shared hook schema." The hook contract is per-harness, so this design is written against the Copilot harness and must be re-verified before it is claimed for Local or any other runtime. That includes sessions driven over the Agent Host Protocol, where it is unverified.
 - Risk: the hook only sees tool calls and turn boundaries, never intent. Planning is governed indirectly through `approval` and the write set; this design never observes a plan and must not claim to verify one.

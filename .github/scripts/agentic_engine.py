@@ -1224,7 +1224,11 @@ def cmd_check_stop(args: argparse.Namespace) -> int:
         return 0
     if reason is None:
         return 0
-    emit({"hookSpecificOutput": {"hookEventName": "Stop", "decision": "block", "reason": reason}})
+    # Copilot harness shape: `decision` and `reason` are top-level fields. The
+    # `hookSpecificOutput` wrapper belongs to the legacy Local harness, and the
+    # Copilot harness ignores unsupported fields, so emitting the Local shape
+    # would silently allow a stop this hook meant to block.
+    emit({"decision": "block", "reason": reason})
     return 0
 
 
@@ -1438,6 +1442,43 @@ class EngineSelfTest(unittest.TestCase):
         self.implement()
         self.assertIsNotNone(self.stop(stop_hook_active=False))
         self.assertIsNone(self.stop(stop_hook_active=True))
+
+    def test_check_stop_emits_the_top_level_decision_shape(self) -> None:
+        # The Copilot harness reads `decision` at the top level and ignores
+        # unsupported fields, so a `hookSpecificOutput` wrapper would be dropped
+        # and the stop allowed.
+        self.init()
+        self.implement()
+        original = sys.stdin
+        try:
+            sys.stdin = io.StringIO(json.dumps({"stop_hook_active": False}))
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                code = cmd_check_stop(
+                    argparse.Namespace(repo_root=str(self.root), state_dir=str(self.state_dir))
+                )
+        finally:
+            sys.stdin = original
+        payload = json.loads(buffer.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["decision"], "block")
+        self.assertIn("verify", payload["reason"])
+        self.assertNotIn("hookSpecificOutput", payload)
+
+    def test_check_stop_is_silent_once_continuing(self) -> None:
+        self.init()
+        self.implement()
+        original = sys.stdin
+        try:
+            sys.stdin = io.StringIO(json.dumps({"stop_hook_active": True}))
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                cmd_check_stop(
+                    argparse.Namespace(repo_root=str(self.root), state_dir=str(self.state_dir))
+                )
+        finally:
+            sys.stdin = original
+        self.assertEqual(buffer.getvalue().strip(), "")
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
         buffer = io.StringIO()
