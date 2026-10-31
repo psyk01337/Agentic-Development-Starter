@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Document the engine entry points
+
+- Area: engine runbook, build-feature prompt
+- Change type: docs, runbook
+- Summary: adds an "Open A Run Before Writing Code" section to `.github/prompts/build-feature.prompt.md` with the `start` and `allow-write` commands and the record sequence, and a matching section in `docs/runbooks/agentic-engine.md` explaining why `start` is preferred over `init` and why extending a write set is explicit. States plainly that skipping the run leaves the hooks inert and should be reported rather than implied otherwise.
+- Reason: the runbook described the engine as a set of commands and never connected them to the workflow a user follows, which is how the enforcement layer stayed unreachable. The prompt is the one document that has to mention it for the gap to close.
+- Affected files: docs/runbooks/agentic-engine.md, .github/prompts/build-feature.prompt.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Give the engine a usable front door"
+- Review status: reviewed
+- Discrepancies or follow-up: the prompt asks the agent to open a run but cannot enforce it. `check-prompt-contracts` validates structure, not whether an agent complies, so the honest status is that the path is documented and reachable rather than guaranteed.
+
 ### 2026-10-31 - Document session-start context injection
 
 - Area: hooks runbook, ADR 0009

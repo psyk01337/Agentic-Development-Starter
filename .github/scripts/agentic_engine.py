@@ -570,10 +570,69 @@ def next_payload(state: dict) -> dict:
     return payload
 
 
-def cmd_init(args: argparse.Namespace) -> int:
+def cmd_start(args: argparse.Namespace) -> int:
+    """Initialize a run from flags rather than a hand-written task file.
+
+    Every run used to begin with someone authoring a task JSON from memory: the
+    field names, which ones are required, and the write-set rules. That is the
+    front door to the whole control plane, and it was the highest-friction part.
+    """
     repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
     policy = load_policy(repo_root)
-    task = validate_task(read_json_file(args.task), policy, repo_root)
+    task = {
+        "taskId": args.task_id or args.run_id,
+        "title": args.title,
+        "acceptanceCriteria": args.criterion,
+        "writeSet": args.write,
+        "class": args.task_class,
+    }
+    if args.approval_category:
+        task["approvalCategory"] = args.approval_category
+        task["requestedBy"] = args.requested_by
+    if args.changed_files_from:
+        task["changedFilesFrom"] = args.changed_files_from
+    validate_task(task, policy, repo_root)
+    # Delegate to the ordinary init path so there is exactly one implementation of
+    # run creation, one lock, and one set of refusal rules.
+    init_args = argparse.Namespace(
+        repo_root=args.repo_root,
+        state_dir=args.state_dir,
+        run_id=args.run_id,
+        task=None,
+        force=args.force,
+        _prepared_task=task,
+    )
+    return _init_with_task(init_args, repo_root, policy, task)
+
+
+def cmd_allow_write(args: argparse.Namespace) -> int:
+    """Extend a run's write set, recording why.
+
+    A write set is a prediction made before the work starts, and real work
+    discovers files as it goes. Without a recorded way to extend it, the choice is
+    between a uselessly broad set and stalling on a refusal. Extending is explicit
+    and auditable rather than implicit.
+    """
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    state_dir = state_dir_for(repo_root, args.state_dir)
+    with run_lock(state_dir, args.run_id):
+        state = load_state(state_dir, args.run_id)
+        if state["stage"] in ("done", "blocked"):
+            raise EngineError(f"run is {state['stage']}; the write set can no longer change")
+        current = list(state["task"]["writeSet"])
+        candidate = current + [args.path]
+        # Validate the whole list so the same rules apply as at init: no
+        # directories, wildcards, traversal, or absolute paths escaping the repo.
+        _validate_write_set(candidate, repo_root)
+        if _normalize_path(args.path) not in {_normalize_path(item) for item in current}:
+            state["task"]["writeSet"] = candidate
+            append_history(state, stage=state["stage"], action="allow-write", path=args.path, reason=args.reason)
+            save_state(state_dir, state)
+    emit({"runId": state["runId"], "writeSet": state["task"]["writeSet"]})
+    return 0
+
+
+def _init_with_task(args: argparse.Namespace, repo_root: Path, policy: dict, task: dict) -> int:
     state_dir = state_dir_for(repo_root, args.state_dir)
     path = state_path(state_dir, args.run_id)
     with run_lock(state_dir, args.run_id):
@@ -606,6 +665,13 @@ def cmd_init(args: argparse.Namespace) -> int:
         save_state(state_dir, state)
     emit(next_payload(state))
     return 0
+
+
+def cmd_init(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    policy = load_policy(repo_root)
+    task = validate_task(read_json_file(args.task), policy, repo_root)
+    return _init_with_task(args, repo_root, policy, task)
 
 
 def cmd_next(args: argparse.Namespace) -> int:
@@ -1562,6 +1628,92 @@ class EngineSelfTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("additionalContext", payload)
         self.assertIn("implement", payload["additionalContext"])
+
+    def start_cli(self, *argv: str) -> tuple[int, dict]:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(io.StringIO()):
+            code = main(list(argv) + ["--repo-root", str(self.root), "--state-dir", str(self.state_dir)])
+        text = buffer.getvalue().strip()
+        return code, (json.loads(text) if text else {})
+
+    def test_start_creates_a_run_from_flags(self) -> None:
+        # The front door: no hand-written task file, no remembered field names.
+        code, payload = self.start_cli(
+            "start", "--run-id", "r2", "--title", "flag run",
+            "--criterion", "it works", "--write", "src/a.py",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["runId"], "r2")
+        self.assertEqual(payload["stage"], "implement")
+        self.assertEqual(payload["writeSet"], ["src/a.py"])
+        self.assertEqual(payload["taskId"], "r2", "taskId should default to the run id")
+
+    def test_start_accepts_repeated_criteria_and_writes(self) -> None:
+        code, payload = self.start_cli(
+            "start", "--run-id", "r3", "--title", "multi",
+            "--criterion", "one", "--criterion", "two",
+            "--write", "src/a.py", "--write", "src/b.py",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(len(payload["acceptanceCriteria"]), 2)
+        self.assertEqual(payload["writeSet"], ["src/a.py", "src/b.py"])
+
+    def test_start_rejects_a_write_set_the_engine_would_refuse(self) -> None:
+        for bad in ("C:/tmp/a.py", "../escape.py", "src/*.py", "src/"):
+            code, _ = self.start_cli(
+                "start", "--run-id", f"bad{abs(hash(bad)) % 1000}", "--title", "bad",
+                "--criterion", "x", "--write", bad,
+            )
+            self.assertEqual(code, 1, f"expected refusal for write set entry {bad!r}")
+
+    def test_start_refuses_to_replace_a_live_run(self) -> None:
+        self.init()
+        code, _ = self.start_cli(
+            "start", "--run-id", "r1", "--title", "clobber",
+            "--criterion", "x", "--write", "src/a.py",
+        )
+        self.assertEqual(code, 1)
+
+    def test_allow_write_extends_the_set_and_records_the_reason(self) -> None:
+        # A write set is a prediction; work discovers files. Extending must be
+        # explicit and auditable rather than forcing a broad set up front.
+        self.init()
+        code, payload = self.start_cli(
+            "allow-write", "--run-id", "r1", "--path", "src/b.py", "--reason", "new helper",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["writeSet"], ["src/a.py", "src/b.py"])
+        state = load_state(self.state_dir, "r1")
+        entry = [h for h in state["history"] if h.get("action") == "allow-write"][-1]
+        self.assertEqual(entry["path"], "src/b.py")
+        self.assertEqual(entry["reason"], "new helper")
+
+    def test_allow_write_is_idempotent(self) -> None:
+        self.init()
+        self.start_cli("allow-write", "--run-id", "r1", "--path", "src/b.py", "--reason", "r")
+        code, payload = self.start_cli(
+            "allow-write", "--run-id", "r1", "--path", "src/b.py", "--reason", "r again",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["writeSet"], ["src/a.py", "src/b.py"])
+
+    def test_allow_write_refuses_an_unsafe_path(self) -> None:
+        self.init()
+        for bad in ("C:/tmp/a.py", "../escape.py", "src/*.py"):
+            code, _ = self.start_cli(
+                "allow-write", "--run-id", "r1", "--path", bad, "--reason", "r",
+            )
+            self.assertEqual(code, 1, f"expected refusal for {bad!r}")
+
+    def test_allow_write_refuses_once_the_run_is_finished(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record("review", {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:r"]})
+        code, _ = self.start_cli(
+            "allow-write", "--run-id", "r1", "--path", "src/b.py", "--reason", "late",
+        )
+        self.assertEqual(code, 1)
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
         buffer = io.StringIO()
@@ -2981,6 +3133,37 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--task", required=True)
     init_parser.add_argument("--force", action="store_true")
     init_parser.set_defaults(func=cmd_init)
+
+    start_parser = subparsers.add_parser(
+        "start", help="initialize a run from flags, without hand-writing a task file"
+    )
+    _add_location_options(start_parser)
+    start_parser.add_argument("--run-id", required=True)
+    start_parser.add_argument("--title", required=True)
+    start_parser.add_argument(
+        "--criterion", action="append", required=True, metavar="TEXT",
+        help="an acceptance criterion; repeat for each one",
+    )
+    start_parser.add_argument(
+        "--write", action="append", required=True, metavar="PATH",
+        help="a repo-relative file the run may change; repeat for each one",
+    )
+    start_parser.add_argument("--task-id", default=None)
+    start_parser.add_argument("--task-class", default="FEATURE")
+    start_parser.add_argument("--approval-category", default=None)
+    start_parser.add_argument("--requested-by", default=None)
+    start_parser.add_argument("--changed-files-from", default=None, choices=["declared", "git"])
+    start_parser.add_argument("--force", action="store_true")
+    start_parser.set_defaults(func=cmd_start)
+
+    allow_write_parser = subparsers.add_parser(
+        "allow-write", help="add one path to a run's write set, recording why"
+    )
+    _add_location_options(allow_write_parser)
+    allow_write_parser.add_argument("--run-id", required=True)
+    allow_write_parser.add_argument("--path", required=True)
+    allow_write_parser.add_argument("--reason", required=True)
+    allow_write_parser.set_defaults(func=cmd_allow_write)
 
     next_parser = subparsers.add_parser("next", help="show the next action")
     _add_location_options(next_parser)

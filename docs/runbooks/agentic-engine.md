@@ -45,6 +45,8 @@ No code branches on `lastStage`; it exists for a human or supervisor reading `st
 All commands accept `--repo-root` and `--state-dir` for tests or non-standard layouts.
 
 ```powershell
+python .github/scripts/agentic_engine.py start --run-id feature-123 --title "Add X" --criterion "Y works" --write src/a.py
+python .github/scripts/agentic_engine.py allow-write --run-id feature-123 --path src/b.py --reason "helper discovered during implementation"
 python .github/scripts/agentic_engine.py init --run-id feature-123 --task task.json
 python .github/scripts/agentic_engine.py next --run-id feature-123
 python .github/scripts/agentic_engine.py record --run-id feature-123 --stage implement --result implement.json
@@ -56,6 +58,32 @@ python .github/scripts/agentic_engine.py status --run-id feature-123
 python .github/scripts/agentic_engine.py report --run-id feature-123
 python .github/scripts/agentic_engine.py selftest
 ```
+
+`start` is the preferred entry point. `init` takes a hand-written task file and exists for callers that already have one; both go through the same validation and the same run creation, so neither can drift from the other.
+
+### `start` and `allow-write`
+
+`start` builds the task from flags, so nobody has to remember the field names or which ones are required:
+
+```bash
+python .github/scripts/agentic_engine.py start \
+  --run-id ember-s3 \
+  --title "Obstacles, collision, scoring" \
+  --criterion "A fixed seed produces the same obstacle sequence" \
+  --criterion "A collision ends the run exactly once" \
+  --write app/game/src/world.js \
+  --write app/game/tests/world.test.mjs
+```
+
+`--criterion` and `--write` repeat. `--task-id` defaults to the run id, `--task-class` defaults to `FEATURE`, and `--changed-files-from git` opts into a repository-derived write set.
+
+`allow-write` exists because a write set is a prediction made before the work starts, and real work discovers files. Extending the set is explicit, validated against the same rules as `start`, and recorded in the run history with a reason:
+
+```bash
+python .github/scripts/agentic_engine.py allow-write --run-id ember-s3 --path app/game/src/extra.js --reason "extracted a helper"
+```
+
+Without it the only options are a uselessly broad write set or stalling on a refusal, and both push people to disable the gate. Adding a path that is already present is a no-op, and a finished or blocked run refuses the change.
 
 Exit codes: `0` success, `1` invalid input or transition, `3` blocked or
 escalated. `next`, `status`, and `report` all return `3` for a blocked run.

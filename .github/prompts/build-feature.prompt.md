@@ -9,6 +9,32 @@ Use this prompt as the single entry point for delivering one application feature
 - The nearest application code, tests, package manifests, and validation commands.
 - `.github/roles/tool-access.json` to confirm which agent owns planning, implementation, review, and verification.
 - `docs/runbooks/agentic-dev.md` for the guided handoff contract.
+- `docs/runbooks/agentic-engine.md` for the run lifecycle below.
+
+## Open A Run Before Writing Code
+
+The engine is what makes the write bound and the completion check real rather than advisory. Open a run as the first action of the slice:
+
+```bash
+python .github/scripts/agentic_engine.py start \
+  --run-id <slice-id> \
+  --title "<one line>" \
+  --criterion "<acceptance criterion>" \
+  --criterion "<another>" \
+  --write <path>
+```
+
+Repeat `--criterion` and `--write` for each. `--write` is the set of files this slice may change; anything outside it is refused by the `preToolUse` hook while the run is active.
+
+If the work discovers a file the plan did not predict, extend the set deliberately rather than widening it up front:
+
+```bash
+python .github/scripts/agentic_engine.py allow-write --run-id <slice-id> --path <path> --reason "<why>"
+```
+
+Then close the slice in order: `record --stage implement`, `record --stage verify` (refused unless every check passes), `record --stage review` with a reviewer distinct from the implementer. The run releases the write bound when it reaches `done`.
+
+Without a run the hooks stay inert and the repository falls back to conventions. That is a valid way to work, but it is not this workflow — if you skip the run, say so rather than implying the gates applied.
 
 ## Deliverables
 

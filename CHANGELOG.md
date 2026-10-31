@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Give the engine a usable front door
+
+- Area: agentic engine, workflow prompts, docs
+- Change type: feature, test, docs
+- Summary: adds `start`, which builds a run from flags instead of a hand-written task file, and `allow-write`, which extends a live run's write set and records why. `cmd_init` now delegates to the same run-creation helper so the two entry points cannot drift. `.github/prompts/build-feature.prompt.md` gains an "Open A Run Before Writing Code" section with both commands. `docs/runbooks/agentic-engine.md` documents them. Eight self-tests take the suite from 93 to 101. Manifest version goes to `2.6.0`.
+- Reason: the engine was infrastructure nothing reached. `build-feature` — the prompt a user actually follows for feature work — made no reference to it, so the write bound and completion check would have stayed inert for anyone who did not already know they existed. Every run in this repository was also created by hand-writing a task JSON from memory, and a write set is a prediction made before the work starts, so a strict gate with no way to extend it pushes people to widen the set or switch it off.
+- Affected files: .github/scripts/agentic_engine.py, .github/prompts/build-feature.prompt.md, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the engine entry points"
+- Validation: engine selftest 101/101. Exercised against this repository: `start` created a run from flags with no task file, `check-tool` refused a write outside the set naming the path, `allow-write` extended the set, the same write then passed `check-tool`, and `report` showed the `allow-write` history entry with its reason. `check-prompt-contracts` passes with the new prompt section.
+- Discrepancies or follow-up: `start` still requires the operator to name the write set, so the prediction problem is mitigated rather than removed; `allow-write` makes a wrong prediction recoverable instead of fatal. Whether the harness injects the stage context and whether `build-feature` is followed in practice are both unobserved — the prompt now points at the engine, but a prompt is advisory, and the gates only apply once a run exists.
+
 ### 2026-10-31 - Inject the run stage at session start
 
 - Area: agentic engine, hooks
