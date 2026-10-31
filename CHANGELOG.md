@@ -24,27 +24,6 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-10-31 - Vendor the pstack principle and verification skills
-
-- Area: vendor/, starter modules, markdown quality
-- Change type: feature, config, docs
-- Summary: vendors 28 skills from `cursor/plugins/pstack` under `vendor/pstack/` - the 24 `principle-*` skills and the four verification-skill lifecycle skills - unmodified, with the upstream MIT licence and a root `THIRD_PARTY_NOTICES.md`. Registers a disabled `vendor-pstack` module covering all 30 vendored files, and excludes `vendor/` from `check-markdown-quality.{sh,ps1}`. Manifest version goes to `2.8.0`.
-- Reason: this starter has 73 always-on instruction files and 12 validators, and no procedure for turning an escaped defect into a permanent check - the "fix the machinery" step that makes a workflow improve rather than accumulate. The `create-`/`maintain-verification-skill` pair is that procedure, and the `principle-*` family is a worked example of the alternative to always-on prose: named principles invoked on demand instead of rules loaded every turn. Upstream is MIT licensed, so vendoring with attribution is both permitted and more honest than reimplementing from a description.
-- Affected files: vendor/pstack/**, THIRD_PARTY_NOTICES.md, .github/starter-modules.json, .github/scripts/check-markdown-quality.sh, .github/scripts/check-markdown-quality.ps1, CHANGELOG.md, DOC-CHANGELOG.md
-- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the vendored pstack subset"
-- Validation: 28 of 28 skill files fetched. `check-markdown-quality`, `check-starter-skills`, `check-hook-policy`, `check-agentic-engine`, `check-prompt-contracts`, `check-evals` and `check-agent-contracts` pass. `check-starter-manifest` initially failed on the unrecorded 2.8.0 bump, which is the check working as designed.
-- Discrepancies or follow-up: the vendored skills are inert. Nothing under `vendor/` is loaded by the agent host or held to this repository's skill contracts, so the module records provenance rather than behaviour; activating one requires copying it into `.github/skills/` deliberately. The reference to a `typescript-best-practices` skill inside `principle-type-system-discipline` does not resolve here, because that skill was not vendored. 53 upstream skills were deliberately left out to avoid a second ungoverned pile.
-
-### 2026-10-31 - Remove the sample application
-
-- Area: app/, docs, hook policy fixtures
-- Change type: chore, docs
-- Summary: deletes `app/game/` (20 files) and the `ember-run-prd.md` intake, and resets `docs/prd.md` to a project template. Repoints the `git add` fixture in `check-hook-policy.sh` and `check-hook-policy.ps1` from `app/game/assets/runtime/hero.png` to `app/assets/hero.png`, and records in `docs/runs/README.md` that archived runs name paths that no longer exist. `app/README.md` stays: it is the scaffold's explanation of where application code belongs, not part of the sample.
-- Reason: the sample outlived its purpose. It was built to prove the workflow could deliver, which it did, but a starter that ships a game invites the next project to keep it. The game overlays, runbook, ADR and eval remain, because those are the offering; the application code is not.
-- Affected files: app/game/** (deleted), docs/inputs/ember-run-prd.md (deleted), docs/prd.md, docs/runs/README.md, .github/scripts/check-hook-policy.sh, .github/scripts/check-hook-policy.ps1, CHANGELOG.md, DOC-CHANGELOG.md
-- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Reset the PRD to a template and annotate removed samples"
-- Validation: `check-hook-policy.{sh,ps1}` pass with the new fixture path, `check-markdown-quality` passes, and the two archived runs remain readable. The hooks were exercised against the trimmed tree before commit.
-- Discrepancies or follow-up: the sample was also the only worked example that the workflow produces something, so the repository now demonstrates nothing end to end. Replacing it with a small fixture slice used by the evals is worth doing and is not done here. `docs/runs/ember-s7.md` and `docs/runs/state-doctor.md` still describe the removed code, which is accurate history rather than a broken state.
 ### 2026-10-31 - Add a doctor command that checks the wiring instead of assuming it
 
 - Area: agentic engine, engine runbook

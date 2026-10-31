@@ -14,7 +14,7 @@ function Add-CheckError([string]$Message) {
   $script:errors.Add($Message)
 }
 
-$markdownFiles = Get-ChildItem -Path $RepoRoot -Recurse -Filter "*.md" -File | Where-Object { $_.FullName -notmatch "[\\/]\.git[\\/]" -and $_.FullName -notmatch "[\\/]vendor[\\/]" }
+$markdownFiles = Get-ChildItem -Path $RepoRoot -Recurse -Filter "*.md" -File | Where-Object { $_.FullName -notmatch "[\\/]\.git[\\/]" }
 foreach ($file in $markdownFiles) {
   $relativeFile = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName).Replace("\", "/")
   $lines = Get-Content -Path $file.FullName
