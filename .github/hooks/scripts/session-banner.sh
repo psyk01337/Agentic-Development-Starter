@@ -25,9 +25,15 @@ NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 printf '{"timestamp":"%s","event":"sessionStart","sessionId":"%s","user":"%s"}\n' "$NOW" "$SESSION_ID" "$USER_NAME" >> "$LOG_PATH"
 
-echo "=== Agentic Session Guardrails Enabled ==="
-echo "Session: ${SESSION_ID}"
-echo "Policy : .github/hooks/agent-policy.json"
-echo "Rules  : .github/hooks/policy-rules.tsv"
-echo "Audit  : .github/hooks/logs/agent-audit.log"
-echo "No secrets, no destructive commands, no unsafe remote execution."
+# stdout is parsed as hook output, so the banner goes to stderr. Printing human
+# text on stdout makes the harness treat the whole payload as unparseable.
+cat >&2 <<BANNER
+=== Agentic Session Guardrails Enabled ===
+Session: ${SESSION_ID}
+Policy : .github/hooks/agent-policy.json
+Rules  : .github/hooks/policy-rules.tsv
+Audit  : .github/hooks/logs/agent-audit.log
+No secrets, no destructive commands, no unsafe remote execution.
+BANNER
+
+exit 0

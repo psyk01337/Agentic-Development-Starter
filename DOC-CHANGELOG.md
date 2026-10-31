@@ -24,6 +24,50 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Record the vocabulary contract
+
+- Area: hooks runbook, ADR 0009
+- Change type: docs, runbook
+- Summary: adds a Vocabulary Contract section to `docs/runbooks/hooks.md` listing the tool names the harness actually sends and the two path shapes involved, and states that a tool name or path shape the gate has not seen is a gate bug rather than a policy decision. Amends ADR 0009 to record that the original design keyed on a registry whose names never occur in traffic, and that unclassified tools now allow.
+- Reason: the same class of error recurred twice — tool names and path shape — and both times the fix was a code change with no record of the underlying rule. The rule is that the gate's vocabulary must come from observed payloads, and until it is written down the next person will rebuild it from documentation again.
+- Affected files: docs/runbooks/hooks.md, docs/adr/0009-hook-governed-loop.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Classify the tool names the harness actually sends"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook now says unclassified tools are allowed, which weakens the original "deny by default" statement in `docs/adr/0009-hook-governed-loop.md`; the ADR is amended to match. The `HOST_TOOL_KINDS` table still needs a maintainer to extend it when the harness adds tools — that is a known manual step rather than a detected one.
+
+### 2026-10-31 - Document the kill switch and interpreter discovery
+
+- Area: hooks runbook
+- Change type: docs, runbook
+- Summary: adds a "When Every Tool Call Is Denied" section giving `Rename-Item .agentic agentic-disabled` as the escape hatch, and an "Interpreter Discovery" section explaining why `python3` on `PATH` is not proof of a working Python and how both twins probe for one. Rewrites the Engine Gate table so the failure rows say `allow` rather than `preToolUse denies`, and states that any exit code other than `0` or `2` is reported by the harness as `hook errored`.
+- Reason: the runbook described the failure behaviour backwards. It said a `preToolUse` failure denies, and the implementation followed that, and the result was a session where every tool call failed with no documented way out. A failure mode is only documented if the recovery is documented with it.
+- Affected files: docs/runbooks/hooks.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Stop the engine gate from denying every tool call"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook now contradicts ADR 0009's original risk statement that `preToolUse` should stay fail-closed on a gate failure. The ADR should be amended to match; it is not amended here to keep this change to the runbook and the scripts.
+
+### 2026-10-31 - Document the hook-driven loop
+
+- Area: hooks runbook, ADR 0009
+- Change type: docs, runbook, adr
+- Summary: adds a "The Loop" section to `docs/runbooks/hooks.md` describing how `preToolUse` and `agentStop` together turn the engine into a control plane, and the three properties that keep the stop hook safe: inert without a run, blocks once rather than forever, and allows the stop on any failure. Extends the Engine Gate table with the `agentStop` branch and the deliberate asymmetry where a `preToolUse` failure denies but an `agentStop` failure allows. Amends ADR 0009 to record `agentStop` as implemented and verified, the observation that the host's block budget is a second stop condition the engine does not control, and rollout step 5 dropped with the measurement behind it.
+- Reason: the runbook previously described the engine gate as a `preToolUse`-only concern, which would have left the loop half documented. The asymmetry between the two failure directions is not obvious from the code and is exactly what a future maintainer would "tidy" into a bug.
+- Affected files: docs/runbooks/hooks.md, docs/adr/0009-hook-governed-loop.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Close the loop with an agentStop hook"
+- Review status: reviewed
+- Discrepancies or follow-up: ADR 0009 states plainly that no test has observed the host firing `agentStop`. Its status stays `Proposed` for that reason. `docs/runbooks/autonomous-execution.md` still scopes the SDK overlay as a live option although ADR 0008 is rejected; re-scoping or archiving it remains deferred.
+
+### 2026-10-29 - Scope the hook rules to command text
+
+- Area: hooks runbook
+- Change type: docs, runbook
+- Summary: records three runtime rules in `docs/runbooks/hooks.md` — only command text is scanned, so file content cannot trip a rule; the Windows handler uses `powershell` because `pwsh` is a separate install and a missing interpreter denies every tool call under the fail-closed contract; and both the rule loop and the command extraction require GNU `grep -P`, so BSD grep silently allows everything. Rewrites the "Every tool call is denied" troubleshooting entry around the interpreter, path, and execution-policy causes in that order.
+- Reason: a maintainer had to disable the guardrail on a second machine. The runbook's previous advice pointed at `pwsh` and at a flattening step that no longer exists, so following it would not have found either cause.
+- Affected files: docs/runbooks/hooks.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-29 - Stop the hook from blocking edits that merely quote a blocked command"
+- Review status: reviewed
+- Discrepancies or follow-up: the macOS `grep -P` limitation is documented but not fixed. Fixing it means rewriting every rule expression for BSD grep or shipping a POSIX matcher, which is larger than this correction.
+
 ### 2026-10-28 - Record the hook-governed loop decision
 
 - Area: ADR 0008, ADR 0009, hooks runbook

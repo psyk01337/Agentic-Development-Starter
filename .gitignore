@@ -12,7 +12,16 @@ update-09262026.md
 # Local runtime state and hook audit output
 .github/hooks/logs/
 .agentic/state/
+# The documented kill switch is `Rename-Item .agentic agentic-disabled`. Without
+# this line the renamed directory is untracked and the git-derived write set
+# reports it as an out-of-set change on the next run.
+agentic-disabled/
 
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Node dependencies and build output
+node_modules/
+dist/
+build/

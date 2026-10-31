@@ -1,5 +1,5 @@
 {
-  "version": "2.3.0",
+  "version": "2.4.2",
   "maintainerAssetScan": true,
   "description": "Composable module manifest for this agentic development starter.",
   "modules": [
@@ -85,9 +85,11 @@
         ".github/hooks/scripts/session-banner.ps1",
         ".github/hooks/scripts/pre-tool-policy.ps1",
         ".github/hooks/scripts/audit-log.ps1",
+        ".github/hooks/scripts/agent-stop.ps1",
         ".github/hooks/scripts/session-banner.sh",
         ".github/hooks/scripts/pre-tool-policy.sh",
         ".github/hooks/scripts/audit-log.sh",
+        ".github/hooks/scripts/agent-stop.sh",
         ".github/scripts/check-hook-policy.ps1",
         ".github/scripts/check-hook-policy.sh",
         "docs/runbooks/hooks.md"

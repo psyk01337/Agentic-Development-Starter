@@ -5,7 +5,7 @@
       {
         "type": "command",
         "bash": "bash .github/hooks/scripts/session-banner.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/scripts/session-banner.ps1",
+        "powershell": "powershell -NoProfile -ExecutionPolicy Bypass -File .github/hooks/scripts/session-banner.ps1",
         "timeoutSec": 10
       }
     ],
@@ -13,7 +13,7 @@
       {
         "type": "command",
         "bash": "bash .github/hooks/scripts/pre-tool-policy.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/scripts/pre-tool-policy.ps1",
+        "powershell": "powershell -NoProfile -ExecutionPolicy Bypass -File .github/hooks/scripts/pre-tool-policy.ps1",
         "timeoutSec": 10
       }
     ],
@@ -21,7 +21,15 @@
       {
         "type": "command",
         "bash": "bash .github/hooks/scripts/audit-log.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/scripts/audit-log.ps1",
+        "powershell": "powershell -NoProfile -ExecutionPolicy Bypass -File .github/hooks/scripts/audit-log.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "bash .github/hooks/scripts/agent-stop.sh",
+        "powershell": "powershell -NoProfile -ExecutionPolicy Bypass -File .github/hooks/scripts/agent-stop.ps1",
         "timeoutSec": 10
       }
     ]

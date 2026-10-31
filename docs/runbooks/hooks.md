@@ -11,6 +11,8 @@ Hooks enforce deterministic guardrails and create an audit trail for agent tool 
 - **Input arrives on stdin as JSON.** A command hook receives `toolName` and `toolArgs` on standard input. Command-line arguments are not populated by the harness. The scripts here also accept argv so they can be exercised by hand, but fixtures must use stdin or they validate a path production never takes.
 - **`preToolUse` is fail-closed.** Exit `2`, a crash, or any non-zero exit denies the tool call. A deny decision is returned as `{"permissionDecision":"deny","permissionDecisionReason":"..."}` on stdout **and** exit `2`, so the reason reaches the agent and the call is still denied if stdout is ignored.
 - **Timeouts are fail-open.** A hook that exceeds `timeoutSec` is killed and the tool call proceeds through the normal permission flow. A slow hook is therefore the same as no hook, which is why every entry keeps a 10 second budget and the validator rejects anything above 30.
+- **Only command text is scanned.** The payload for an edit tool carries the file content being written, so matching rules against the whole payload blocks any file that merely mentions a blocked pattern — which is most of this repository's documentation. The policy extracts `toolArgs.command` and matches rules against that alone; a payload with no command matches nothing and is allowed.
+- **The Windows handler uses `powershell`, not `pwsh`.** `pwsh` is PowerShell 7 and a separate install; a machine without it cannot spawn the hook, and because `preToolUse` is fail-closed that denies every tool call. `powershell` ships with Windows. `-ExecutionPolicy Bypass` is scoped to the hook process so a restrictive default policy cannot fail the whole session.
 
 A malformed hook item is dropped and logged; a bad top-level `version` rejects the whole file. Both failures disable the policy silently, so `check-hook-policy` asserts the shape rather than trusting it.
 
@@ -26,11 +28,33 @@ Each entry declares a `bash` and a `powershell` handler. The `.sh` scripts are t
 
 ## Lifecycle
 
-1. `sessionStart`: prints banner and logs session metadata, using `sessionId` from the payload.
-2. `preToolUse`: flattens the payload and blocks dangerous command patterns.
+1. `sessionStart`: logs session metadata and prints the banner to stderr, using `sessionId` from the payload.
+2. `preToolUse`: extracts command text and blocks dangerous command patterns, then asks the engine whether the call is admissible.
 3. `postToolUse`: appends timestamped audit records.
+4. `agentStop`: asks the engine whether the active run may stop.
 
 `agent-policy.json` defines the lifecycle wiring. `policy-rules.tsv` defines the blocklist data consumed by the pre-tool policy scripts.
+
+## The Loop
+
+`preToolUse` and `agentStop` together turn the engine into a control plane, not just a record. Nothing new has to run, and no credential is involved.
+
+```
+agent works -> preToolUse denies writes outside task.writeSet
+             -> agentStop asks "is the stage satisfied?"
+                  no  -> { decision: "block", reason: <required result schema> }
+                  yes -> the turn ends
+```
+
+`agentStop` is what makes this a loop rather than a guardrail. When the engine reports an unfinished stage the hook refuses the turn end and returns the engine's own `requiredResult` schema as the reason, so the agent is told exactly what to produce next. Three properties keep it safe:
+
+- **Inert without a run.** No `.agentic/state`, no subprocess, no behaviour change.
+- **It blocks once, not forever.** `stop_hook_active` is true on the turn after a block, and the hook then allows the stop. Repeating the refusal would only burn credits.
+- **A failure allows the stop.** A missing interpreter, a non-zero exit, or unparseable output all fall through to "allow", because a broken hook must not trap the agent in a loop.
+
+A blocked turn consumes AI credits, so the engine's repair budget and identical-failure escalation are the real bound. Once a run reaches `blocked`, `agentStop` stops objecting.
+
+The engine owns both decisions. `check-tool` answers `preToolUse`; `check-stop` answers `agentStop`. Neither reimplements the other.
 
 ## Policy Metadata
 
@@ -71,6 +95,8 @@ The former `rolePolicyGuidance` and `logging` keys were removed from `agent-poli
 
 - Block tool calls whose command string matches a deterministic unsafe pattern.
 - Require safer alternatives for common destructive or supply-chain-risky commands.
+- Bound which files an agent may change, by consulting the engine's write set.
+- Refuse to end a turn while the engine reports an unfinished stage.
 - Create audit records for tool usage when the runtime invokes the hooks.
 - Deny by exit code, so the refusal holds even if the agent ignores the message.
 
@@ -82,29 +108,95 @@ The former `rolePolicyGuidance` and `logging` keys were removed from `agent-poli
 - They cannot judge intent. The engine gate below bounds *which files* may change, but a hook never sees a plan or a reason, only calls.
 - They cannot replace human review for high-risk policy, MCP, credential, or deployment changes.
 - They cannot guarantee secrets are absent from every external system or terminal output.
+- They cannot be assumed to apply to a session started by a different client. The hook contract is per-harness, and that has not been verified for sessions created over the Agent Host Protocol.
 
 ## Engine Gate
 
-`pre-tool-policy.{sh,ps1}` consults `agentic_engine.py` after the rule loop, and only when a run exists:
+`pre-tool-policy.{sh,ps1}` consults `agentic_engine.py` after the rule loop, and `agent-stop.{sh,ps1}` consults it on every turn end. Both are dormant unless a run exists:
 
 ```
 .agentic/state missing        -> allow, no engine call at all
-.agentic/state present        -> run `python3 agentic_engine.py check-tool` with the payload on stdin
+.agentic/state present        -> preToolUse: python agentic_engine.py check-tool
+                                 agentStop : python agentic_engine.py check-stop
   tool not classified         -> deny
   stage forbids the tool kind -> deny
   write outside the write set -> deny
-  engine unreachable          -> deny
+  stage unfinished            -> block the turn end, with the required result
+  no working interpreter      -> allow, with a warning on stderr
+  engine fails for any reason -> allow, with a warning on stderr
 ```
+
+The asymmetry in the last two lines is deliberate. A `preToolUse` failure allows, because a governance control that cannot run must not brick the editor; the rule layer above has already run and still applies. An `agentStop` failure also allows, because a hook that cannot decide must not trap the agent. Neither direction should ever produce an unhandled exit code — anything other than `0` or `2` is reported by the harness as `hook errored` and treated as a denial for `preToolUse`.
 
 Three properties make this safe to leave enabled:
 
 - **Inert without a run.** No `.agentic/state`, no subprocess, no behaviour change, no latency cost.
-- **Finished runs release the session.** Stages `done` and `blocked` are not active, so a completed run never locks anyone out.
-- **Tool names come from `.github/roles/tool-access.json`.** The gate inverts `toolDefinitions` at runtime rather than owning a private copy, so it cannot drift from the vocabulary the supervisor validator already checks.
+- **Finished runs release the session.** Stages `done` and `blocked` are not active, so a completed run never locks anyone out or refuses a turn end.
+- **A gate that cannot run allows the call.** The engine gate needs a working Python interpreter. If none is usable the gate switches itself off with a warning on stderr and the rule layer above still applies. Denying every tool call because an interpreter is missing does not make anything safer; it makes the whole policy get disabled, which is how this guardrail was lost the first time.
 
-The design, its risks, and its unverified status are recorded in `docs/adr/0009-hook-governed-loop.md`.
+### When Every Tool Call Is Denied
 
-## If a Command Is Blocked
+That state is possible and it has one cause: the engine gate is returning a denial for every call. The fix takes seconds and needs no editor tools:
+
+```powershell
+Rename-Item .agentic agentic-disabled
+```
+
+Renaming the state directory makes the gate inert immediately; the next tool call succeeds. Rename it back to resume the run. Do not delete it — the run history is the evidence trail.
+
+The same escape exists for the write-set gate specifically: a finished or `blocked` run stops restricting anything, so recording a blocking result also releases the session.
+
+### Cost
+
+The hook runs on every tool call, so its latency matters:
+
+| layer | measured cost |
+|---|---|
+| bash handler, no active run | ~265ms per call |
+| PowerShell handler, no active run | ~640ms per call |
+| one Python engine call | ~120ms, only when a run exists |
+
+The rule probe is the part that can be tuned and has been: 27 rules matched individually cost ~150ms because each is a separate `grep` process, while one combined alternation costs ~16ms. The shell walks the rules in file order only after the combined probe matches, so the first matching rule still wins and its reason is still the one reported.
+
+The remaining cost is process startup, not logic — PowerShell 5.1 alone accounts for most of the Windows figure. Avoid adding work to these scripts; if a hook needs to do more, it should hand off rather than grow.
+
+The cost is also why the engine gate is skipped entirely when `.agentic/state` is absent. Ordinary editing pays only the rule layer.
+
+### Vocabulary Contract
+
+The gate decides by tool name and by file path, so it is only as correct as its vocabulary. Both come from **observed payloads**, never from documentation.
+
+Tool names the harness sends, recorded by the `postToolUse` hook:
+
+| tool | kind |
+| --- | --- |
+| `powershell` | `execute` |
+| `read_powershell` | `read` |
+| `view` | `read` |
+| `grep` | `search` |
+| `glob` | `search` |
+| `edit` | `edit` (write) |
+| `create` | `edit` (write) |
+| `skill` | `read` |
+| `sql` | `read` |
+
+`.github/roles/tool-access.json` `toolDefinitions.examples` documents capability roles for a different surface and shares no names with live traffic. It is still read, but it is a supplement, not the source.
+
+Paths arrive **absolute** (`D:\repo\app\game\src\rng.js`, or `file:///d:/...`) while a write set is **repo-relative** (`app/game/src/rng.js`). Both are the same file, so the gate normalises the reported path against the repository root before comparing. A path outside the repository stays outside and is refused.
+
+Two rules follow:
+
+- **An unclassified tool is allowed**, with a reason. Denying it is how a vocabulary mismatch becomes a total lockout: if the gate recognises nothing, deny-on-unknown denies everything. The authoritative, name-independent check is the git-derived write set at `record` time.
+- **A name or shape the gate has not seen is a gate bug, not a policy decision.** Add it to `HOST_TOOL_KINDS` and add a fixture, rather than relying on the allow fallback.
+
+`check-hook-policy` asserts that every name in the table above classifies, and that a brand-new name is allowed. If the harness adds a tool, that assertion is what will catch it.
+
+### Interpreter Discovery
+`python3` on `PATH` is not proof of a working Python. Windows ships a `python3.exe` App Execution Alias that is a stub which fails at runtime, and `Get-Command python` returns every match as an array. Both hook twins probe each candidate with `--version` and require a `Python X.Y` response before trusting it, so a stub falls through to a real `python` further down `PATH`.
+
+`check-hook-policy` asserts this: it places a dead `python3` in front of `PATH` with a working `python` behind it and requires the gate to still deny an out-of-set write. It also asserts that with no usable interpreter at all the gate allows, so the degrade path cannot silently become a denial.
+
+The design, its risks, and its unverified status are recorded in `docs/adr/0009-hook-governed-loop.md`.## If a Command Is Blocked
 
 1. Read the block reason and safer alternative printed by the hook.
 2. Replace destructive/unsafe command with explicit, reviewable steps.
@@ -165,9 +257,10 @@ The approval-gated orchestration overlay should reuse the existing `postToolUse`
 
 ## Troubleshooting
 
-- **Every tool call is denied.** A `preToolUse` hook that cannot run fails closed. Check that the referenced script path exists and that `pwsh` or `bash` is on `PATH`; the validator asserts referenced scripts exist for this reason.
+- **Every tool call is denied.** `preToolUse` fails closed, so anything that stops the hook from running denies everything. In order of likelihood: the interpreter named in `agent-policy.json` is missing (`powershell` ships with Windows; `pwsh` is a separate install), a referenced script path does not resolve, or the execution policy blocks the script. The validator asserts referenced scripts exist for the first two; the audit channel shows the third.
 - **Nothing is blocked.** The policy is not loading. Confirm `version` is the number `1` and every item has `type: "command"` and a string handler. A bad version rejects the whole file and a malformed item is dropped, both without stopping the session.
 - **Blocking is intermittent.** A slow hook times out, and a timeout is fail-open. Keep the script's own work small and leave `timeoutSec` at 10.
-- **A rule never fires.** The rule may be anchored against content the flattening step removed. Test the exact payload through `check-hook-policy` rather than the command string alone.
+- **A rule never fires.** The rule may be anchored against content the extraction step removed. Test the exact payload through `check-hook-policy` rather than the command string alone.
+- **Nothing is blocked on macOS or Linux without GNU grep.** Both the rule loop and the command extraction use `grep -P`. BSD grep does not support `-P`, so every rule silently fails to match and the policy allows everything. Run the hook under Git Bash, WSL, or a GNU grep, or treat the rules as documentation on that platform.
 - **Every tool call is denied and `.agentic/state` exists.** The engine gate is failing closed. Check that `python3` or `python` is on `PATH`, that `.github/roles/tool-access.json` is present, and that the tool name in the payload is listed in its `toolDefinitions`. A finished or blocked run is ignored, so a stale `done` state file is never the cause.
 

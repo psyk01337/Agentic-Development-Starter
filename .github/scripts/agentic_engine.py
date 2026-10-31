@@ -30,7 +30,7 @@ import time
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 if sys.version_info < (3, 9):
     raise SystemExit("agentic_engine.py requires Python 3.9 or newer")
@@ -674,6 +674,29 @@ def _normalize_path(value: str) -> str:
     return normalized.lower() if CASE_INSENSITIVE_PATHS else normalized
 
 
+def _repo_relative(value: str, repo_root: Path) -> str:
+    """Normalize a reported path to repo-relative form before comparing.
+
+    The harness reports absolute paths; a write set is written repo-relative.
+    Both name the same file, so a straight string compare denies every legitimate
+    write. A path outside the repository stays outside, so it is still refused.
+    """
+    raw = str(value).strip()
+    if raw.lower().startswith("file://"):
+        raw = unquote(urlparse(raw).path)
+        if re.match(r"^/[A-Za-z]:", raw):
+            raw = raw[1:]
+    normalized = raw.replace("\\", "/")
+    root = str(repo_root).replace("\\", "/").rstrip("/")
+    if CASE_INSENSITIVE_PATHS:
+        inside = normalized.lower().startswith(root.lower() + "/")
+    else:
+        inside = normalized.startswith(root + "/")
+    if inside:
+        normalized = normalized[len(root) + 1:]
+    return _normalize_path(normalized)
+
+
 def _outside_write_set(files: list, write_set: list) -> list:
     allowed = {_normalize_path(item) for item in write_set}
     return [str(item) for item in files if _normalize_path(str(item)) not in allowed]
@@ -977,6 +1000,24 @@ def cmd_approve(args: argparse.Namespace) -> int:
 
 TOOL_REGISTRY_PATH = Path(".github") / "roles" / "tool-access.json"
 
+# Observed Copilot harness tool names, mapped to the registry's capability kinds.
+# These are not guesses: they come from the tool names the harness actually sent,
+# recorded by the postToolUse hook in .github/hooks/logs/agent-audit.log. The
+# registry's `examples` field documents role capability mapping for a different
+# surface and shares no names with live traffic, which is why a gate keyed only
+# on the registry classified nothing and denied every call once armed.
+HOST_TOOL_KINDS = {
+    "powershell": "execute",
+    "read_powershell": "read",
+    "view": "read",
+    "grep": "search",
+    "glob": "search",
+    "edit": "edit",
+    "create": "edit",
+    "skill": "read",
+    "sql": "read",
+}
+
 # A done or blocked run bounds nothing, so only these stages restrict tools.
 ACTIVE_STAGES = ("approval", "implement", "verify", "repair", "review")
 
@@ -1001,18 +1042,19 @@ WRITE_PATH_LIST_KEYS = ("files", "paths", "edits")
 
 
 def load_tool_kinds(repo_root: Path) -> dict:
-    """Map concrete host tool name to capability kind.
+    """Map concrete tool name to capability kind.
 
-    The role registry is the single source of truth for the vocabulary, so this
-    gate cannot drift from the matrix the supervisor validator already reads.
+    The role registry contributes the capability vocabulary and the observed
+    harness names contribute the concrete spellings. Registry names win on
+    conflict because a maintainer who edited the registry meant it.
     """
+    kinds = dict(HOST_TOOL_KINDS)
     registry_path = repo_root / TOOL_REGISTRY_PATH
     if not registry_path.is_file():
-        raise EngineError(f"missing tool registry: {TOOL_REGISTRY_PATH.as_posix()}")
+        return kinds
     definitions = read_json_file(str(registry_path)).get("toolDefinitions")
     if not isinstance(definitions, dict):
-        raise EngineError("tool registry is missing toolDefinitions")
-    kinds = {}
+        return kinds
     for kind, definition in definitions.items():
         examples = definition.get("examples") if isinstance(definition, dict) else None
         if not isinstance(examples, list):
@@ -1020,7 +1062,7 @@ def load_tool_kinds(repo_root: Path) -> dict:
         for name in examples:
             # delegate-agent documents a platform mapping, not a literal name.
             if isinstance(name, str) and name and " " not in name:
-                kinds[name] = kind
+                kinds.setdefault(name, kind)
     return kinds
 
 
@@ -1079,10 +1121,12 @@ def check_tool_call(repo_root: Path, state_dir: Path, payload: dict) -> tuple:
 
     kind = load_tool_kinds(repo_root).get(tool_name)
     if kind is None:
-        return False, (
-            f"tool {tool_name!r} is not classified in {TOOL_REGISTRY_PATH.as_posix()}; "
-            "classify it before running an agent under the engine"
-        )
+        # Denying here is what turned a vocabulary mismatch into a total lockout:
+        # an unknown name was not an edge case, it was every call. A gate should
+        # only deny what it knows is disallowed. The authoritative, name-independent
+        # check is the git-derived write set at `record` time, which catches an
+        # out-of-scope change whatever the tool was called.
+        return True, f"unclassified tool {tool_name!r} allowed; add it to HOST_TOOL_KINDS"
 
     tool_args = payload.get("toolArgs")
     if tool_args is None:
@@ -1101,8 +1145,8 @@ def check_tool_call(repo_root: Path, state_dir: Path, payload: dict) -> tuple:
             paths = write_paths(tool_args)
             if not paths:
                 return False, f"{tool_name!r} is a write call but reported no file path"
-            allowed = {_normalize_path(item) for item in state["task"]["writeSet"]}
-            outside = sorted({path for path in paths if _normalize_path(path) not in allowed})
+            allowed = {_repo_relative(item, repo_root) for item in state["task"]["writeSet"]}
+            outside = sorted({p for p in (_repo_relative(path, repo_root) for path in paths) if p not in allowed})
             if outside:
                 return False, (
                     f"write outside the declared write set for run {state['runId']}: "
@@ -1130,6 +1174,58 @@ def cmd_check_tool(args: argparse.Namespace) -> int:
         return 0
     emit({"permissionDecision": "deny", "permissionDecisionReason": reason})
     return 2
+
+
+def stop_reason(runs: list, stop_hook_active: bool) -> str | None:
+    """Reason the agent must keep working, or None to allow the stop.
+
+    The hook cannot make progress on its own, so once the agent is already
+    continuing because of a previous block, the honest answer is to let it stop:
+    repeating the same refusal only burns credits. The engine's own budget and
+    escalation remain the authority on whether the run is stuck.
+    """
+    if stop_hook_active:
+        return None
+    pending = [run for run in runs if run["stage"] in ACTIVE_STAGES]
+    if not pending:
+        return None
+    run = pending[0]
+    instructions = STAGE_INSTRUCTIONS.get(run["stage"], {})
+    action = instructions.get("action") or "Record the stage result."
+    required = instructions.get("requiredResult")
+    reason = (
+        f"Run {run['runId']} is at stage {run['stage']!r} and has not recorded a result. "
+        f"Next: {action}"
+    )
+    if required:
+        reason += f" The result must satisfy: {json.dumps(required, sort_keys=True)}"
+    return reason
+
+
+def cmd_check_stop(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    state_dir = state_dir_for(repo_root, args.state_dir)
+    raw = sys.stdin.read().strip()
+    payload = {}
+    if raw:
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            # An unreadable payload is not a reason to trap the agent in a loop.
+            return 0
+    if not isinstance(payload, dict):
+        return 0
+    try:
+        runs = active_runs(state_dir)
+        reason = stop_reason(runs, bool(payload.get("stop_hook_active")))
+    except EngineError as exc:
+        # A broken state file must not hold a turn open indefinitely.
+        print(f"[WARN] stop check skipped: {exc}", file=sys.stderr)
+        return 0
+    if reason is None:
+        return 0
+    emit({"hookSpecificOutput": {"hookEventName": "Stop", "decision": "block", "reason": reason}})
+    return 0
 
 
 class EngineSelfTest(unittest.TestCase):
@@ -1224,12 +1320,55 @@ class EngineSelfTest(unittest.TestCase):
         allowed, reason = self.check("run_in_terminal", {"command": "pytest"})
         self.assertTrue(allowed, reason)
 
-    def test_check_tool_denies_unclassified_tool_during_a_run(self) -> None:
+    def test_check_tool_allows_unclassified_tool_during_a_run(self) -> None:
+        # Denying unclassified names is what bricked the editor: the harness sent
+        # `powershell` and `edit`, the registry listed `run_in_terminal` and
+        # `create_file`, and every call was therefore unclassified.
         self.write_tool_registry()
         self.init()
         allowed, reason = self.check("mystery_tool", {})
+        self.assertTrue(allowed, reason)
+        self.assertIn("unclassified", reason)
+
+    def test_check_tool_classifies_observed_harness_names(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        self.assertTrue(self.check("view", {"path": "README.md"})[0])
+        self.assertTrue(self.check("grep", {"query": "x"})[0])
+        self.assertTrue(self.check("powershell", {"command": "npm test"})[0])
+        self.assertTrue(self.check("create", {"path": "src/a.py"})[0])
+        self.assertFalse(self.check("edit", {"path": "src/outside.py"})[0])
+
+    def test_check_tool_accepts_absolute_paths_inside_the_write_set(self) -> None:
+        # The harness reports absolute paths and the write set is repo-relative.
+        # Comparing them as strings denied every legitimate write.
+        self.write_tool_registry()
+        self.init()
+        absolute = str(self.root / "src" / "a.py")
+        allowed, reason = self.check("create", {"path": absolute})
+        self.assertTrue(allowed, reason)
+
+    def test_check_tool_rejects_absolute_paths_outside_the_write_set(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        outside = str(self.root / "src" / "other.py")
+        allowed, reason = self.check("create", {"path": outside})
         self.assertFalse(allowed)
-        self.assertIn("not classified", reason)
+        self.assertIn("outside the declared write set", reason)
+
+    def test_check_tool_rejects_paths_outside_the_repository(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        allowed, _ = self.check("create", {"path": "/tmp/elsewhere/a.py"})
+        self.assertFalse(allowed)
+
+    def test_check_tool_denies_write_at_verify_with_harness_name(self) -> None:
+        self.write_tool_registry()
+        self.init()
+        self.implement()
+        allowed, reason = self.check("create", {"path": "src/a.py"})
+        self.assertFalse(allowed)
+        self.assertIn("does not permit edit", reason)
 
     def test_check_tool_denies_write_without_a_path(self) -> None:
         self.write_tool_registry()
@@ -1249,6 +1388,56 @@ class EngineSelfTest(unittest.TestCase):
         )
         allowed, reason = self.check("create_file", {"filePath": "src/z.py"})
         self.assertTrue(allowed, reason)
+
+    def stop(self, stop_hook_active: bool = False) -> str | None:
+        return stop_reason(active_runs(self.state_dir), stop_hook_active)
+
+    def test_stop_allowed_when_no_run_exists(self) -> None:
+        self.assertIsNone(self.stop())
+
+    def test_stop_blocked_while_a_stage_is_unfinished(self) -> None:
+        self.init()
+        self.implement()
+        reason = self.stop()
+        self.assertIsNotNone(reason)
+        self.assertIn("verify", reason)
+        self.assertIn("result must satisfy", reason)
+
+    def test_stop_allowed_once_the_run_completes(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        self.assertIsNone(self.stop())
+
+    def test_stop_allowed_for_a_blocked_run(self) -> None:
+        self.init()
+        self.implement()
+        failing = [{"name": "pytest", "ok": False, "message": "boom"}]
+        self.verify("NOT_VERIFIED", failing)
+        self.assertEqual(load_state(self.state_dir, "r1")["stage"], "repair")
+        self.record(
+            "repair",
+            {
+                "status": "done",
+                "implementedBy": "engineer",
+                "filesChanged": ["src/a.py"],
+                "evidence": ["diff:HEAD"],
+            },
+        )
+        code, payload = self.verify("NOT_VERIFIED", failing)
+        self.assertEqual(code, 3)
+        self.assertEqual(payload["stage"], "blocked")
+        self.assertIsNone(self.stop())
+
+    def test_stop_allowed_when_already_continuing(self) -> None:
+        self.init()
+        self.implement()
+        self.assertIsNotNone(self.stop(stop_hook_active=False))
+        self.assertIsNone(self.stop(stop_hook_active=True))
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
         buffer = io.StringIO()
@@ -2703,6 +2892,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_location_options(check_tool_parser)
     check_tool_parser.set_defaults(func=cmd_check_tool)
+
+    check_stop_parser = subparsers.add_parser(
+        "check-stop", help="decide an agentStop payload read from stdin"
+    )
+    _add_location_options(check_stop_parser)
+    check_stop_parser.set_defaults(func=cmd_check_stop)
 
     return parser
 

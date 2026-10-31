@@ -32,9 +32,16 @@ $now = (Get-Date).ToString("o")
 $entry = @{ timestamp = $now; event = "sessionStart"; sessionId = $SessionId; user = $UserName } | ConvertTo-Json -Compress
 Add-Content -Path $logPath -Value $entry
 
-Write-Host "=== Agentic Session Guardrails Enabled ==="
-Write-Host "Session: $SessionId"
-Write-Host "Policy : .github/hooks/agent-policy.json"
-Write-Host "Rules  : .github/hooks/policy-rules.tsv"
-Write-Host "Audit  : .github/hooks/logs/agent-audit.log"
-Write-Host "No secrets, no destructive commands, no unsafe remote execution."
+# stdout is parsed as hook output, so the banner goes to stderr. Write-Host
+# writes to the host and cannot be relied on to stay off stdout.
+$banner = @(
+  "=== Agentic Session Guardrails Enabled ==="
+  "Session: $SessionId"
+  "Policy : .github/hooks/agent-policy.json"
+  "Rules  : .github/hooks/policy-rules.tsv"
+  "Audit  : .github/hooks/logs/agent-audit.log"
+  "No secrets, no destructive commands, no unsafe remote execution."
+)
+[Console]::Error.WriteLine(($banner -join [Environment]::NewLine))
+
+exit 0
