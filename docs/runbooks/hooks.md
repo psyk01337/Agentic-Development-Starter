@@ -28,7 +28,7 @@ Each entry declares a `bash` and a `powershell` handler. The `.sh` scripts are t
 
 ## Lifecycle
 
-1. `sessionStart`: logs session metadata and prints the banner to stderr, using `sessionId` from the payload.
+1. `sessionStart`: logs session metadata and prints the banner to stderr, using `sessionId` from the payload. When a run is active it also emits `{"additionalContext": "..."}` on stdout with the stage, objective, next action, write set, and required result.
 2. `preToolUse`: extracts command text and blocks dangerous command patterns, then asks the engine whether the call is admissible.
 3. `postToolUse`: appends timestamped audit records.
 4. `agentStop`: asks the engine whether the active run may stop.
@@ -38,6 +38,8 @@ Each entry declares a `bash` and a `powershell` handler. The `.sh` scripts are t
 ## The Loop
 
 `preToolUse` and `agentStop` together turn the engine into a control plane, not just a record. Nothing new has to run, and no credential is involved.
+
+`sessionStart` completes the set: when a run is active it injects the stage, objective, next action, write set, and required result, so the agent starts knowing where it is instead of discovering it on the first refused turn end. That output is `{"additionalContext": "..."}` — top-level, because only that field is consumed for `sessionStart` and a wrapped one is ignored.
 
 ```
 agent works -> preToolUse denies writes outside task.writeSet

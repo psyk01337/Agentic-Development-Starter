@@ -24,6 +24,17 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-10-31 - Document session-start context injection
+
+- Area: hooks runbook, ADR 0009
+- Change type: docs, runbook, adr
+- Summary: records that `sessionStart` now emits `{"additionalContext": "..."}` describing the active run's stage, objective, next action, write set, and required result, and that the field is top-level because only that field is consumed for the event. Updates the lifecycle and stage-mapping tables and marks rollout step 4 done in ADR 0009.
+- Reason: the fourth addition to the same section in one day, and the first where the output shape was checked against the Copilot reference before the code was written rather than after it failed. Recording which order produced the working result is worth more than recording the feature.
+- Affected files: docs/runbooks/hooks.md, docs/adr/0009-hook-governed-loop.md, DOC-CHANGELOG.md, CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Inject the run stage at session start"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook describes the injection as working but does not claim the harness consumes it, because that has not been observed. The ADR keeps the same distinction: verified at the script boundary, not in a live session.
+
 ### 2026-10-31 - Record that the stop hook is enforced by the host
 
 - Area: hooks runbook, ADR 0009

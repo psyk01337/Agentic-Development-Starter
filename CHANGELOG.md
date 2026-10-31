@@ -24,6 +24,17 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-10-31 - Inject the run stage at session start
+
+- Area: agentic engine, hooks
+- Change type: feature, test
+- Summary: adds `active-context` to `agentic_engine.py`, which emits `{"additionalContext": "..."}` describing the active run's stage, objective, next action, write set, and required result. `session-banner.{sh,ps1}` forward it on stdout while the human banner stays on stderr. Four self-tests cover the absent-run case, the content, the completed-run case, and the top-level output shape. Manifest version goes to `2.5.0`.
+- Reason: `agentStop` already told the agent it was in the wrong stage, but only after a turn end was refused. Injecting the stage at session start makes the loop self-starting: the agent reads the objective and required result before acting, instead of burning a turn discovering them.
+- Affected files: .github/scripts/agentic_engine.py, .github/hooks/scripts/session-banner.sh, .github/hooks/scripts/session-banner.ps1, .github/starter-modules.json, docs/runbooks/hooks.md, docs/adr/0009-hook-governed-loop.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document session-start context injection"
+- Validation: engine selftest 93/93. With a run armed, `active-context` emitted the expected `additionalContext` and both `session-banner` twins returned it on stdout with an empty stderr payload unchanged at 250 bytes; with no run both emitted empty stdout. The output shape was checked against the Copilot hooks reference before writing the code, because the previous three defects were all formats taken from the wrong harness.
+- Discrepancies or follow-up: the harness has not been observed consuming this context in a live session, so the injection is verified at the script boundary only. That is the same class of gap as `agentStop` before its probe, and it needs a session that starts with a run already armed.
+
 ### 2026-10-31 - Record the observed agentStop enforcement
 
 - Area: documentation

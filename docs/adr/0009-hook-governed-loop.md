@@ -82,6 +82,8 @@ Govern the host's existing loop with hooks that consult `agentic_engine.py`. Do 
 | `review` | reviews the change | `preToolUse` denies `edit`; `agentStop` requires a decision |
 | `done` / `blocked` | stops | `agentStop` allows |
 
+`sessionStart` injects the stage so the agent knows which of these it is in before it takes a single action.
+
 Two hooks carry the whole design:
 
 1. `preToolUse` gates the call: classify the tool from `.github/roles/tool-access.json`, check the stage profile, and check the path against the write set.
@@ -136,7 +138,7 @@ Tool classification reads `toolDefinitions` from `.github/roles/tool-access.json
 1. **Done.** `check-tool` on the engine, reading a `preToolUse` payload from stdin, classifying tools from the role registry, and returning a deny decision with exit `2`. Wired into `pre-tool-policy.{sh,ps1}` behind an `.agentic/state` existence check, so it is inert until a run exists.
 2. **Done.** `check-stop` on the engine plus `agent-stop.{sh,ps1}`, registered as the `agentStop` event. The hook returns `{"hookSpecificOutput":{"decision":"block","reason":...}}` while a stage is unfinished and stays silent once `stop_hook_active` is set. Verified against a live run: an `implement` stage produced a block carrying the required result schema, and the same payload with `stop_hook_active: true` produced nothing.
 3. **Done.** Confirmed the `agentStop` event fires in the host and that its block is honoured. A fresh session with the configuration in place refused a turn end and returned the required result schema; the trace shows one `block` followed by a `skipped` with `stopHookActive: true`, so the hook yields instead of looping.
-4. **Open.** `sessionStart` context injection, so the agent starts at the engine's stage instead of discovering it on the first refused turn end.
+4. **Done.** `sessionStart` context injection: `active-context` on the engine emits `{"additionalContext": "..."}` describing the active run's stage, objective, next action, write set, and required result, and `session-banner.{sh,ps1}` forwards it. Verified with an armed run in both twins.
 5. **Dropped.** A standalone client over the Agent Host Protocol. A Node client authenticates and handshakes against the editor host over its named pipe, but `createSession` never progresses past `lifecycle: "creating"` — observed for 180 seconds on an already-authenticated host, with two `session/metaChanged` actions and no further events. The substrate is real; the missing piece is undocumented session initialisation, not something this ADR should depend on.
 
 ## Validation

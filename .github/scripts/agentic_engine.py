@@ -1232,6 +1232,48 @@ def cmd_check_stop(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_context(runs: list) -> str | None:
+    """Context describing the active run, for injection at session start.
+
+    Kept short on purpose: this text is prepended to every request in the
+    session, so it earns its tokens only by telling the agent which stage it is
+    in and what the engine will accept as a result.
+    """
+    if not runs:
+        return None
+    run = runs[0]
+    instructions = STAGE_INSTRUCTIONS.get(run["stage"], {})
+    lines = [
+        f"Agentic run {run['runId']} is at stage '{run['stage']}'.",
+        f"Objective: {instructions.get('objective', 'unspecified')}",
+        f"Next: {instructions.get('action', 'Record the stage result.')}",
+        "Writes outside this set are refused: " + ", ".join(run["task"]["writeSet"]),
+    ]
+    required = instructions.get("requiredResult")
+    if required:
+        lines.append("Required result: " + json.dumps(required, sort_keys=True))
+    if run["stage"] in ("implement", "repair") and run.get("blockingFindings"):
+        lines.append("Blocking findings: " + json.dumps(run["blockingFindings"], sort_keys=True))
+    return "\n".join(lines)
+
+
+def cmd_active_context(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    state_dir = state_dir_for(repo_root, args.state_dir)
+    try:
+        runs = active_runs(state_dir)
+    except EngineError as exc:
+        print(f"[WARN] session context skipped: {exc}", file=sys.stderr)
+        return 0
+    context = run_context(runs)
+    if not context:
+        return 0
+    # Copilot harness shape: `additionalContext` is a top-level field. Only that
+    # field is consumed for sessionStart; anything wrapped is ignored.
+    emit({"additionalContext": context})
+    return 0
+
+
 class EngineSelfTest(unittest.TestCase):
     def setUp(self) -> None:
         self.root = Path(tempfile.mkdtemp(prefix="agentic-engine-test-"))
@@ -1479,6 +1521,47 @@ class EngineSelfTest(unittest.TestCase):
         finally:
             sys.stdin = original
         self.assertEqual(buffer.getvalue().strip(), "")
+
+    def context(self) -> str | None:
+        return run_context(active_runs(self.state_dir))
+
+    def test_context_is_none_without_a_run(self) -> None:
+        self.assertIsNone(self.context())
+
+    def test_context_names_the_stage_and_required_result(self) -> None:
+        self.init()
+        text = self.context()
+        self.assertIn("stage 'implement'", text)
+        self.assertIn("src/a.py", text)
+        self.assertIn("Required result", text)
+
+    def test_context_is_none_once_the_run_completes(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        self.assertIsNone(self.context())
+
+    def test_active_context_emits_the_top_level_shape(self) -> None:
+        # Only a top-level `additionalContext` is consumed for sessionStart.
+        self.init()
+        original = sys.stdin
+        try:
+            sys.stdin = io.StringIO("")
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                code = cmd_active_context(
+                    argparse.Namespace(repo_root=str(self.root), state_dir=str(self.state_dir))
+                )
+        finally:
+            sys.stdin = original
+        payload = json.loads(buffer.getvalue())
+        self.assertEqual(code, 0)
+        self.assertIn("additionalContext", payload)
+        self.assertIn("implement", payload["additionalContext"])
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
         buffer = io.StringIO()
@@ -2939,6 +3022,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_location_options(check_stop_parser)
     check_stop_parser.set_defaults(func=cmd_check_stop)
+
+    context_parser = subparsers.add_parser(
+        "active-context", help="print session-start context for the active run"
+    )
+    _add_location_options(context_parser)
+    context_parser.set_defaults(func=cmd_active_context)
 
     return parser
 

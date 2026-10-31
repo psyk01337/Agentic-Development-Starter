@@ -36,4 +36,20 @@ Audit  : .github/hooks/logs/agent-audit.log
 No secrets, no destructive commands, no unsafe remote execution.
 BANNER
 
+# Inject the engine's stage context so the agent starts knowing where it is
+# instead of discovering it on the first refused turn end. Only a top-level
+# `additionalContext` is consumed for sessionStart; a wrapped field is ignored.
+STATE_DIR="${AGENTIC_STATE_DIR:-${REPO_ROOT}/.agentic/state}"
+ENGINE="${REPO_ROOT}/.github/scripts/agentic_engine.py"
+if [[ -d "${STATE_DIR}" && -f "${ENGINE}" ]]; then
+  PYTHON_BIN="$(command -v python3 || command -v python || true)"
+  if [[ -n "${PYTHON_BIN}" ]] \
+    && "${PYTHON_BIN}" --version 2>&1 | grep -qE '^Python [0-9]+\.'; then
+    CONTEXT="$("${PYTHON_BIN}" "${ENGINE}" active-context --state-dir "${STATE_DIR}" 2>/dev/null || true)"
+    if [[ "${CONTEXT:0:1}" == "{" ]]; then
+      printf '%s\n' "${CONTEXT}"
+    fi
+  fi
+fi
+
 exit 0
