@@ -79,7 +79,22 @@ Multiplayer, accounts, leaderboards, any server component, level editor, monetis
 | --- | --- | --- | --- | --- |
 | 1 | Engine: Phaser 4, Phaser 3, or plain Canvas | Enabling exactly one engine overlay; NFR-3 budget | Tech lead | **Decided 2026-10-31: plain Canvas 2D** |
 | 2 | Asset storage for authoring masters | Committing any binary art | Tech lead | Open |
-| 3 | Score authority without a server | FR-5 wording and its acceptance test | Product | Open |
+| 3 | Score authority without a server | FR-5 wording and its acceptance test | Product | **Closed 2026-10-31: local-only, "not trivially forged"** |
+
+### Decision 3 (resolved): local scores, no proof-of-run
+
+The PRD lists leaderboards and any server component as non-goals, so there is no
+authority to appeal to and no reason to build one. FR-5's "cannot be trivially forged"
+is therefore scoped honestly:
+
+- A stored value that is not a finite, plausible number becomes **zero**, not a clamped
+  ceiling — clamping would hand an attacker the best possible score.
+- Nothing else is protected, and the PRD says so. A determined player can still edit
+  storage to a plausible number; that is a known and accepted limit of a client-only
+  game, not a defect to fix later.
+
+Revisit only if a leaderboard enters scope, at which point the score must be confirmed
+by an authoritative source rather than accepted from the client.
 
 ### Decision 1 (resolved): plain Canvas 2D
 
@@ -101,9 +116,17 @@ Requirements map to slices in this order. Each slice is one `build-feature` run.
 | S1 Deterministic simulation core | FR-2, NFR-1, NFR-6 | Decision 1 | Delivered — `src/rng.js`, `src/loop.js`, 9 tests |
 | S2 Auto-run and jump physics | FR-1 (physics half), NFR-1 | S1 | Delivered — `src/player.js`, 10 tests. Input binding still open |
 | S3 Collision, scoring, run end | FR-3, FR-4 | S1, S2 | Delivered — `src/world.js`, `src/score.js`, 20 tests |
-| S4 Persistence and clamping | FR-5, NFR-5 | S3, Decision 3 | Partially done — `sanitizeStoredScore` lands the clamping half |
-| S5 Difficulty ramp and mute | FR-7, FR-8 | S3 | Not started |
-| S6 Perf pass and build prep | NFR-2, NFR-3 | S1-S5 | Not started |
+| S4 Persistence and clamping | FR-5, NFR-5 | S3, Decision 3 | Delivered — `src/storage.js`, clamping half in `score.js` |
+| S5 Difficulty ramp and mute | FR-7, FR-8 | S3 | Delivered — `src/difficulty.js`, mute in `storage.js` |
+| S6 Perf pass and build prep | NFR-2, NFR-3 | S1-S5 | Delivered — `src/renderer.js`, `src/main.js`, `index.html`. 26 KB shipped against a 500 KB budget |
+
+S1 to S6 are all delivered. 65 tests pass under `cd app/game && node --test`.
+
+**Still not delivered:** FR-9 (touch, keyboard, pointer input) has listeners wired in
+`main.js` but no automated coverage, because it needs a DOM harness the starter does
+not provide. Everything the tests cover is pure logic; the Canvas adapter, the input
+listeners and `requestAnimationFrame` are verified by hand-loading the page, not by CI.
+Treat a green suite as proof of the simulation, never of the rendering.
 
 S1 and S2 are deliberately engine-agnostic, so they were built before Decision 1
 was settled. Everything from S3 that touches rendering is blocked on it.
