@@ -8,7 +8,7 @@
 ![Skills](https://img.shields.io/badge/skills-34-blue)
 ![Agents](https://img.shields.io/badge/agents-12-blue)
 ![Prompts](https://img.shields.io/badge/prompts-23-blue)
-![Checks](https://img.shields.io/badge/checks-12%2F12-brightgreen)
+![Checks](https://img.shields.io/badge/checks-13%2F13-brightgreen)
 ![Engine tests](https://img.shields.io/badge/engine%20tests-156-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
@@ -71,7 +71,7 @@ pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1
 | **Agents** | 12 | Specialist roles with declared tool access, escalation rules, and a handoff contract |
 | **Prompts** | 23 | One-off workflows: feature delivery, docs ingestion, bug fixing, release notes, CI triage |
 | **Evals** | 13 | Golden tasks with checklists, so "did the agent behave" is gradable rather than felt |
-| **Guardrails** | 12 checks | Manifest, skills, agents, prompts, hooks, MCP posture, markdown, evals, engine, driver — in Bash **and** PowerShell |
+| **Guardrails** | 13 checks | Manifest, skills, agents, prompts, hooks, MCP posture, markdown, evals, engine, driver — in Bash **and** PowerShell |
 
 Every asset is registered in [`.github/starter-modules.json`](.github/starter-modules.json) — 40 modules across core, optional, and overlay. Nothing ships enabled that you did not choose, and a validator fails if an asset exists without being registered.
 
@@ -143,11 +143,11 @@ MCP servers, durable memory, and high-risk automation stay **disabled by default
 
 ## Validation is the point
 
-A guardrail nobody checks is a comment. Twelve contracts run on push and pull request, and every one exists in both Bash and PowerShell so Windows and CI agree.
+A guardrail nobody checks is a comment. Thirteen contracts run on push and pull request, and every one exists in both Bash and PowerShell so Windows and CI agree.
 
 | Check | Catches |
 | --- | --- |
-| `check-starter-manifest` | Unregistered assets, missing files, invalid versions, README counts that disagree with the tree, an `app/` folder holding code behind a placeholder verification command, a PRD that names its source but stays a template, an intake in `docs/inputs/` the index never names, a check script the umbrella never runs |
+| `check-manifest-fixtures` | The manifest check's own rules, by breaking one per case in a copied tree |`n| `check-starter-manifest` | Unregistered assets, missing files, invalid versions, README counts that disagree with the tree, an `app/` folder holding code behind a placeholder verification command, a PRD that names its source but stays a template, an intake in `docs/inputs/` the index never names, a check script the umbrella never runs |
 | `check-starter-skills` | Malformed skill contracts |
 | `check-agent-contracts` | Missing handoff, escalation, or output sections |
 | `check-prompt-contracts` | Missing safety boundaries or expected output |
@@ -166,6 +166,7 @@ A guardrail nobody checks is a comment. Twelve contracts run on push and pull re
 
 ```bash
 bash .github/scripts/check-starter-manifest.sh
+bash .github/scripts/check-manifest-fixtures.sh
 bash .github/scripts/check-starter-skills.sh
 bash .github/scripts/check-agent-contracts.sh
 bash .github/scripts/check-prompt-contracts.sh

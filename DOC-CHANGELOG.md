@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the manifest fixture harness
+
+- Area: module manifest runbook, root README, check table
+- Change type: docs, runbook
+- Summary: the root README's contract count moves from twelve to thirteen and the table gains a `check-manifest-fixtures` row. The module manifest runbook now names the harness as part of what runs, so the runbook's enforcement list is not left describing a set of twelve.
+- Reason: the count and the table are the only places a reader learns how many contracts exist, and both are now guarded against drift. The runbook lists what validators enforce, and a thirteenth validator that enforces nothing new still has to appear there or the list quietly becomes wrong.
+- Affected files: README.md, docs/runbooks/module-manifest-versioning.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Give the manifest check a fixture harness so its rules are tested"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook's enforcement list gained a mention of the harness but still does not describe the five self-description rules added before it. That list is hand-written prose with no reader, and it is the same unverifiable class as the runbook index descriptions.
 ### 2026-11-01 - Record the umbrella wiring rule in the check table
 
 - Area: root README check table

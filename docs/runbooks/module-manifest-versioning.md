@@ -208,9 +208,17 @@ The manifest is validated by `.github/scripts/check-starter-manifest.sh` and `.g
 | `maintainerAssetScan` is present and boolean | yes |
 | Every listed file exists | yes |
 | Every asset file is listed (only when `maintainerAssetScan` is `true`) | yes |
+| The README's stated counts match the tree (starter mode only) | yes |
+| `app/` holds no code behind a placeholder verification command | yes |
+| A PRD naming a source carries no template placeholders | yes |
+| Every intake in `docs/inputs/` is named in `docs/inputs.md` | yes |
+| Every `check-*` script is run by its umbrella | yes |
+| Those five rules still work if the check changes | yes, `check-manifest-fixtures` |
 | `version` was increased when the inventory changed | **no** |
 
 The last row is deliberate. A stateless script cannot know whether a bump was warranted, because that needs the previous manifest to compare against. The validators enforce everything downstream of the decision, which leaves exactly one judgement for review: pick the right bump. A missing bump with an unchanged version is invisible to the checks and must be caught by a reviewer reading the manifest diff.
+
+The row above it is the answer to the obvious objection. The five rules below `maintainerAssetScan` only fire once the repository has already drifted, so on a clean tree they are invisible and a regression in one of them would ship quietly. `check-manifest-fixtures` copies the working tree, breaks one thing per case, and requires the matching error message, so each rule has a failing case that proves it still fires.
 
 ### The `maintainerAssetScan` Flag
 

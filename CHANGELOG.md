@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Give the manifest check a fixture harness so its rules are tested
+
+- Area: validation scripts, umbrella, root README, manifest
+- Change type: feature, test, docs
+- Summary: adds `check-manifest-fixtures` in both twins. Each case copies the working tree, breaks exactly one thing, runs `check-starter-manifest`, and requires the expected message: a wrong README badge, code behind a placeholder command, an unlogged intake, a templated PRD with a concrete source, and a check the umbrella never runs, plus a clean baseline that must pass. A fresh copy per case means a crash cannot leave the repository mutated. The check is registered in `core-governance`, wired into both umbrellas, and counted in the root README, which now reports thirteen contracts. Manifest version goes to `2.21.0`.
+- Reason: every rule added to `check-starter-manifest` over the preceding changes was verified by a throwaway probe and then left untested. Those rules only fire once the repository has drifted, so on a clean tree they are invisible: a regression in one of them would ship with all thirteen contracts green. `check-hook-policy` and `check-agentic-engine` already build fixture trees for exactly this reason; the manifest check was the one carrying new logic with no such harness.
+- Affected files: .github/scripts/check-manifest-fixtures.ps1, .github/scripts/check-manifest-fixtures.sh, .github/scripts/check-starter-workflow.ps1, .github/scripts/check-starter-workflow.sh, .github/starter-modules.json, README.md, docs/runbooks/module-manifest-versioning.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the manifest fixture harness"
+- Validation: the harness passes on the repository and each of its five failure cases fires the intended message. Adding the check forced three other guards in sequence, which is the point: the asset scan rejected it as unregistered, the version rule rejected `2.21.0` until a Summary named it, and the README count rule demanded the badge move from twelve to thirteen.
+- Discrepancies or follow-up: the harness copies the whole working tree per case, so it costs roughly five seconds and grows with the repository; a shared baseline with targeted reverts would be faster and was rejected because a crash mid-revert would leave the tree dirty. It tests the manifest check only — the other eleven contracts still have no fixture harness of their own, and `check-hook-policy` and `check-agentic-engine` are the only two that self-test at all.
 ### 2026-11-01 - Notice a check the umbrella never runs
 
 - Area: validation scripts, root README
