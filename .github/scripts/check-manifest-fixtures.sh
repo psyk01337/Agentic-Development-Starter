@@ -12,6 +12,7 @@ REPO_ROOT="${1:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 # Each case copies the working tree, breaks exactly one thing, runs the check, and requires the
 # expected message. A fresh copy per case means a crash here cannot leave anything mutated.
 python3 - "${REPO_ROOT}" <<'PY'
+import json
 import pathlib
 import re
 import shutil
@@ -73,18 +74,33 @@ def mutate_empty_script(tree):
 
 
 cases = [
-    ("baseline passes", None),
-    ("a wrong README badge is caught", mutate_readme_badge),
-    ("code behind a placeholder command is caught", mutate_app_placeholder),
-    ("an unlogged intake is caught", mutate_intake),
-    ("a templated PRD with a concrete source is caught", mutate_prd_source),
-    ("a check the umbrella never runs is caught", mutate_umbrella),
-    ("an empty check script is caught", mutate_empty_script),
+    ("baseline passes", None, False),
+    ("a wrong README badge is caught", mutate_readme_badge, True),
+    ("code behind a placeholder command is caught", mutate_app_placeholder, False),
+    ("an unlogged intake is caught", mutate_intake, False),
+    ("a templated PRD with a concrete source is caught", mutate_prd_source, False),
+    ("a check the umbrella never runs is caught", mutate_umbrella, False),
+    ("an empty check script is caught", mutate_empty_script, False),
 ]
+
+# The README count rule is gated on maintainerAssetScan, so it does not exist in a project. An
+# adopting repository replaced the starter README and its numbers describe the starter, so there
+# is nothing there to test. Reporting the case as skipped is honest; failing it, which is what
+# happened until a real project ran this harness, blames the project for a rule it never had.
+manifest_path = repo_root / ".github/starter-modules.json"
+try:
+    starter_mode = bool(
+        json.loads(manifest_path.read_text(encoding="utf-8")).get("maintainerAssetScan", False)
+    )
+except (OSError, ValueError):
+    starter_mode = False
 
 failures = []
 with tempfile.TemporaryDirectory(prefix="manifest-fixtures-") as workdir:
-    for index, (label, mutate) in enumerate(cases):
+    for index, (label, mutate, starter_only) in enumerate(cases):
+        if starter_only and not starter_mode:
+            print(f"skip {label} (starter-only: this repository is in project mode)")
+            continue
         tree = pathlib.Path(workdir) / f"case-{index}"
         shutil.copytree(repo_root, tree, ignore=ignore, symlinks=True)
 

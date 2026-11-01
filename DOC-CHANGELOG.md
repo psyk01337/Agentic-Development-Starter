@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Record the fixture harness mode skip
+
+- Area: documentation changelog
+- Change type: docs
+- Summary: no runbook text changed. The harness behaviour is described in its own output, which names the case and the reason for skipping it.
+- Reason: the change is a behaviour fix inside a validator whose only audience is someone reading a failed umbrella, and the output now says what happened. Duplicating that in prose would create a second description of the same rule.
+- Affected files: CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Make the fixture harness work in a project, not just in the starter"
+- Review status: reviewed
+- Discrepancies or follow-up: the module manifest runbook's enforcement table does not mention the mode skip; that table is already behind by several rules.
 ### 2026-11-01 - Document the second directory rule for write sets
 
 - Area: engine runbook
