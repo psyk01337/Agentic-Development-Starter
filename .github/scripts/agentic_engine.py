@@ -23,6 +23,7 @@ import json
 import os
 import re
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -1143,6 +1144,79 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         "checks": checks,
     })
     return 0 if not failed else 1
+def _seconds_between(start, end) -> float | None:
+    if not isinstance(start, str) or not isinstance(end, str):
+        return None
+    try:
+        return (datetime.fromisoformat(end) - datetime.fromisoformat(start)).total_seconds()
+    except ValueError:
+        return None
+
+
+def collect_metrics(state_dir: Path, repo_root: Path) -> dict:
+    """Summarise what the runs actually did.
+
+    Counts a reader can act on: how many runs finished, how long they took, how
+    often they needed repair, and whether verification was observed or merely
+    asserted. A workflow nobody measures is a workflow nobody can improve, and a
+    PR count says nothing about quality.
+    """
+    states = []
+    if state_dir.is_dir():
+        for path in sorted(state_dir.glob("*.json")):
+            if path.name.startswith(".tmp-"):
+                continue
+            try:
+                states.append(validate_state(read_state_file(path), path.stem))
+            except EngineError:
+                continue
+
+    by_status = {}
+    durations = []
+    repair_attempts = 0
+    executed = 0
+    reported = 0
+    for state in states:
+        status = str(state.get("status", "UNKNOWN"))
+        by_status[status] = by_status.get(status, 0) + 1
+        repair_attempts += state.get("repairAttempts", 0) or 0
+        seconds = _seconds_between(state.get("createdAt"), state.get("completedAt"))
+        if seconds is not None:
+            durations.append(seconds)
+        for entry in state.get("history", []):
+            if entry.get("action") != "recorded" or entry.get("stage") != "verify":
+                continue
+            for check in entry.get("checks") or []:
+                if isinstance(check, dict) and "exitCode" in check:
+                    executed += 1
+                else:
+                    reported += 1
+
+    archive_dir = repo_root / ARCHIVE_DIR
+    # README.md explains the directory; it is not an archive.
+    archives = (
+        len([p for p in archive_dir.glob("*.md") if p.name.lower() != "readme.md"])
+        if archive_dir.is_dir()
+        else 0
+    )
+
+    return {
+        "runs": len(states),
+        "byStatus": by_status,
+        "repairAttempts": repair_attempts,
+        "medianSecondsToDone": round(statistics.median(durations), 1) if durations else None,
+        "checks": {"executed": executed, "reported": reported},
+        "archivedRuns": archives,
+    }
+
+
+def cmd_metrics(args: argparse.Namespace) -> int:
+    repo_root = Path(args.repo_root).resolve() if args.repo_root else repo_root_from(Path(__file__))
+    state_dir = state_dir_for(repo_root, args.state_dir)
+    emit(collect_metrics(state_dir, repo_root))
+    return 0
+
+
 def cmd_archive(args: argparse.Namespace) -> int:
     """Write a run's history into the repository as reviewable Markdown.
 
@@ -2502,6 +2576,57 @@ class EngineSelfTest(unittest.TestCase):
         for command in ("git status", "node --test", "echo 'a > b'", "git diff --stat"):
             allowed, reason = self.check("powershell", {"command": command})
             self.assertTrue(allowed, f"{command}: {reason}")
+
+    def test_metrics_on_an_empty_state_directory(self) -> None:
+        code, payload = self.run_cli(["metrics"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["runs"], 0)
+        self.assertEqual(payload["byStatus"], {})
+        self.assertIsNone(payload["medianSecondsToDone"])
+        self.assertEqual(payload["checks"], {"executed": 0, "reported": 0})
+
+    def test_metrics_counts_a_finished_run(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        code, payload = self.run_cli(["metrics"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["runs"], 1)
+        self.assertEqual(payload["byStatus"], {"DONE": 1})
+        self.assertIsNotNone(payload["medianSecondsToDone"])
+
+    def test_metrics_separates_executed_from_reported_checks(self) -> None:
+        # The number that matters: how much of the verification was observed
+        # rather than asserted.
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        code, payload = self.run_cli(["metrics"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["checks"]["executed"], 1)
+        self.assertEqual(payload["checks"]["reported"], 1)
+
+    def test_metrics_counts_archives(self) -> None:
+        archive_dir = self.root / "docs" / "runs"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        # The directory README is documentation, not an archive, and counting it
+        # overstates how much evidence exists.
+        (archive_dir / "README.md").write_text("# Run Archives\n", encoding="utf-8")
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        self.run_cli(["archive", "--run-id", "r1"])
+        code, payload = self.run_cli(["metrics"])
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["archivedRuns"], 1)
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
 
@@ -3956,6 +4081,12 @@ def build_parser() -> argparse.ArgumentParser:
     allow_write_parser.add_argument("--path", required=True)
     allow_write_parser.add_argument("--reason", required=True)
     allow_write_parser.set_defaults(func=cmd_allow_write)
+
+    metrics_parser = subparsers.add_parser(
+        "metrics", help="summarise what the recorded runs actually did"
+    )
+    _add_location_options(metrics_parser)
+    metrics_parser.set_defaults(func=cmd_metrics)
 
     doctor_parser = subparsers.add_parser(
         "doctor", help="report whether the workflow is wired, and exit 1 when it is not"

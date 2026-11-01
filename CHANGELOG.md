@@ -24,7 +24,18 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-10-31 - Hold shell writes to the declared write set
+### 2026-10-31 - Add metrics so the workflow can be judged on evidence
+
+- Area: agentic engine, engine runbook
+- Change type: feature, test, docs
+- Summary: adds `metrics`, reporting runs by status, total repair attempts, median seconds from creation to completion, executed versus reported verification checks, and the archive count. Four tests take the suite from 129 to 133. Manifest version goes to `2.11.0`.
+- Reason: the workflow had no way to answer whether it was working. `doctor` reports wiring, which stayed green throughout the period when verification was recording opinions. The executed-versus-reported split is the one number that distinguishes a gate being used from a gate being satisfied, and it costs nothing to compute because every run already records it.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document the metrics command"
+- Validation: engine selftest 133/133. Run against this repository it reports 3 runs, 2 done and 1 running, 2 archives, median 203.4 seconds to done, 0 repair attempts, and 0 executed against 0 reported checks - that last pair is accurate rather than broken, because the two completed runs predate the verify history recording checks.
+- Discrepancies or follow-up: the first live run reported 3 archives against 2 real ones, because `docs/runs/README.md` matched the glob; a test now covers it. Runs whose state was deleted are invisible to `metrics`, so a repository that archives and then cleans up under-counts itself. `repairAttempts` is the only rework signal available; review time and escaped defects are not derivable from what is recorded yet.
+
+
 
 - Area: agentic engine, hooks runbook, engine runbook
 - Change type: fix, test, docs

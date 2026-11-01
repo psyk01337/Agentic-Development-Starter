@@ -24,7 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
-### 2026-10-31 - Document shell writes under the write set
+### 2026-10-31 - Document the metrics command
+
+- Area: engine runbook
+- Change type: docs, runbook
+- Summary: adds `metrics` to the command list in `docs/runbooks/agentic-engine.md` and a section explaining each figure, why the executed-versus-reported split is the one to watch, and that the totals only describe runs still on disk.
+- Reason: a new command that nobody knows how to read is a command nobody runs. The runbook is where the meaning of "0 executed, 0 reported" has to be explained, because that reading looks like a failure and is actually history.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Add metrics so the workflow can be judged on evidence"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook lists the figures but gives no target values, so a reader has nothing to compare against. Choosing thresholds before there is data would invent them.
+
+
 
 - Area: hooks runbook, engine runbook
 - Change type: docs, runbook

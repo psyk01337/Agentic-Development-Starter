@@ -57,6 +57,7 @@ python .github/scripts/agentic_engine.py status --run-id feature-123
 python .github/scripts/agentic_engine.py report --run-id feature-123
 python .github/scripts/agentic_engine.py archive --run-id feature-123
 python .github/scripts/agentic_engine.py doctor
+python .github/scripts/agentic_engine.py metrics
 python .github/scripts/agentic_engine.py selftest
 ```
 
@@ -123,6 +124,20 @@ Every entry carries `ok`, `required`, and a `detail` naming what was inspected. 
 It checks the failures this repository has actually had, rather than the ones that are easy to test: the hook policy parses and sits inside the harness schema, `preToolUse` and `agentStop` are both declared, every handler is a `command` entry whose referenced script exists on disk, and `build-feature` mentions both the engine and the archive step. A handler pointing at a renamed script is the case that matters most, because the policy then looks installed while enforcing nothing.
 
 A finished run with no archive is reported but not fatal. The run completed; missing evidence is a process gap rather than a broken install.
+
+### `metrics`
+
+`metrics` answers whether the workflow is doing anything worth the cost.
+
+```bash
+python .github/scripts/agentic_engine.py metrics
+```
+
+It reports how many runs exist and by status, the total repair attempts, the median time from creation to completion, how many verification checks were executed versus reported, and how many runs were archived.
+
+The executed-versus-reported split is the number to watch. A workflow whose verification is entirely reported is recording opinions, and `doctor` cannot tell you that because the wiring is fine. This is the cheapest signal that the gate is being used as intended rather than satisfied.
+
+Runs whose state was deleted are not counted, so the totals describe what is still on disk. A low archive count against a high run count says the evidence is not being kept.
 
 Exit codes: `0` success, `1` invalid input or transition, `3` blocked or
 escalated. `next`, `status`, and `report` all return `3` for a blocked run.
