@@ -103,6 +103,8 @@ python .github/scripts/agentic_engine.py allow-write --run-id feature-123 --path
 
 Without it the only options are a uselessly broad write set or stalling on a refusal, and both push people to disable the gate. Adding a path that is already present is a no-op, and a finished or blocked run refuses the change.
 
+An added path must name a file. A directory is refused twice over: once because the path resolves to a directory on disk, and once because it contains another entry in the set. The second rule exists because the first only sees the filesystem at the moment of the call — `allow-write src` used to succeed while `src/` did not yet exist, and the stored set became invalid the moment the directory appeared, after which every later command on that run failed validation with no way to repair it.
+
 ### `record` From Flags
 
 `record` also accepts the stage result as flags, so a run needs no hand-written JSON. The built result goes through the same validation as a file, so both paths accept and refuse exactly the same things; `--result <file>` still works and remains the escape hatch for a result the flags cannot express.

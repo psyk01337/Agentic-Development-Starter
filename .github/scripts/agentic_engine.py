@@ -390,6 +390,14 @@ def validate_evidence(evidence, repo_root: Path) -> list:
     return pointers
 
 
+def _normalize_write_entry(entry: str) -> str:
+    """A comparison form for write-set entries: forward slashes, no leading ./ or trailing /."""
+    normalized = entry.strip().replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized.strip("/")
+
+
 def _validate_write_set(write_set, repo_root: Path) -> None:
     if not isinstance(write_set, list):
         raise EngineError("task.writeSet must be a list (may be empty for read-only work)")
@@ -436,6 +444,22 @@ def _validate_write_set(write_set, repo_root: Path) -> None:
         if resolved.is_dir():
             raise EngineError(
                 f"task.writeSet entry {entry!r} is a directory; name the files instead"
+            )
+    # An entry that contains another entry names a directory by construction, whether or not
+    # it exists yet. `resolved.is_dir()` above only sees the filesystem at the moment of the
+    # call, so `allow-write src` used to succeed while `src/` was absent and the stored set
+    # became invalid the moment the directory appeared -- after which every later command on
+    # that run failed validation with no way to repair the set. This check closes the window.
+    normalized_entries = [_normalize_write_entry(entry) for entry in write_set]
+    for entry, normalized in zip(write_set, normalized_entries):
+        prefix = normalized + "/"
+        if any(
+            other != normalized and other.startswith(prefix)
+            for other in normalized_entries
+        ):
+            raise EngineError(
+                f"task.writeSet entry {entry!r} is a directory of other entries; name the "
+                "files instead"
             )
 
 
@@ -2432,6 +2456,22 @@ class EngineSelfTest(unittest.TestCase):
                 "allow-write", "--run-id", "r1", "--path", bad, "--reason", "r",
             )
             self.assertEqual(code, 1, f"expected refusal for {bad!r}")
+
+    def test_allow_write_refuses_a_path_that_contains_other_entries(self) -> None:
+        # The write set is validated when it is extended, so a directory that does not exist
+        # yet slipped through: `allow-write src` passed while src/ was absent, and the stored
+        # set became invalid the moment the directory appeared. Every later command on that run
+        # then failed validation with no way to repair the set.
+        self.init()
+        errors = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(errors):
+            code = main([
+                "allow-write", "--run-id", "r1", "--path", "src", "--reason", "parent dir",
+                "--repo-root", str(self.root), "--state-dir", str(self.state_dir),
+            ])
+        self.assertEqual(code, 1)
+        self.assertIn("is a directory of other entries", errors.getvalue())
+        self.assertEqual(load_state(self.state_dir, "r1")["task"]["writeSet"], ["src/a.py"])
 
     def test_allow_write_refuses_once_the_run_is_finished(self) -> None:
         self.init()
