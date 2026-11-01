@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Make a freshly cloned project actually reusable
+
+- Area: quickstart, adoption runbook, initialization prompt
+- Change type: docs
+- Summary: every `git init` instruction now reads `git init -b main`, and initialization gains a deliverable to confirm or restore the `main` branch. Manifest version goes to `2.21.4`.
+- Reason: found while creating a real project from `main`. A bare `git init` produces `master`, and `validation.yml` triggers on `main` only, so a new project never runs its own CI. Nothing reports this, because a workflow that never fires has no failure to show — the project looks healthy and unvalidated at the same time.
+- Affected files: QUICKSTART.md, docs/runbooks/starter-adoption.md, .github/prompts/initialize-new-project.prompt.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Record the branch-name requirement"
+- Validation: `git init -b main` verified on git 2.45.2 during the smoke test, where a bare `git init` produced `master` and the branch had to be renamed by hand. Both umbrella twins pass in the resulting project.
+- Discrepancies or follow-up: nothing checks the branch name, and nothing can: CI runs on a detached checkout, so a local assertion would fail there and a remote one would need API access. The requirement is documented at three places and enforced by nothing.
 ### 2026-11-01 - Make the fixture harness work in a project, not just in the starter
 
 - Area: validation scripts

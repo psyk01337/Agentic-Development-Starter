@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Record the branch-name requirement
+
+- Area: quickstart, adoption runbook, initialization prompt
+- Change type: docs
+- Summary: the three places that tell you to run `git init` now specify `-b main`, and each states why: the shipped workflows trigger on `main` only.
+- Reason: this is the one setup step whose failure is completely silent. A wrong dependency fails loudly, a wrong count fails the manifest check, but a project on `master` simply never runs CI and reports nothing at all.
+- Affected files: QUICKSTART.md, docs/runbooks/starter-adoption.md, .github/prompts/initialize-new-project.prompt.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Make a freshly cloned project actually reusable"
+- Review status: reviewed
+- Discrepancies or follow-up: `validation.yml` and `skill-contract-tests.yml` disagree on trigger scope — the first is main-only, the second runs on every push and pull request. That asymmetry is what made the gap easy to miss.
 ### 2026-11-01 - Record the fixture harness mode skip
 
 - Area: documentation changelog

@@ -45,6 +45,7 @@ The agent will read this prompt file for the full adaptation instructions, then 
 - Keep all workflow assets intact: `.github/instructions/`, `.github/agents/`, `.github/skills/`, `.github/prompts/`, `.github/hooks/`, `.github/scripts/`, `.github/workflows/`, `docs/runbooks/`, `docs/adr/0000-template.md`, `evals/`.
 - Leave `.github/copilot-instructions.md` unchanged — the baseline rules are project-agnostic.
 - Confirm the chosen adoption mode (Minimal is the safe default for new projects).
+- Confirm the default branch is `main`. The shipped workflows trigger on `main` only, so a repository left on `master` never runs its own validation and nothing reports the gap — the workflows simply never fire. If `git init` produced `master`, rename it with `git branch -m main`.
 
 ## Safety Boundaries
 

@@ -17,8 +17,10 @@ Use this path when starting a brand-new project from scratch. Instead of copying
 2. **Detach from the starter's git history** and reinitialize for your project:
    ```bash
    rm -rf .git
-   git init
+   git init -b main
    ```
+
+   Use `-b main`. The shipped workflows trigger on `main` only, so a project left on `master` never runs its own CI and nothing warns you — the workflows simply never fire.
 
 3. **Clean up starter-specific artifacts** you don't need:
    - `MIGRATION.md` — migration guide for v1.0→v1.1 upgrades; safe to remove for new projects.

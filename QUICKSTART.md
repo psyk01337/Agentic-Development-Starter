@@ -24,7 +24,7 @@ PowerShell:
 git clone https://github.com/psyk01337/Agentic-Development-Starter.git my-app
 Set-Location my-app
 Remove-Item -Recurse -Force .git
-git init
+git init -b main
 ```
 
 Bash:
@@ -33,8 +33,10 @@ Bash:
 git clone https://github.com/psyk01337/Agentic-Development-Starter.git my-app
 cd my-app
 rm -rf .git
-git init
+git init -b main
 ```
+
+Use `-b main`, not a bare `git init`. The shipped workflows trigger on `main` only, so a project sitting on `master` never runs its own CI — and nothing in the repository will tell you, because the workflows simply never fire.
 
 If you have local starter changes, clone your local path or commit and push them first.
 
