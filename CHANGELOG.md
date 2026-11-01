@@ -24,7 +24,18 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-10-31 - Add metrics so the workflow can be judged on evidence
+### 2026-10-31 - Scope the tool gate to a run's owner instead of every active run
+
+- Area: agentic engine, engine runbook
+- Change type: fix, feature, test, docs
+- Summary: runs can now declare `--owner <id>`, and `check_tool_call` compares it with the payload's `sessionId` so the gate enforces only the caller's own runs. When no owner matches, or none is declared, the gate permits a call if any active run permits it, which is the union of their write sets. Four tests take the suite from 133 to 137. Manifest version goes to `2.12.0`.
+- Reason: the gate looped over every active run and denied a path missing from any one of them. Two runs with disjoint write sets therefore denied each other completely - a second live run froze the session, and nothing could be written at all. Proved before the change: with `alpha` holding `src/a.py` and `beta` holding `src/b.py`, edits to both were refused. That made anything resembling parallel agents impossible and was an accident of the loop rather than a decision.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document run ownership and gate scoping"
+- Validation: engine selftest 137/137. QA of nine live cases through `check-tool`: an owned caller writing its own file is allowed and another run's file is denied naming that run; an unattributed caller reaches both sets; an unknown path is denied; a scoped shell write to another run's file is denied while the same write inside the set is allowed. Three cases repeated through `pre-tool-policy.ps1` match. Single-run outside-the-set still exits 2, so the ordinary case is unchanged.
+- Discrepancies or follow-up: ownership is only as good as the `sessionId` the harness supplies, and nothing verifies that a caller is who it claims. A caller that omits the field gets the union, which is a wider bound than its own run - deliberate, because the alternative is deadlock, but it means scoping is a usability fix rather than a security boundary. `--owner` is not yet written by `build-feature`, so runs created by the ordinary path are unowned and take the union.
+
+
 
 - Area: agentic engine, engine runbook
 - Change type: feature, test, docs

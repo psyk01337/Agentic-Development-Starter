@@ -79,6 +79,10 @@ python .github/scripts/agentic_engine.py start \
 
 `--criterion` and `--write` repeat. `--task-id` defaults to the run id, `--task-class` defaults to `FEATURE`, and `--changed-files-from git` opts into a repository-derived write set.
 
+`--owner <id>` records which caller the run belongs to. The hook compares it with the `sessionId` the harness puts on every tool call, and when a run declares a matching owner the gate enforces only that caller's runs. Without an owner, or when no run matches the caller, the gate falls back to the union of every active run's write set.
+
+That fallback matters. Before it existed the gate looped over every active run and denied anything missing from any one of them, so a second live run made each run deny the other's files and nothing could be written at all. With one run — the ordinary case — union and ownership give identical answers. With several, the union is the only well-defined bound when a call cannot be attributed to a run.
+
 `allow-write` exists because a write set is a prediction made before the work starts, and real work discovers files. Extending the set is explicit, validated against the same rules as `start`, and recorded in the run history with a reason:
 
 ```bash

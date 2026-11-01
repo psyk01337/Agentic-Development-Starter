@@ -615,6 +615,7 @@ def cmd_start(args: argparse.Namespace) -> int:
         run_id=args.run_id,
         task=None,
         force=args.force,
+        owner=getattr(args, "owner", None),
         _prepared_task=task,
     )
     return _init_with_task(init_args, repo_root, policy, task)
@@ -665,6 +666,9 @@ def _init_with_task(args: argparse.Namespace, repo_root: Path, policy: dict, tas
             "status": "RUNNING",
             "stage": "approval" if task.get("approvalCategory") else "implement",
             "task": task,
+            # Which caller this run belongs to. Absent means unowned, and the gate
+            # then falls back to the union of every active run's write set.
+            "owner": getattr(args, "owner", None),
             "attempt": 0,
             "repairAttempts": 0,
             "verifyAttempts": 0,
@@ -1672,42 +1676,66 @@ def check_tool_call(repo_root: Path, state_dir: Path, payload: dict) -> tuple:
     if not isinstance(tool_args, dict):
         return False, "toolArgs must be a JSON object"
 
-    for state in runs:
-        profile = STAGE_TOOL_PROFILES[state["stage"]]
-        if not profile.get(kind, False):
+    # Which runs bound this call. When the payload names a caller and a run
+    # declares that owner, only that caller's runs apply - otherwise every active
+    # run is in scope. Scoping matters because checking all of them made two runs
+    # deny each other's files, so a second live run froze the session outright.
+    session = payload.get("sessionId")
+    owned = [
+        state for state in runs
+        if isinstance(state.get("owner"), str) and session and state["owner"] == session
+    ]
+    scope = owned or runs
+
+    # A call is permitted if any run in scope permits it. With one run this is
+    # identical to the old behaviour; with several, the bound is the union of
+    # their write sets, which is the only well-defined answer when a call cannot
+    # be attributed to one of them.
+    reasons = []
+    for state in scope:
+        permitted, reason = _permit_for_run(state, kind, tool_name, tool_args, repo_root)
+        if permitted:
+            return True, ""
+        reasons.append(reason)
+    return False, reasons[0]
+
+
+def _permit_for_run(state: dict, kind: str, tool_name: str, tool_args: dict, repo_root: Path) -> tuple:
+    """Whether one run permits this call. Returns (allowed, reason)."""
+    profile = STAGE_TOOL_PROFILES[state["stage"]]
+    if not profile.get(kind, False):
+        return False, (
+            f"{tool_name!r} is a {kind} call and run {state['runId']} is at stage "
+            f"{state['stage']!r}, which does not permit {kind}"
+        )
+    allowed = {_repo_relative(item, repo_root) for item in state["task"]["writeSet"]}
+    if kind in WRITE_KINDS:
+        paths = write_paths(tool_args)
+        if not paths:
+            return False, f"{tool_name!r} is a write call but reported no file path"
+        outside = sorted({p for p in (_repo_relative(path, repo_root) for path in paths) if p not in allowed})
+        if outside:
             return False, (
-                f"{tool_name!r} is a {kind} call and run {state['runId']} is at stage "
-                f"{state['stage']!r}, which does not permit {kind}"
+                f"write outside the declared write set for run {state['runId']}: "
+                + ", ".join(outside)
             )
-        if kind in WRITE_KINDS:
-            paths = write_paths(tool_args)
-            if not paths:
-                return False, f"{tool_name!r} is a write call but reported no file path"
-            allowed = {_repo_relative(item, repo_root) for item in state["task"]["writeSet"]}
-            outside = sorted({p for p in (_repo_relative(path, repo_root) for path in paths) if p not in allowed})
+    if kind in SHELL_KINDS:
+        text = ""
+        for key in SHELL_COMMAND_KEYS:
+            value = tool_args.get(key)
+            if isinstance(value, str):
+                text = value
+                break
+        shell_paths = shell_write_paths(text)
+        if shell_paths:
+            outside = sorted({
+                p for p in (_repo_relative(path, repo_root) for path in shell_paths) if p not in allowed
+            })
             if outside:
                 return False, (
-                    f"write outside the declared write set for run {state['runId']}: "
+                    f"shell write outside the declared write set for run {state['runId']}: "
                     + ", ".join(outside)
                 )
-        if kind in SHELL_KINDS:
-            text = ""
-            for key in SHELL_COMMAND_KEYS:
-                value = tool_args.get(key)
-                if isinstance(value, str):
-                    text = value
-                    break
-            shell_paths = shell_write_paths(text)
-            if shell_paths:
-                allowed = {_repo_relative(item, repo_root) for item in state["task"]["writeSet"]}
-                outside = sorted({
-                    p for p in (_repo_relative(path, repo_root) for path in shell_paths) if p not in allowed
-                })
-                if outside:
-                    return False, (
-                        f"shell write outside the declared write set for run {state['runId']}: "
-                        + ", ".join(outside)
-                    )
     return True, ""
 
 
@@ -2627,6 +2655,60 @@ class EngineSelfTest(unittest.TestCase):
         code, payload = self.run_cli(["metrics"])
         self.assertEqual(code, 0)
         self.assertEqual(payload["archivedRuns"], 1)
+
+    def check_as(self, session, tool_name: str, tool_args: dict) -> tuple:
+        payload = {"toolName": tool_name, "toolArgs": tool_args}
+        if session is not None:
+            payload["sessionId"] = session
+        return check_tool_call(self.root, self.state_dir, payload)
+
+    def test_two_runs_with_disjoint_sets_do_not_block_each_other(self) -> None:
+        # Before this, a path missing from ANY active run's write set was denied,
+        # so a second live run froze the session: each run denied the other's
+        # files and nothing could be written.
+        self.init()
+        self.start_cli(
+            "start", "--run-id", "r2", "--title", "second", "--criterion", "y", "--write", "src/b.py"
+        )
+        self.assertTrue(self.check("edit", {"filePath": "src/a.py"})[0])
+        self.assertTrue(self.check("edit", {"filePath": "src/b.py"})[0])
+        allowed, reason = self.check("edit", {"filePath": "src/c.py"})
+        self.assertFalse(allowed)
+        self.assertIn("src/c.py", reason)
+
+    def test_an_owned_run_scopes_the_gate_to_its_caller(self) -> None:
+        self.start_cli(
+            "start", "--run-id", "own1", "--title", "one", "--criterion", "x",
+            "--write", "src/a.py", "--owner", "s1",
+        )
+        self.start_cli(
+            "start", "--run-id", "own2", "--title", "two", "--criterion", "y",
+            "--write", "src/b.py", "--owner", "s2",
+        )
+        self.assertTrue(self.check_as("s1", "edit", {"filePath": "src/a.py"})[0])
+        allowed, reason = self.check_as("s1", "edit", {"filePath": "src/b.py"})
+        self.assertFalse(allowed)
+        self.assertIn("own1", reason)
+
+    def test_an_unowned_caller_falls_back_to_the_union(self) -> None:
+        self.start_cli(
+            "start", "--run-id", "own1", "--title", "one", "--criterion", "x",
+            "--write", "src/a.py", "--owner", "s1",
+        )
+        self.start_cli(
+            "start", "--run-id", "own2", "--title", "two", "--criterion", "y",
+            "--write", "src/b.py", "--owner", "s2",
+        )
+        self.assertTrue(self.check("edit", {"filePath": "src/b.py"})[0])
+
+    def test_a_writable_run_permits_a_call_a_restricted_run_forbids(self) -> None:
+        self.init()
+        self.implement()  # r1 reaches verify, which does not permit edits
+        self.start_cli(
+            "start", "--run-id", "r2", "--title", "second", "--criterion", "y", "--write", "src/a.py"
+        )
+        allowed, reason = self.check("edit", {"filePath": "src/a.py"})
+        self.assertTrue(allowed, reason)
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
 
@@ -4049,6 +4131,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--run-id", required=True)
     init_parser.add_argument("--task", required=True)
     init_parser.add_argument("--force", action="store_true")
+    init_parser.add_argument("--owner", default=None, help="caller identity this run belongs to")
     init_parser.set_defaults(func=cmd_init)
 
     start_parser = subparsers.add_parser(
@@ -4071,6 +4154,7 @@ def build_parser() -> argparse.ArgumentParser:
     start_parser.add_argument("--requested-by", default=None)
     start_parser.add_argument("--changed-files-from", default=None, choices=["declared", "git"])
     start_parser.add_argument("--force", action="store_true")
+    start_parser.add_argument("--owner", default=None, help="caller identity this run belongs to")
     start_parser.set_defaults(func=cmd_start)
 
     allow_write_parser = subparsers.add_parser(

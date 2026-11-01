@@ -24,7 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
-### 2026-10-31 - Document the metrics command
+### 2026-10-31 - Document run ownership and gate scoping
+
+- Area: engine runbook
+- Change type: docs, runbook
+- Summary: the `start` section of `docs/runbooks/agentic-engine.md` documents `--owner`, how it is matched against the harness `sessionId`, and the union fallback. It records why the fallback exists rather than presenting it as a design preference: checking every active run made two runs deny each other.
+- Reason: scoping changes which run bounds a tool call, and a reader debugging an unexpected denial needs to know whether the answer came from their run or from another one's write set.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Scope the tool gate to a run's owner instead of every active run"
+- Review status: reviewed
+- Discrepancies or follow-up: the hooks runbook still describes the gate without mentioning scoping, so the two documents now describe the same code at different levels of detail. `build-feature` does not pass `--owner`, which the runbook also does not say.
+
+
 
 - Area: engine runbook
 - Change type: docs, runbook
