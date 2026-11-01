@@ -42,6 +42,12 @@ function Invoke-BadgeMutation([string]$Tree) {
 }
 
 function Invoke-AppMutation([string]$Tree) {
+  # Build the condition rather than assuming it. The first version relied on the repository
+  # shipping an unfilled app/README.md, so the case stopped meaning anything the moment real
+  # code landed in app/.
+  $readme = Join-Path $Tree "app/README.md"
+  New-Item -ItemType Directory -Path (Split-Path $readme) -Force | Out-Null
+  Set-Text $readme "# Application Source`n`n``````bash`ncd app && <the command that runs this project's tests>`n``````n"
   $src = Join-Path $Tree "app/src"
   New-Item -ItemType Directory -Path $src -Force | Out-Null
   Set-Text (Join-Path $src "probe.js") "export const probe = 1;`n"
@@ -56,12 +62,17 @@ function Invoke-IntakeMutation([string]$Tree) {
 }
 
 function Invoke-PrdMutation([string]$Tree) {
+  # Same reasoning as the app case: state the condition explicitly so the case survives the
+  # repository's own PRD becoming filled.
   $inputs = Join-Path $Tree "docs/inputs"
   New-Item -ItemType Directory -Path $inputs -Force | Out-Null
   Set-Text (Join-Path $inputs "probe-intake.md") "# probe`n"
-  $prdPath = Join-Path $Tree "docs/prd.md"
-  $prdText = [System.IO.File]::ReadAllText($prdPath)
-  Set-Text $prdPath ([regex]::Replace($prdText, "(?m)^\|\s*Source\s*\|.*$", "| Source | ``docs/inputs/probe-intake.md`` |", 1))
+  Set-Text (Join-Path $Tree "docs/prd.md") (
+    "# <Project>: Product Requirements`n`n" +
+    "| Field | Value |`n| --- | --- |`n" +
+    "| Source | ``docs/inputs/probe-intake.md`` |`n" +
+    "| Owner | <who decides product scope> |`n"
+  )
   return "names a concrete source"
 }
 

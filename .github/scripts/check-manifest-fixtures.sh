@@ -33,6 +33,15 @@ def mutate_readme_badge(tree):
 
 
 def mutate_app_placeholder(tree):
+    # Build the condition rather than assuming it. The first version relied on the repository
+    # shipping an unfilled app/README.md, so the case stopped meaning anything the moment real
+    # code landed in app/.
+    readme = tree / "app/README.md"
+    readme.parent.mkdir(parents=True, exist_ok=True)
+    readme.write_text(
+        "# Application Source\n\n```bash\ncd app && <the command that runs this project's tests>\n```\n",
+        encoding="utf-8",
+    )
     (tree / "app/src").mkdir(parents=True, exist_ok=True)
     (tree / "app/src/probe.js").write_text("export const probe = 1;\n", encoding="utf-8")
     return "placeholder verification command"
@@ -45,16 +54,15 @@ def mutate_intake(tree):
 
 
 def mutate_prd_source(tree):
+    # Same reasoning as the app case: state the condition explicitly so the case survives the
+    # repository's own PRD becoming filled.
     (tree / "docs/inputs").mkdir(parents=True, exist_ok=True)
     (tree / "docs/inputs/probe-intake.md").write_text("# probe\n", encoding="utf-8")
-    prd = tree / "docs/prd.md"
-    prd.write_text(
-        re.sub(
-            r"(?m)^\|\s*Source\s*\|.*$",
-            "| Source | `docs/inputs/probe-intake.md` |",
-            prd.read_text(encoding="utf-8"),
-            count=1,
-        ),
+    (tree / "docs/prd.md").write_text(
+        "# <Project>: Product Requirements\n\n"
+        "| Field | Value |\n| --- | --- |\n"
+        "| Source | `docs/inputs/probe-intake.md` |\n"
+        "| Owner | <who decides product scope> |\n",
         encoding="utf-8",
     )
     return "names a concrete source"

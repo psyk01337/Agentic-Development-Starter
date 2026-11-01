@@ -33,7 +33,11 @@ The single most useful thing in this file is the command that proves the applica
 Replace this block with the project's real commands:
 
 ```bash
-cd app && <the command that runs this project's tests>
+# from the repository root — this is the exact command `verify` executes
+node --test app/test/server.test.js
+
+# from app/ — the same suite through the package script
+cd app && npm test
 ```
 
 Until that is replaced, this file describes a scaffold rather than a project. An agent should say so rather than invent a command, and the `verify` stage should record `NOT_VERIFIED` rather than a pass nobody observed.

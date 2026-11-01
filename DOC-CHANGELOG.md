@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Record the first application slice and the fixture correction
+
+- Area: app scaffold
+- Change type: docs
+- Summary: `app/README.md`'s verification block now names the real commands — `node --test app/test/server.test.js` from the repository root, which is what `verify` executes, and `cd app && npm test` for a developer working in the folder.
+- Reason: the block is the contract the workflow reads, and until now the repository had never had one filled in. The two forms are recorded separately because the engine runs from the root and a developer does not, and a block naming only one would mislead one of them.
+- Affected files: app/README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Add the first application slice, and fix a fixture that assumed there was none"
+- Review status: reviewed
+- Discrepancies or follow-up: this file still describes a general scaffold in its layout and overlay sections, which remain correct for a stack-agnostic starter; nothing in it claims the Node proof is a default.
 ### 2026-11-01 - Record the family-guard fixture and the empty-script rule
 
 - Area: root README check table

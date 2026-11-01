@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Add the first application slice, and fix a fixture that assumed there was none
+
+- Area: app, validation scripts
+- Change type: feature, fix, test, docs
+- Summary: `app/` gains a health endpoint, a 404 fallback, and two tests that drive the real server over HTTP, plus a `package.json` and a filled verification block naming `node --test app/test/server.test.js` as the command `verify` executes. Separately, `check-manifest-fixtures` was fixed: its app and PRD cases assumed the repository ships an unfilled scaffold, so the app landing made them unable to construct their own conditions. Both now build the state they need instead of depending on it. No manifest version bump: `app/` is outside the module inventory, so the starter's version does not describe it.
+- Reason: every archived run in this repository until now was the repository changing itself. This is the first slice where the `verify` stage executed an application's test command and recorded its exit code, which is the only thing that distinguishes a workflow that governs work from one that only governs itself. The fixture defect is reported honestly because it was found by the app landing, not by the harness: the harness went red the moment app code existed, which is what a good fixture does when it is wrong.
+- Affected files: app/package.json, app/src/server.js, app/test/server.test.js, app/README.md, .github/scripts/check-manifest-fixtures.ps1, .github/scripts/check-manifest-fixtures.sh, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Record the first application slice and the fixture correction"
+- Validation: the scaffold guard fired on the real app before the contract was filled, refusing with the file count, and cleared once it was. `verify` executed `node --test app/test/server.test.js` and recorded `exitCode: 0` for the check named `app-tests`. Both fixture harnesses pass seven cases with the app present; the full umbrella passes. The review returned this run to `repair` first: the umbrella was red because of the harness case, and the stage machine refused every edit at `review`, which is why the fix arrived as a repair rather than an edit.
+- Discrepancies or follow-up: the stack here is Node, chosen only as a proof vehicle; the boilerplate remains stack-agnostic and this branch can be deleted without loss. `allow-write` accepts a directory path and the resulting write set then fails the engine's own validator, which required repairing this run's local state by hand — a real defect in the engine, reported here and not yet fixed.
 ### 2026-11-01 - Test the family guard, and notice an empty check script
 
 - Area: validation scripts, root README, manifest
