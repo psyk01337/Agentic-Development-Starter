@@ -62,6 +62,7 @@ Without a run the hooks stay inert and the repository falls back to conventions.
 - Implement the slice with `senior-software-engineer` or the matching stack overlay agent.
 - Add or update tests for the changed behavior and the most important failure path.
 - Run the focused application checks first, then the relevant starter validation.
+- If this slice is the first to run the application's own tests, replace the placeholder verification block in `app/README.md` with the exact command you ran, and add `app/README.md` to the run's write set. Record what you ran, not what you plan to run: a command written before it executes is a promise, and `verify` only accepts something it observed.
 - Hand the diff to `code-reviewer` and the verification evidence to `qa`.
 - Update `CHANGELOG.md` for behavior changes and `DOC-CHANGELOG.md` for documentation changes.
 - Produce a PR-ready summary with files changed, commands run, evidence, residual risk, and the next step.

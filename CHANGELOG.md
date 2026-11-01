@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Give the app verification block an owner
+
+- Area: prompt assets, quickstart, manifest
+- Change type: docs, config
+- Summary: `build-feature` now requires the first slice that runs the application's own tests to replace the placeholder verification block in `app/README.md` with the command it actually executed, and to add that file to the run's write set. `initialize-new-project` now states that it must leave the block alone, because it knows the stack but not the test runner the first slice settles on, and a command written before anything runs is a promise rather than a check. QUICKSTART Path A gains the same rule plus a note that a slice opens an engine run and archives it. Manifest version goes to `2.18.1`.
+- Reason: `app/README.md` is the only contract between the workflow layer and the product, and nothing owned it. No prompt referenced the file, no validator inspected its content, and it is deliberately not a registered starter asset because `app/` may be renamed. The gap was structural: the verify stage refuses `VERIFIED` without an executed check, so the file that tells an agent what to execute had no author.
+- Affected files: .github/prompts/build-feature.prompt.md, .github/prompts/initialize-new-project.prompt.md, QUICKSTART.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document who fills the app verification block"
+- Validation: `check-prompt-contracts`, `check-markdown-quality`, `check-starter-manifest`, and `check-starter-workflow` all pass under PowerShell 7; no engine behavior changed, so the engine suite is unaffected.
+- Discrepancies or follow-up: nothing enforces the new bullet. A slice could still leave the placeholder in place, and no check would notice, because inspecting `app/README.md` for a real command would fail for every repository that has not written its first test yet. The rule is owned by a prompt rather than a gate on purpose; a gate needs a usable answer for the empty case before it can exist.
 ### 2026-11-01 - Refuse a second live run in one checkout
 
 - Area: agentic engine, engine runbook, ADR 0010, manifest

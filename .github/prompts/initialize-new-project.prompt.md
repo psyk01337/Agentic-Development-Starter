@@ -39,6 +39,7 @@ The agent will read this prompt file for the full adaptation instructions, then 
 - Reset `"version"` in `.github/starter-modules.json` to `1.0.0` and mention that version in the initial `CHANGELOG.md` Summary. The manifest check requires the current manifest version to appear in a changelog Summary line, so a cleared log without this step leaves the repository failing its own checks.
 - Remember the split: `CHANGELOG.md` is only for code changes made in THIS project; `DOC-CHANGELOG.md` is only for this project's documentation changes. Starter history must never remain in either log.
 - Trim stack overlays that do not apply to the stated tech stack. Enable overlays that do apply.
+- Leave the verification block in `app/README.md` as a placeholder. Nothing has run yet, and this prompt knows the stack but not the test runner the first slice will settle on. The first `build-feature` slice fills that block with the command it actually executed.
 - Keep all workflow assets intact: `.github/instructions/`, `.github/agents/`, `.github/skills/`, `.github/prompts/`, `.github/hooks/`, `.github/scripts/`, `.github/workflows/`, `docs/runbooks/`, `docs/adr/0000-template.md`, `evals/`.
 - Leave `.github/copilot-instructions.md` unchanged — the baseline rules are project-agnostic.
 - Confirm the chosen adoption mode (Minimal is the safe default for new projects).

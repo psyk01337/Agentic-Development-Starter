@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document who fills the app verification block
+
+- Area: prompt assets, quickstart guide
+- Change type: docs
+- Summary: records the division of labour for the verification block in `app/README.md`. `initialize-new-project` leaves it as a placeholder and says why; `build-feature` requires the first slice that executes the application's tests to replace it with that exact command. QUICKSTART Path A carries the same rule and now names the engine run that the first-slice prompt opens, including the `archive` output that has to be committed.
+- Reason: the file states that it describes a scaffold rather than a project until the block is replaced, and no instruction anywhere said whose job that was. A rule with no author does not get followed.
+- Affected files: .github/prompts/build-feature.prompt.md, .github/prompts/initialize-new-project.prompt.md, QUICKSTART.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Give the app verification block an owner"
+- Review status: reviewed
+- Discrepancies or follow-up: QUICKSTART step 4 still tells a new project to create `app/`, which already exists in the clone. It is harmless because both commands tolerate an existing directory, and it is left alone rather than renumbered.
 ### 2026-11-01 - Record the one-run-per-checkout rule
 
 - Area: ADR set, engine runbook, manifest

@@ -103,6 +103,8 @@ Out of scope: <...>.
 
 The prompt routes the work through plan, implementation, tests, `code-reviewer`, `qa`, and changelog updates. Start with one endpoint or one screen, not a subsystem.
 
+`build-feature` opens an engine run before it writes code. The run's `--write` set is what the `preToolUse` hook enforces, so a write outside it is refused until you extend it with `allow-write`; the run closes with `archive`, which writes `docs/runs/<slice-id>.md`. Commit that file with the change, or the history disappears when the state is discarded.
+
 ### 6. Validate
 
 ```bash
@@ -114,6 +116,8 @@ pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1
 ```
 
 Also run the application's own test, lint, and build commands.
+
+The umbrella proves the workflow layer is intact and says nothing about your application; `app/README.md` spells that split out. The application's commands are yours to declare: the first slice that runs a test replaces the placeholder block in `app/README.md` with the command it actually ran. Until that block names a real command there is nothing to execute, so a `verify` stage must record `NOT_VERIFIED` rather than a pass nobody observed.
 
 ### 7. Commit
 
