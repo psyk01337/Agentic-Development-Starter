@@ -37,7 +37,7 @@ while IFS= read -r -d '' markdown_file; do
       report_error "Broken local Markdown link in ${relative_file}: ${target}"
     fi
   done < <(grep -oE '\]\(([^)]+)\)' "${markdown_file}" | sed -E 's/^\]\(([^)]+)\)$/\1/')
-done < <(find "${REPO_ROOT}" -path "${REPO_ROOT}/.git" -prune -o -name '*.md' -type f -print0)
+done < <(find "${REPO_ROOT}" \( -path "${REPO_ROOT}/.git" -o -path "${REPO_ROOT}/.forlocal" \) -prune -o -name '*.md' -type f -print0)
 
 if [[ "${FAILED}" -ne 0 ]]; then
   exit 1

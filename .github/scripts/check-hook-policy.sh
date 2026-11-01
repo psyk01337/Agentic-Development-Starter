@@ -133,7 +133,7 @@ if [[ -f "${POLICY_SCRIPT}" ]]; then
   expect_allowed "git lfs pull"
   expect_allowed "git lfs status"
   expect_allowed "git lfs prune --dry-run"
-  expect_allowed "git add app/game/assets/runtime/hero.png"
+  expect_allowed "git add docs/assets/hero.png"
 fi
 
 expect_blocked_argv "rm -rf /"

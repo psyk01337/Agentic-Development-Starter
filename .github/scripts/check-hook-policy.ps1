@@ -135,7 +135,7 @@ if (Test-Path $policyScript) {
   Expect-Allowed -Command "git lfs pull"
   Expect-Allowed -Command "git lfs status"
   Expect-Allowed -Command "git lfs prune --dry-run"
-  Expect-Allowed -Command "git add app/game/assets/runtime/hero.png"
+  Expect-Allowed -Command "git add docs/assets/hero.png"
 
   Expect-BlockedArgv -Command "rm -rf /"
   Expect-AllowedArgv -Command "git status --short"

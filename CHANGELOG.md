@@ -24,7 +24,18 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-10-31 - Scope the tool gate to a run's owner instead of every active run
+### 2026-11-01 - Repoint the hook fixtures and stop linting local-only docs
+
+- Area: hook validators, markdown quality
+- Change type: fix, chore, docs
+- Summary: the `git add` fixture in `check-hook-policy.{sh,ps1}` moves from `app/game/assets/runtime/hero.png` to `docs/assets/hero.png`, a path a clone can plausibly contain. `check-markdown-quality.{sh,ps1}` now prunes `.forlocal/` in addition to `.git/`. Manifest version goes to `2.13.0`.
+- Reason: the fixture named a directory that is now gitignored, so it asserted against a path no clone would have. The lint exclusion follows the same reasoning that justified excluding vendored code earlier: `.forlocal/` is unpublished working material, and holding it to the published-document standard either blocks a commit over a scratch note or forces someone to edit a note they never intended to publish.
+- Affected files: .github/scripts/check-hook-policy.sh, .github/scripts/check-hook-policy.ps1, .github/scripts/check-markdown-quality.sh, .github/scripts/check-markdown-quality.ps1, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Reset the PRD and route the intake to local-only storage"
+- Validation: both umbrella suites pass all twelve checks with `.forlocal/` populated, which is the condition that would have failed if the exclusion were missing.
+- Discrepancies or follow-up: `.forlocal/` is ignored by `.gitignore`, so the exclusion is belt-and-braces - a file there is only linted if it already exists locally, which is exactly the case that was failing.
+
+
 
 - Area: agentic engine, engine runbook
 - Change type: fix, feature, test, docs

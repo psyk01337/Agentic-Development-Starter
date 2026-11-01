@@ -24,7 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
-### 2026-10-31 - Document run ownership and gate scoping
+### 2026-11-01 - Reset the PRD and route the intake to local-only storage
+
+- Area: docs/prd.md, docs/inputs, app/README.md
+- Change type: docs
+- Summary: `docs/prd.md` returns to a project template instead of describing the Ember Run sample, the game intake moves to `.forlocal/ember-run-prd.md` where it is ignored rather than published, and `docs/inputs/README.md` records what an intake is for and why it is kept verbatim after being routed. `app/README.md` gains a "Local Sample" section explaining that `app/game/` is ignored rather than missing.
+- Reason: the sample application is no longer published, and the repository's one required product document still described it. A fresh clone would have shipped a PRD for software it does not contain. The intake was moved rather than deleted because it is the record of what was actually asked for, and the PRD is an interpretation of it.
+- Affected files: docs/prd.md, docs/inputs/README.md, .forlocal/ember-run-prd.md (untracked), app/README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Repoint the hook fixtures and stop linting local-only docs"
+- Review status: reviewed
+- Discrepancies or follow-up: the template is unvalidated as a template; no check confirms a filled-in PRD kept the required sections, so a project can delete the traceability table and nothing notices. `docs/runs/ember-s7.md` still names files under `app/game/`, which is accurate history for a run that really happened.
+
+
 
 - Area: engine runbook
 - Change type: docs, runbook
