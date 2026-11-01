@@ -76,14 +76,28 @@ function Invoke-EmptyScriptMutation([string]$Tree) {
 }
 
 $cases = @(
-  @{ Label = "baseline passes"; Mutate = $null },
-  @{ Label = "a wrong README badge is caught"; Mutate = "badge" },
-  @{ Label = "code behind a placeholder command is caught"; Mutate = "app" },
-  @{ Label = "an unlogged intake is caught"; Mutate = "intake" },
-  @{ Label = "a templated PRD with a concrete source is caught"; Mutate = "prd" },
-  @{ Label = "a check the umbrella never runs is caught"; Mutate = "umbrella" },
-  @{ Label = "an empty check script is caught"; Mutate = "empty" }
+  @{ Label = "baseline passes"; Mutate = $null; StarterOnly = $false },
+  @{ Label = "a wrong README badge is caught"; Mutate = "badge"; StarterOnly = $true },
+  @{ Label = "code behind a placeholder command is caught"; Mutate = "app"; StarterOnly = $false },
+  @{ Label = "an unlogged intake is caught"; Mutate = "intake"; StarterOnly = $false },
+  @{ Label = "a templated PRD with a concrete source is caught"; Mutate = "prd"; StarterOnly = $false },
+  @{ Label = "a check the umbrella never runs is caught"; Mutate = "umbrella"; StarterOnly = $false },
+  @{ Label = "an empty check script is caught"; Mutate = "empty"; StarterOnly = $false }
 )
+
+# The README count rule is gated on maintainerAssetScan, so it does not exist in a project. An
+# adopting repository replaced the starter README and its numbers describe the starter, so there
+# is nothing there to test. Reporting the case as skipped is honest; failing it, which is what
+# happened until a real project ran this harness, blames the project for a rule it never had.
+$starterMode = $false
+$manifestPath = Join-Path $RepoRoot ".github/starter-modules.json"
+if (Test-Path -Path $manifestPath -PathType Leaf) {
+  try {
+    $starterMode = [bool](Get-Content -Path $manifestPath -Raw | ConvertFrom-Json).maintainerAssetScan
+  } catch {
+    $starterMode = $false
+  }
+}
 
 $failures = New-Object System.Collections.Generic.List[string]
 $workRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("manifest-fixtures-" + [guid]::NewGuid().ToString("N"))
@@ -92,6 +106,10 @@ New-Item -ItemType Directory -Path $workRoot -Force | Out-Null
 try {
   for ($index = 0; $index -lt $cases.Count; $index++) {
     $case = $cases[$index]
+    if ($case.StarterOnly -and -not $starterMode) {
+      Write-Host "skip $($case.Label) (starter-only: this repository is in project mode)"
+      continue
+    }
     $tree = Join-Path $workRoot "case-$index"
     Copy-Tree -Source $RepoRoot -Destination $tree
 

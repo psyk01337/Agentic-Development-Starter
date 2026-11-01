@@ -24,6 +24,26 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Make a freshly cloned project actually reusable
+
+- Area: quickstart, adoption runbook, initialization prompt
+- Change type: docs
+- Summary: every `git init` instruction now reads `git init -b main`, and initialization gains a deliverable to confirm or restore the `main` branch. Manifest version goes to `2.21.4`.
+- Reason: found while creating a real project from `main`. A bare `git init` produces `master`, and `validation.yml` triggers on `main` only, so a new project never runs its own CI. Nothing reports this, because a workflow that never fires has no failure to show — the project looks healthy and unvalidated at the same time.
+- Affected files: QUICKSTART.md, docs/runbooks/starter-adoption.md, .github/prompts/initialize-new-project.prompt.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Record the branch-name requirement"
+- Validation: `git init -b main` verified on git 2.45.2 during the smoke test, where a bare `git init` produced `master` and the branch had to be renamed by hand. Both umbrella twins pass in the resulting project.
+- Discrepancies or follow-up: nothing checks the branch name, and nothing can: CI runs on a detached checkout, so a local assertion would fail there and a remote one would need API access. The requirement is documented at three places and enforced by nothing.
+### 2026-11-01 - Make the fixture harness work in a project, not just in the starter
+
+- Area: validation scripts
+- Change type: fix, test
+- Summary: `check-manifest-fixtures` reads `maintainerAssetScan` from the manifest and reports the README-count case as skipped, rather than failed, when the repository is in project mode. Manifest version goes to `2.21.3`.
+- Reason: found by doing what a new user does. A project cloned from the starter and initialized following the documented steps failed its own umbrella on the first run, because the harness ran a case for a rule gated on `maintainerAssetScan: true` — and a project legitimately sets that to `false`. The case could never fire there, so it reported the project as broken for a rule it never had. This is the third fixture in this repository to assume repository state instead of handling it, after the app and PRD cases.
+- Affected files: .github/scripts/check-manifest-fixtures.ps1, .github/scripts/check-manifest-fixtures.sh, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Record the fixture harness mode skip"
+- Validation: in the starter both twins still run all seven cases and pass. In a freshly initialized project both twins now report six passes, one explicit skip, and exit 0, and the project's full umbrella passes for the first time. The skip prints its reason, so it is visible rather than silent.
+- Discrepancies or follow-up: the skipped case is starter-only by nature, so a project never exercises the README count rule through this harness — that rule is not testable from a project, which is correct but worth knowing. A silently skipped case would be a hole; the printed reason is what keeps it honest.
 ### 2026-11-01 - Close the window where a write-set entry can become a directory
 
 - Area: agentic engine, engine runbook
