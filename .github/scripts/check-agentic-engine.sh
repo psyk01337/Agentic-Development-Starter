@@ -109,6 +109,57 @@ else
   fi
 fi
 
+# The family guard above only fails when someone trims the allowlist, which never happens on a
+# clean repository. Untested, it could be deleted and every contract would stay green while stack
+# neutrality quietly stopped being enforced -- the thing this repository exists to protect.
+#
+# The fixture copies the tree, trims the allowlist, and requires the failure. AGENTIC_ENGINE_FIXTURE
+# stops the copied check from running its own copy of this block, which would otherwise recurse
+# until the disk filled.
+if [[ "${AGENTIC_ENGINE_FIXTURE:-}" != "1" ]]; then
+  fixture_root="$(mktemp -d)"
+  fixture_tree="${fixture_root}/repo"
+  if AGENTIC_ENGINE_FIXTURE=1 python3 - "${REPO_ROOT}" "${fixture_tree}" <<'PY'
+import json
+import pathlib
+import shutil
+import subprocess
+import sys
+
+source = pathlib.Path(sys.argv[1]).resolve()
+target = pathlib.Path(sys.argv[2])
+shutil.copytree(
+    source, target, symlinks=True,
+    ignore=shutil.ignore_patterns(".git", ".forlocal", ".agentic", "__pycache__"),
+)
+
+policy_path = target / ".github/roles/orchestration-policy.json"
+policy = json.loads(policy_path.read_text(encoding="utf-8"))
+policy["verificationCommands"] = ["node", "python", "bash", "pwsh"]
+policy_path.write_text(json.dumps(policy, indent=2), encoding="utf-8")
+
+result = subprocess.run(
+    ["bash", str(target / ".github/scripts/check-agentic-engine.sh"), str(target)],
+    capture_output=True, text=True,
+)
+output = result.stdout + result.stderr
+if result.returncode == 0:
+    print("[ERROR] A trimmed verificationCommands list did not fail the engine check; the "
+          "family guard is gone or no longer covers Go, Rust, .NET, JVM, Ruby, or PHP", file=sys.stderr)
+    raise SystemExit(1)
+if "no longer allows" not in output:
+    print(f"[ERROR] The trimmed policy failed for the wrong reason: {output.strip()[:200]}", file=sys.stderr)
+    raise SystemExit(1)
+print("Agentic engine fixture checks passed.")
+PY
+  then
+    rm -rf "${fixture_root}"
+  else
+    rm -rf "${fixture_root}"
+    report_error "The family guard fixture failed; see the message above."
+  fi
+fi
+
 if [[ "${FAILED}" -ne 0 ]]; then
   exit 1
 fi

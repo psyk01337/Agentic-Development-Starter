@@ -350,9 +350,23 @@ for twin in (".ps1", ".sh"):
     if not umbrella.is_file():
         continue
     umbrella_text = umbrella.read_text(encoding="utf-8")
+    scripts = sorted((repo_root / ".github" / "scripts").glob("check-*" + twin))
+    # An empty script exits 0, so the umbrella reports green while running nothing. This was
+    # not hypothetical: a bad edit truncated check-agentic-engine.sh to zero bytes and the
+    # umbrella passed it until the file was restored from git.
+    empty = [
+        script.name
+        for script in scripts
+        if script.name != umbrella.name and script.stat().st_size < 100
+    ]
+    if empty:
+        errors.append(
+            f"{', '.join(empty)} are effectively empty; a script with no body exits 0 and "
+            "passes every umbrella while checking nothing"
+        )
     unwired = [
         script.name
-        for script in sorted((repo_root / ".github" / "scripts").glob("check-*" + twin))
+        for script in scripts
         if script.name != umbrella.name and script.name not in umbrella_text
     ]
     if unwired:

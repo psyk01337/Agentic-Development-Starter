@@ -70,13 +70,19 @@ function Invoke-UmbrellaMutation([string]$Tree) {
   return "never runs them"
 }
 
+function Invoke-EmptyScriptMutation([string]$Tree) {
+  Set-Text (Join-Path $Tree ".github/scripts/check-empty.ps1") ""
+  return "effectively empty"
+}
+
 $cases = @(
   @{ Label = "baseline passes"; Mutate = $null },
   @{ Label = "a wrong README badge is caught"; Mutate = "badge" },
   @{ Label = "code behind a placeholder command is caught"; Mutate = "app" },
   @{ Label = "an unlogged intake is caught"; Mutate = "intake" },
   @{ Label = "a templated PRD with a concrete source is caught"; Mutate = "prd" },
-  @{ Label = "a check the umbrella never runs is caught"; Mutate = "umbrella" }
+  @{ Label = "a check the umbrella never runs is caught"; Mutate = "umbrella" },
+  @{ Label = "an empty check script is caught"; Mutate = "empty" }
 )
 
 $failures = New-Object System.Collections.Generic.List[string]
@@ -96,6 +102,7 @@ try {
       "intake" { $marker = Invoke-IntakeMutation $tree }
       "prd" { $marker = Invoke-PrdMutation $tree }
       "umbrella" { $marker = Invoke-UmbrellaMutation $tree }
+      "empty" { $marker = Invoke-EmptyScriptMutation $tree }
     }
 
     $output = & pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $tree ".github/scripts/check-starter-manifest.ps1") -RepoRoot $tree 2>&1

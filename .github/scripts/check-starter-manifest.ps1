@@ -331,9 +331,20 @@ if (-not (Test-Path $manifestPath)) {
       $umbrellaPath = Join-Path $RepoRoot ".github/scripts/check-starter-workflow$twin"
       if (-not (Test-Path -Path $umbrellaPath -PathType Leaf)) { continue }
       $umbrellaText = Get-Content -Path $umbrellaPath -Raw
+      $scripts = @(Get-ChildItem -Path (Join-Path $RepoRoot ".github/scripts") -File -Filter "check-*$twin" |
+        Where-Object { $_.Name -ne "check-starter-workflow$twin" })
+
+      # An empty script exits 0, so the umbrella reports green while running nothing. This was not
+      # hypothetical: a bad edit truncated check-agentic-engine.sh to zero bytes and the umbrella
+      # passed it until the file was restored from git.
+      $empty = @($scripts | Where-Object { $_.Length -lt 100 } | ForEach-Object { $_.Name } | Sort-Object)
+      if ($empty.Count -gt 0) {
+        Add-CheckError("$($empty -join ', ') are effectively empty; a script with no body exits 0 and passes every umbrella while checking nothing")
+      }
+
       $unwired = @(
-        Get-ChildItem -Path (Join-Path $RepoRoot ".github/scripts") -File -Filter "check-*$twin" |
-          Where-Object { $_.Name -ne "check-starter-workflow$twin" -and -not $umbrellaText.Contains($_.Name) } |
+        $scripts |
+          Where-Object { -not $umbrellaText.Contains($_.Name) } |
           ForEach-Object { $_.Name } |
           Sort-Object
       )

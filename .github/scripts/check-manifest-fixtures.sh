@@ -67,6 +67,11 @@ def mutate_umbrella(tree):
     return "never runs them"
 
 
+def mutate_empty_script(tree):
+    (tree / ".github/scripts/check-empty.sh").write_text("", encoding="utf-8")
+    return "effectively empty"
+
+
 cases = [
     ("baseline passes", None),
     ("a wrong README badge is caught", mutate_readme_badge),
@@ -74,6 +79,7 @@ cases = [
     ("an unlogged intake is caught", mutate_intake),
     ("a templated PRD with a concrete source is caught", mutate_prd_source),
     ("a check the umbrella never runs is caught", mutate_umbrella),
+    ("an empty check script is caught", mutate_empty_script),
 ]
 
 failures = []

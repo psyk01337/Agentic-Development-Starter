@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Record the family-guard fixture and the empty-script rule
+
+- Area: root README check table
+- Change type: docs
+- Summary: the `check-starter-manifest` row now names one more catch — a check script that is empty as well as one the umbrella never runs.
+- Reason: the row is the only place a reader learns that an empty script is treated as a failure rather than a pass, and the failure it prevents is invisible by nature: a truncated script exits 0, so nothing looks wrong.
+- Affected files: README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Test the family guard, and notice an empty check script"
+- Review status: reviewed
+- Discrepancies or follow-up: neither the runbook enforcement table nor the troubleshooting guide mentions the empty-script rule yet; the table gained six rows two changes ago and is already behind again.
 ### 2026-11-01 - Document the manifest fixture harness
 
 - Area: module manifest runbook, root README, check table

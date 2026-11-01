@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Test the family guard, and notice an empty check script
+
+- Area: validation scripts, root README, manifest
+- Change type: fix, test
+- Summary: `check-agentic-engine` now self-tests the rule that protects stack neutrality: it copies the tree, trims `verificationCommands` to four entries, runs the copied check, and requires the family failure. An `AGENTIC_ENGINE_FIXTURE` flag stops the copied check from running its own copy of the block, which would otherwise recurse. Separately, `check-starter-manifest` now fails when a `check-*` script is under 100 bytes, and `check-manifest-fixtures` gained a case for it. Manifest version goes to `2.21.1`.
+- Reason: the family guard only fails when someone trims the allowlist, which never happens on a clean repository, so deleting it would have left every contract green while stack neutrality stopped being enforced — the property this repository most needs. The empty-script rule came from a real incident in this change: evaluating `open(path, "wb").write(path.read_bytes()...)` truncated `check-agentic-engine.sh` to zero bytes before the read, and an empty script exits 0, so the umbrella reported green while running nothing until the file was restored from git.
+- Affected files: .github/scripts/check-agentic-engine.ps1, .github/scripts/check-agentic-engine.sh, .github/scripts/check-starter-manifest.ps1, .github/scripts/check-starter-manifest.sh, .github/scripts/check-manifest-fixtures.ps1, .github/scripts/check-manifest-fixtures.sh, README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Record the family-guard fixture and the empty-script rule"
+- Validation: the fixture harness reports seven cases green in both twins. The family guard was then disabled in each twin in turn and the fixture caught it: both `check-agentic-engine` twins exited 1 with "the family guard is gone or no longer covers Go, Rust, .NET, JVM, Ruby, or PHP". Restored, both pass. The repository itself passes both twins and the umbrella.
+- Discrepancies or follow-up: the emptiness rule uses a 100-byte threshold, which is a proxy for "has a body" and would accept a 101-byte stub containing only comments — it stops accidental truncation, not deliberate placation. Nine of the thirteen contracts still have no fixture harness, and this change deliberately did not rename `check-manifest-fixtures` to a general runner because a module losing a file path requires a major version bump under this repository's own rule.
 ### 2026-11-01 - Give the manifest check a fixture harness so its rules are tested
 
 - Area: validation scripts, umbrella, root README, manifest

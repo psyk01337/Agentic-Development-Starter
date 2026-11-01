@@ -147,7 +147,7 @@ A guardrail nobody checks is a comment. Thirteen contracts run on push and pull 
 
 | Check | Catches |
 | --- | --- |
-| `check-manifest-fixtures` | The manifest check's own rules, by breaking one per case in a copied tree |`n| `check-starter-manifest` | Unregistered assets, missing files, invalid versions, README counts that disagree with the tree, an `app/` folder holding code behind a placeholder verification command, a PRD that names its source but stays a template, an intake in `docs/inputs/` the index never names, a check script the umbrella never runs |
+| `check-manifest-fixtures` | The manifest check's own rules, by breaking one per case in a copied tree |`n| `check-starter-manifest` | Unregistered assets, missing files, invalid versions, README counts that disagree with the tree, an `app/` folder holding code behind a placeholder verification command, a PRD that names its source but stays a template, an intake in `docs/inputs/` the index never names, a check script the umbrella never runs or that is empty |
 | `check-starter-skills` | Malformed skill contracts |
 | `check-agent-contracts` | Missing handoff, escalation, or output sections |
 | `check-prompt-contracts` | Missing safety boundaries or expected output |

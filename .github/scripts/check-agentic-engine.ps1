@@ -83,6 +83,50 @@ if ((Test-Path $gitignore) -and -not ((Get-Content -Path $gitignore -Raw) -match
   Add-CheckError(".gitignore must ignore .agentic/state/")
 }
 
+# The family guard above only fails when someone trims the allowlist, which never happens on a
+# clean repository. Untested, it could be deleted and every contract would stay green while stack
+# neutrality quietly stopped being enforced -- the thing this repository exists to protect.
+#
+# The fixture copies the tree, trims the allowlist, and requires the failure. AGENTIC_ENGINE_FIXTURE
+# stops the copied check from running its own copy of this block, which would otherwise recurse
+# until the disk filled.
+if ($env:AGENTIC_ENGINE_FIXTURE -ne "1") {
+  $fixtureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("engine-fixture-" + [guid]::NewGuid().ToString("N"))
+  $fixtureTree = Join-Path $fixtureRoot "repo"
+  New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
+
+  try {
+    $excluded = @(".git", ".forlocal", ".agentic", "__pycache__")
+    New-Item -ItemType Directory -Path $fixtureTree -Force | Out-Null
+    Get-ChildItem -Path $RepoRoot -Force |
+      Where-Object { $excluded -notcontains $_.Name } |
+      ForEach-Object { Copy-Item -Path $_.FullName -Destination $fixtureTree -Recurse -Force }
+
+    $policyPath = Join-Path $fixtureTree ".github/roles/orchestration-policy.json"
+    $policy = Get-Content -Path $policyPath -Raw | ConvertFrom-Json
+    $policy.verificationCommands = @("node", "python", "bash", "pwsh")
+    [System.IO.File]::WriteAllText($policyPath, ($policy | ConvertTo-Json -Depth 20))
+
+    $previousFixtureFlag = $env:AGENTIC_ENGINE_FIXTURE
+    $env:AGENTIC_ENGINE_FIXTURE = "1"
+    try {
+      $fixtureOutput = & pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $fixtureTree ".github/scripts/check-agentic-engine.ps1") -RepoRoot $fixtureTree 2>&1
+      $fixtureExit = $LASTEXITCODE
+    } finally {
+      $env:AGENTIC_ENGINE_FIXTURE = $previousFixtureFlag
+    }
+    $fixtureText = ($fixtureOutput | Out-String)
+
+    if ($fixtureExit -eq 0) {
+      Add-CheckError("A trimmed verificationCommands list did not fail the engine check; the family guard is gone or no longer covers Go, Rust, .NET, JVM, Ruby, or PHP")
+    } elseif (-not $fixtureText.Contains("no longer allows")) {
+      Add-CheckError("The trimmed policy failed for the wrong reason: $($fixtureText.Trim().Split("`n")[0])")
+    }
+  } finally {
+    Remove-Item -Path $fixtureRoot -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
+
 if ($errors.Count -gt 0) {
   foreach ($message in $errors) { Write-Error $message }
   exit 1
