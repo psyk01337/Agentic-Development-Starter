@@ -252,6 +252,8 @@ A run in a terminal stage does not block a new one, and a state file that cannot
 
 `verify` refuses `VERIFIED` unless at least one `--check` executed a command, and that command's executable must appear in `verificationCommands` in `.github/roles/orchestration-policy.json`. Inline code is refused: `-c`, `-e`, `--eval`, `-Command`, and `-EncodedCommand` are rejected wherever they appear, so `python -c pass` cannot satisfy the rule.
 
+The list ships cross-stack, so a Go, Rust, .NET, JVM, Ruby, or PHP runner is already accepted. If yours is not, add it to that list — the refusal message names the file and says so. The comparison ignores case and a trailing `.exe`, `.cmd`, or `.bat`, so a Windows launcher resolves to the same name as its plain form. A project that has chosen its stack should narrow the list to the runners it actually uses, since every name left there is an executable a check may launch.
+
 Report `NOT_VERIFIED` with `--check "<name>=fail:<message>"` when nothing can be executed yet — an application with no test command is the ordinary case. `grep -e` is refused along with the rest, which is the known cost of a rule that does not try to judge intent.
 
 ### Evidence is rejected

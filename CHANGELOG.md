@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Stop the verification allowlist from assuming Node and Python
+
+- Area: orchestration policy, agentic engine, engine validators
+- Change type: fix, test, docs
+- Summary: `verificationCommands` now ships 57 cross-stack runners instead of eight Node and Python entries, and matching a runner ignores case and a trailing `.exe`, `.cmd`, or `.bat` through a new `verification_name` helper. The refusal message now names the remedy instead of only the file. `check-agentic-engine` in both twins fails if the list loses representatives for JavaScript/TypeScript, Python, Go, Rust, .NET, JVM, Ruby, or PHP. Manifest version goes to `2.20.0`.
+- Reason: this repository is a stack-agnostic boilerplate, and the shipped list quietly contradicted that. A Go, Rust, .NET, Java, Ruby, or PHP project could not reach `VERIFIED` at all: `go test ./...`, `dotnet test`, and `php artisan test` were refused before execution, and the only escape was editing policy JSON, which nothing told anyone to do. A boilerplate that blocks every stack but two is not neutral, it is Node-and-Python with an unstated opinion.
+- Affected files: .github/roles/orchestration-policy.json, .github/scripts/agentic_engine.py, .github/scripts/check-agentic-engine.ps1, .github/scripts/check-agentic-engine.sh, .github/prompts/initialize-new-project.prompt.md, app/README.md, docs/runbooks/agentic-engine.md, TROUBLESHOOTING.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the stack-neutral verification toolchain"
+- Validation: engine selftest 156/156. `cargo test`, `go test ./...`, and `php artisan test` now reach execution instead of being refused; `dotnet test` executes and reports its own failure; `git --version` is still refused, now with the remedy in the message; `verification_name` resolves `Cargo.EXE`, `gradlew.BAT`, and an absolute path. Both engine validators pass on the shipped list and both fail with identical wording when it is trimmed to Node and Python. Umbrella passes.
+- Discrepancies or follow-up: the list still cannot name every ecosystem's runner — Scala's `sbt`, Haskell's `stack`, and Clojure's `lein` are included but something exotic may not be, so the refusal path stays the documented answer rather than the list becoming exhaustive. The engine does not check that a name is a test runner, only that it is on the list, so the list is a tautology filter and the docs now say so explicitly rather than implying containment.
 ### 2026-11-01 - Make the hook policy check independent of the repository's own runs
 
 - Area: validation scripts

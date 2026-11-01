@@ -26,6 +26,32 @@ policy = json.loads((root / ".github/roles/orchestration-policy.json").read_text
 retry = policy.get("retryPolicy")
 errors = []
 
+# This repository is a stack-agnostic boilerplate, so the shipped allowlist must not
+# quietly admit only one ecosystem. Each name below stands for a family a project could
+# legitimately choose; dropping one blocks that whole family from ever reaching VERIFIED,
+# and nothing else would notice.
+verification = policy.get("verificationCommands")
+families = {
+    "node": "JavaScript/TypeScript",
+    "python": "Python",
+    "go": "Go",
+    "cargo": "Rust",
+    "dotnet": ".NET",
+    "mvn": "JVM",
+    "ruby": "Ruby",
+    "php": "PHP",
+}
+if not isinstance(verification, list) or not verification:
+    errors.append("orchestration-policy.json must declare a non-empty verificationCommands list")
+else:
+    allowed_names = {str(item).strip().lower() for item in verification}
+    for name, family in families.items():
+        if name not in allowed_names:
+            errors.append(
+                f"verificationCommands no longer allows {name!r} ({family}); "
+                "a project on that stack could not reach VERIFIED"
+            )
+
 if not isinstance(retry, dict):
     errors.append("orchestration-policy.json must contain a retryPolicy object")
 else:

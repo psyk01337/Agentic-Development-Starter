@@ -24,6 +24,33 @@ if (-not (Test-Path $example)) { Add-CheckError("Missing example task: .github/e
 
 if (Test-Path $policy) {
   $data = Get-Content -Path $policy -Raw | ConvertFrom-Json
+
+  # This repository is a stack-agnostic boilerplate, so the shipped allowlist must not
+  # quietly admit only one ecosystem. Each name below stands for a family a project could
+  # legitimately choose; dropping one blocks that whole family from ever reaching VERIFIED,
+  # and nothing else would notice.
+  $verification = @($data.verificationCommands)
+  $families = [ordered]@{
+    node   = "JavaScript/TypeScript"
+    python = "Python"
+    go     = "Go"
+    cargo  = "Rust"
+    dotnet = ".NET"
+    mvn    = "JVM"
+    ruby   = "Ruby"
+    php    = "PHP"
+  }
+  if ($verification.Count -eq 0) {
+    Add-CheckError("orchestration-policy.json must declare a non-empty verificationCommands list")
+  } else {
+    $allowedNames = @($verification | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
+    foreach ($name in $families.Keys) {
+      if ($allowedNames -notcontains $name) {
+        Add-CheckError("verificationCommands no longer allows '$name' ($($families[$name])); a project on that stack could not reach VERIFIED")
+      }
+    }
+  }
+
   $retry = $data.retryPolicy
   if ($null -eq $retry) {
     Add-CheckError("orchestration-policy.json must contain a retryPolicy object")

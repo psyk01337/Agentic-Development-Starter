@@ -895,6 +895,19 @@ def _handle_failure(state: dict, policy: dict, result: dict, evidence: list) -> 
     return "repair", "repair-scheduled"
 
 
+def verification_name(executable: str) -> str:
+    """Name a runner the way the shell resolves it: case and launcher suffixes do not matter.
+
+    Without this, `cargo.exe` on Windows and `cargo` on Linux are different entries, so a
+    cross-stack allowlist would have to spell out every suffix.
+    """
+    name = os.path.basename(executable).lower()
+    for suffix in (".exe", ".cmd", ".bat"):
+        if name.endswith(suffix):
+            return name[: -len(suffix)]
+    return name
+
+
 def check_command_argv(check: dict) -> list:
     """Turn a check's `command` into an argv list.
 
@@ -921,9 +934,13 @@ def execute_check_commands(checks: list, repo_root: Path, policy: dict) -> list:
     and running arbitrary text from it would turn the gate into an execution hole.
     """
     declared = policy.get("verificationCommands")
-    allowed = []
+    allowed = set()
     if isinstance(declared, list):
-        allowed = [item.strip() for item in declared if isinstance(item, str) and item.strip()]
+        allowed = {
+            verification_name(item)
+            for item in declared
+            if isinstance(item, str) and item.strip()
+        }
     timeout = retry_policy(policy).get("maxCheckCommandSeconds", 600)
     results = []
     for check in checks:
@@ -937,11 +954,11 @@ def execute_check_commands(checks: list, repo_root: Path, policy: dict) -> list:
                 f"check command runs inline code ({inline[0]}); a verification must invoke "
                 "something the repository ships, so the check is chosen before the result is known"
             )
-        names = {argv[0], os.path.basename(argv[0])}
-        if not names & set(allowed):
+        if verification_name(argv[0]) not in allowed:
             raise EngineError(
-                f"check command {argv[0]!r} is not allowlisted by verificationCommands "
-                "in .github/roles/orchestration-policy.json"
+                f"check command {argv[0]!r} is not allowlisted by verificationCommands in "
+                ".github/roles/orchestration-policy.json. That list ships cross-stack but cannot "
+                "name every ecosystem's runner, so add this project's test or build tool there."
             )
         observed = dict(check)
         # The observation replaces the claim: a caller passing ok:true alongside a

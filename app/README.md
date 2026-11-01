@@ -40,6 +40,8 @@ Until that is replaced, this file describes a scaffold rather than a project. An
 
 **Who fills it in:** the first `build-feature` slice that runs the application's tests. `initialize-new-project` deliberately leaves the block alone — it knows the stack but not the runner the first slice settles on. That slice replaces the block with the command it actually executed and adds this file to the run's write set. A command written before anything runs is a promise, and `verify` only accepts a check it observed.
 
+**The runner has to be allowlisted.** `verify` launches a check only when its executable appears in `verificationCommands` in `.github/roles/orchestration-policy.json`. The shipped list spans the common test runners across ecosystems on purpose, because this repository has no default stack, and a project should narrow it to the runners it actually uses. If your stack's runner is missing, add it there — the refusal names the file and says so.
+
 Rules that matter for those commands:
 
 - Add or update the tests for the changed behavior and the most important failure path, not just the happy path.

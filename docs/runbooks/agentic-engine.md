@@ -185,6 +185,15 @@ already known. A verification must invoke something the repository ships. A comm
 list, used as exact argv, or a string split on whitespace, which cannot express a
 path containing spaces.
 
+The shipped list is cross-stack on purpose. This repository has no default stack, so a
+Go, Rust, .NET, JVM, Ruby, or PHP project must not have to edit policy before it can
+verify anything; `check-agentic-engine` fails if the list loses its representative for
+any of those families, and `initialize-new-project` narrows the list to the stack the
+project actually chose. Matching ignores case and a trailing `.exe`, `.cmd`, or `.bat`,
+so a Windows launcher resolves to the same name as its plain form. The list is a filter
+for "invokes a real tool", not a sandbox: `bash`, `python`, and `node` can already run
+any file in the repository, which is why widening it does not widen the real risk.
+
 Checks with no `command` are still recorded, so a run can note a manual
 observation. They cannot carry a `VERIFIED` on their own: at least one check must
 have been executed, because "verified" has to mean observed. A repository that

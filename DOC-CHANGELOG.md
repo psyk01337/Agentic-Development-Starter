@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the stack-neutral verification toolchain
+
+- Area: engine runbook, app scaffold, initialization prompt, troubleshooting
+- Change type: docs, runbook
+- Summary: records that `verificationCommands` ships cross-stack because this repository has no default stack, that `check-agentic-engine` fails if the list loses its representative for any of eight ecosystem families, and that a project narrowing the list is part of initialization. `app/README.md` states that the runner must be allowlisted and where to add it. The troubleshooting entry for `VERIFIED needs a check that actually ran` now carries the remedy instead of only the file name.
+- Reason: the allowlist was documented as a mechanism but never as a project setting, so a stack outside Node and Python hit a refusal whose cause was invisible: the file was named, but nothing said this was a setup step rather than a broken command.
+- Affected files: docs/runbooks/agentic-engine.md, app/README.md, .github/prompts/initialize-new-project.prompt.md, TROUBLESHOOTING.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Stop the verification allowlist from assuming Node and Python"
+- Review status: reviewed
+- Discrepancies or follow-up: no document states which ecosystem families the validator requires, so trimming the list and reading the failure is still how someone learns the set. That is deliberate — the check names the missing family — but it means the eight families live in the validator and in this entry rather than in one readable place.
 ### 2026-11-01 - Document the derived README counts and the maintainer flag
 
 - Area: clone-as-template runbook, initialization prompt, root README
