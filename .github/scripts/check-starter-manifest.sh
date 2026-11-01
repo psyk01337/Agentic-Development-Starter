@@ -56,10 +56,16 @@ else:
             # Scope the search to Summary lines. A substring match over the whole
             # file is satisfied by the version being quoted anywhere, including
             # in a validation note about this very check, which makes the rule
-            # unfalsifiable. The trailing lookahead keeps "2.1.0" from matching
-            # inside "2.1.0.1".
+            # unfalsifiable.
+            #
+            # The guards below have to survive prose. The first version of this used
+            # (?![\d.]) and so rejected "at version 1.0.0." -- the most natural way to
+            # end the sentence -- while accepting "1.0.0-beta", which is a different
+            # version. A gate that turns on punctuation is arbitrary, and this one
+            # failed the documented initialization path because of a full stop.
             version_pattern = re.compile(
-                r"^- Summary:.*" + re.escape(version) + r"(?![\d.])",
+                r"^- Summary:.*(?<![\d.])" + re.escape(version)
+                + r"(?![0-9A-Za-z])(?!\.[0-9])(?!-[0-9A-Za-z])(?!\+[0-9A-Za-z])",
                 re.MULTILINE,
             )
             if not version_pattern.search(changelog_text):

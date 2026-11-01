@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Record the version-punctuation fix and what it does not cover
+
+- Area: documentation changelog
+- Change type: docs
+- Summary: records that the version-in-changelog rule now accepts a version ending a sentence and rejects prerelease, four-part, longer, and concatenated variants, and that no runbook text needed to change because the rule was never described as punctuation-sensitive anywhere.
+- Reason: the previous behaviour was not documented at all, so nobody could have known that ending a sentence after the version would fail the check. Documenting only the corrected behaviour keeps the record accurate without implying the old one was intended.
+- Affected files: CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Stop the version check punishing punctuation"
+- Review status: reviewed
+- Discrepancies or follow-up: the adoption path still has no check that notices whether initialization completed. That is a design decision, tracked in the related entry, not a documentation gap.
 ### 2026-11-01 - Document the stack-neutral verification toolchain
 
 - Area: engine runbook, app scaffold, initialization prompt, troubleshooting

@@ -51,9 +51,14 @@ if (-not (Test-Path $manifestPath)) {
         # Scope the search to Summary lines. A substring match over the whole
         # file is satisfied by the version being quoted anywhere, including in a
         # validation note about this very check, which makes the rule
-        # unfalsifiable. The trailing lookahead keeps "2.1.0" from matching
-        # inside "2.1.0.1".
-        $versionPattern = "(?m)^- Summary:.*" + [regex]::Escape($manifestVersion) + "(?![\d.])"
+        # unfalsifiable.
+        #
+        # The guards below have to survive prose. The first version of this used
+        # (?![\d.]) and so rejected "at version 1.0.0." -- the most natural way to
+        # end the sentence -- while accepting "1.0.0-beta", which is a different
+        # version. A gate that turns on punctuation is arbitrary, and this one
+        # failed the documented initialization path because of a full stop.
+        $versionPattern = "(?m)^- Summary:.*(?<![\d.])" + [regex]::Escape($manifestVersion) + "(?![0-9A-Za-z])(?!\.[0-9])(?!-[0-9A-Za-z])(?!\+[0-9A-Za-z])"
         if ($changelogText -notmatch $versionPattern) {
           Add-CheckError("starter-modules.json version $manifestVersion is not recorded in a CHANGELOG.md Summary line; describe the manifest change there")
         }

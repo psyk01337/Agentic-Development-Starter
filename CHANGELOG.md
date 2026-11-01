@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Stop the version check punishing punctuation
+
+- Area: validation scripts
+- Change type: fix, test
+- Summary: the manifest check's version-in-changelog rule now tolerates prose around the version. A Summary line that ends at the version, a semicolon, a colon, or a spaced hyphen all pass; a prerelease (`1.0.0-beta`), a four-part version (`1.0.0.1`), a longer version the substring sits inside (`11.0.0`), and a concatenated one (`1.0.0rc1`) are all rejected. Both twins changed together. Manifest version goes to `2.20.1`.
+- Reason: the rule used a single trailing lookahead, `(?![\d.])`, which made it wrong in both directions. It rejected `at version 1.0.0.` — the most natural way to end the sentence, and the phrasing a simulated `initialize-new-project` produced — so a freshly initialized project failed its own umbrella. It accepted `1.0.0-beta` for a manifest at `1.0.0`, which is a different version. A gate that turns on a full stop is arbitrary, and this one broke the documented first-run path for that reason alone.
+- Affected files: .github/scripts/check-starter-manifest.ps1, .github/scripts/check-starter-manifest.sh, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Record the version-punctuation fix and what it does not cover"
+- Validation: an eight-phrasing matrix run against both twins, with zero disagreements: four accepted (`...1.0.0.`, `...1.0.0`, `; version set to 1.0.0;`, `1.0.0 - overlays`), four rejected (`1.0.0-beta`, `1.0.0.1`, `11.0.0`, `1.0.0rc1`). The failing scenario was then reproduced end to end: a clean clone initialized exactly as before, with the version ending the sentence, now passes the full umbrella where it previously exited 1. The repository's own manifest check passes in both twins.
+- Discrepancies or follow-up: this fixes the rule, not the blindness that let it survive. Nothing still notices whether a project finished initializing, because `maintainerAssetScan: false` disables the only two checks that read project-specific files. That remains an open design question rather than a defect this change could close.
 ### 2026-11-01 - Stop the verification allowlist from assuming Node and Python
 
 - Area: orchestration policy, agentic engine, engine validators
