@@ -25,3 +25,7 @@ __pycache__/
 node_modules/
 dist/
 build/
+
+# Sample application: kept on disk as a local test bed for the workflow, never
+# published. Untracked with `git rm -r --cached app/game`; the files remain.
+app/game/

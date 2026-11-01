@@ -4,6 +4,10 @@ Everything the product actually does lives here. The rest of the repository is t
 
 Keep the split clean. Do not put workflow assets in this folder, and do not put application code outside it.
 
+## Local Sample
+
+`app/game/` is a sample application used to exercise the workflow while building the starter itself. It is listed in `.gitignore` and is not part of the published repository, so a clone will not contain it and nothing in the starter depends on it.
+
 ## Layout
 
 Pick one shape and stay with it. `../docs/runbooks/starter-adoption.md` documents both patterns.
