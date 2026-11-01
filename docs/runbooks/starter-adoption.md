@@ -26,6 +26,8 @@ Use this path when starting a brand-new project from scratch. Instead of copying
    - `CHANGELOG.md` and `DOC-CHANGELOG.md` — clear all starter entries (the starter's development history is not yours); keep only the header and entry template, then add your project's first entry.
    - `README.md` — replace the starter README entirely with your project's README; no starter-specific content should remain.
 
+   Then set `"maintainerAssetScan": false` in `.github/starter-modules.json`. That flag gates the checks which only make sense in the repository that maintains the starter — the reverse scan that flags every asset missing from the manifest, and the assertion that the README's stated counts match the tree. Your project owns its own ADRs, runbooks, and agents, so leaving the flag `true` makes your first `docs/adr/` file fail as an unregistered starter asset.
+
 4. **Add your application code** alongside the workflow assets:
    ```bash
    mkdir -p app

@@ -13,6 +13,24 @@ report_error() {
   FAILED=1
 }
 
+# The fixtures below run the real hook, and the hook reads the repository's own run
+# state unless told otherwise. A live run therefore changes what it allows, which made
+# this check fail for anyone who opened a run before validating — the order the feature
+# prompt prescribes. Point the hook at an empty directory for the whole script; the
+# gate fixtures still redirect to their own state on top of this.
+hermetic_state="$(mktemp -d)"
+previous_state_dir="${AGENTIC_STATE_DIR-}"
+export AGENTIC_STATE_DIR="${hermetic_state}"
+cleanup_state() {
+  if [[ -n "${previous_state_dir}" ]]; then
+    export AGENTIC_STATE_DIR="${previous_state_dir}"
+  else
+    unset AGENTIC_STATE_DIR
+  fi
+  rm -rf "${hermetic_state}"
+}
+trap cleanup_state EXIT
+
 # Independent copy of the hook's probe, so the validator can find a real
 # interpreter even when the hook's own discovery is the thing under test.
 find_usable_python() {

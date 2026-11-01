@@ -178,6 +178,75 @@ elif scan_setting:
                     f"Asset is not listed in starter-modules.json: {relative_path}"
                 )
 
+# The README states this repository's size in fourteen places and every one was
+# typed by hand. Nothing derived them, so the engine-test badge read 62 while the
+# suite ran 156 and the module count was off by one in two places. A count nobody
+# checks is a comment, so each claim below is compared with the tree that produces
+# it. Same switch as the scan above: these numbers describe the starter's own
+# README, which an adopting repository replaces.
+if scan_setting:
+    readme_path = repo_root / "README.md"
+    if readme_path.is_file():
+        readme_text = readme_path.read_text(encoding="utf-8")
+
+        def count_glob(directory: pathlib.Path, pattern: str) -> int:
+            return len(list(directory.glob(pattern))) if directory.is_dir() else 0
+
+        skills_dir = repo_root / ".github/skills"
+        engine_path = repo_root / ".github/scripts/agentic_engine.py"
+        derived = {
+            "instructions": count_glob(repo_root / ".github/instructions", "*.md"),
+            "skills": len(
+                [d for d in skills_dir.iterdir() if (d / "SKILL.md").is_file()]
+            ) if skills_dir.is_dir() else 0,
+            "agents": count_glob(repo_root / ".github/agents", "*.md"),
+            "prompts": count_glob(repo_root / ".github/prompts", "*.md"),
+            "evals": count_glob(repo_root / "evals/tasks", "*"),
+            # The umbrella runs the others, so it is not one of the contracts.
+            "checks": count_glob(repo_root / ".github/scripts", "check-*.sh") - 1,
+            "modules": len(modules),
+            "engine": len(
+                re.findall(
+                    r"^\s+def test_",
+                    engine_path.read_text(encoding="utf-8"),
+                    re.MULTILINE,
+                )
+            ) if engine_path.is_file() else 0,
+        }
+
+        claims = [
+            ("skills badge", "skills", r"skills-(\d+)-blue"),
+            ("agents badge", "agents", r"agents-(\d+)-blue"),
+            ("prompts badge", "prompts", r"prompts-(\d+)-blue"),
+            ("checks badge", "checks", r"checks-(\d+)%2F\d+"),
+            ("engine-test badge", "engine", r"engine%20tests-(\d+)-"),
+            ("instructions table row", "instructions", r"\|\s*\*\*Instructions\*\*\s*\|\s*(\d+)\s*\|"),
+            ("skills table row", "skills", r"\|\s*\*\*Skills\*\*\s*\|\s*(\d+)\s*\|"),
+            ("agents table row", "agents", r"\|\s*\*\*Agents\*\*\s*\|\s*(\d+)\s*\|"),
+            ("prompts table row", "prompts", r"\|\s*\*\*Prompts\*\*\s*\|\s*(\d+)\s*\|"),
+            ("evals table row", "evals", r"\|\s*\*\*Evals\*\*\s*\|\s*(\d+)\s*\|"),
+            ("guardrails table row", "checks", r"\|\s*\*\*Guardrails\*\*\s*\|\s*(\d+) checks"),
+            ("module count in the manifest paragraph", "modules", r"(\d+) modules across core, optional, and overlay"),
+            ("module count in the directory tree", "modules", r"what ships enabled \((\d+) modules\)"),
+            ("self-test count in the loop paragraph", "engine", r"state machine with (\d+) self-tests"),
+        ]
+        for label, key, pattern in claims:
+            match = re.search(pattern, readme_text)
+            if match is None:
+                # A wording change is not a failure of the repository, but it is a
+                # lost assertion. Say so rather than passing silently.
+                errors.append(
+                    f"README.md no longer states the {label} in the expected form; "
+                    "update this check with the new wording instead of dropping it"
+                )
+                continue
+            claimed = int(match.group(1))
+            if claimed != derived[key]:
+                errors.append(
+                    f"README.md {label} says {claimed}; the repository has "
+                    f"{derived[key]}"
+                )
+
 missing_core = sorted(required_core_files - seen_files)
 for relative_path in missing_core:
     errors.append(f"Required core file is not listed in starter-modules.json: {relative_path}")

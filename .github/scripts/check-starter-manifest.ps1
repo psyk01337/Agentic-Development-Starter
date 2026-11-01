@@ -170,6 +170,61 @@ if (-not (Test-Path $manifestPath)) {
           }
         }
       }
+
+      # The README states this repository's size in fourteen places and every one was
+      # typed by hand. Nothing derived them, so the engine-test badge read 62 while the
+      # suite ran 156 and the module count was off by one in two places. A count nobody
+      # checks is a comment, so each claim below is compared with the tree that produces
+      # it. Same switch as the scan above: these numbers describe the starter's own
+      # README, which an adopting repository replaces.
+      $readmePath = Join-Path $RepoRoot "README.md"
+      if (Test-Path -Path $readmePath -PathType Leaf) {
+        $readme = Get-Content -Path $readmePath -Raw
+        $instructionDir = Join-Path $RepoRoot ".github/instructions"
+        $skillsDir = Join-Path $RepoRoot ".github/skills"
+        $enginePath = Join-Path $RepoRoot ".github/scripts/agentic_engine.py"
+        $derived = @{
+          instructions = @(Get-ChildItem -Path $instructionDir -Filter "*.md" -File -ErrorAction SilentlyContinue).Count
+          skills       = @(Get-ChildItem -Path $skillsDir -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path (Join-Path $_.FullName "SKILL.md") }).Count
+          agents       = @(Get-ChildItem -Path (Join-Path $RepoRoot ".github/agents") -Filter "*.md" -File -ErrorAction SilentlyContinue).Count
+          prompts      = @(Get-ChildItem -Path (Join-Path $RepoRoot ".github/prompts") -Filter "*.md" -File -ErrorAction SilentlyContinue).Count
+          evals        = @(Get-ChildItem -Path (Join-Path $RepoRoot "evals/tasks") -File -ErrorAction SilentlyContinue).Count
+          # The umbrella runs the others, so it is not one of the contracts.
+          checks       = @(Get-ChildItem -Path (Join-Path $RepoRoot ".github/scripts") -Filter "check-*.sh" -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "check-starter-workflow.sh" }).Count
+          modules      = @($manifest.modules).Count
+          engine       = if (Test-Path -Path $enginePath -PathType Leaf) { @(Select-String -Path $enginePath -Pattern '^\s+def test_').Count } else { 0 }
+        }
+
+        $claims = @(
+          @{ Label = "skills badge"; Key = "skills"; Pattern = 'skills-(\d+)-blue' },
+          @{ Label = "agents badge"; Key = "agents"; Pattern = 'agents-(\d+)-blue' },
+          @{ Label = "prompts badge"; Key = "prompts"; Pattern = 'prompts-(\d+)-blue' },
+          @{ Label = "checks badge"; Key = "checks"; Pattern = 'checks-(\d+)%2F\d+' },
+          @{ Label = "engine-test badge"; Key = "engine"; Pattern = 'engine%20tests-(\d+)-' },
+          @{ Label = "instructions table row"; Key = "instructions"; Pattern = '\|\s*\*\*Instructions\*\*\s*\|\s*(\d+)\s*\|' },
+          @{ Label = "skills table row"; Key = "skills"; Pattern = '\|\s*\*\*Skills\*\*\s*\|\s*(\d+)\s*\|' },
+          @{ Label = "agents table row"; Key = "agents"; Pattern = '\|\s*\*\*Agents\*\*\s*\|\s*(\d+)\s*\|' },
+          @{ Label = "prompts table row"; Key = "prompts"; Pattern = '\|\s*\*\*Prompts\*\*\s*\|\s*(\d+)\s*\|' },
+          @{ Label = "evals table row"; Key = "evals"; Pattern = '\|\s*\*\*Evals\*\*\s*\|\s*(\d+)\s*\|' },
+          @{ Label = "guardrails table row"; Key = "checks"; Pattern = '\|\s*\*\*Guardrails\*\*\s*\|\s*(\d+) checks' },
+          @{ Label = "module count in the manifest paragraph"; Key = "modules"; Pattern = '(\d+) modules across core, optional, and overlay' },
+          @{ Label = "module count in the directory tree"; Key = "modules"; Pattern = 'what ships enabled \((\d+) modules\)' },
+          @{ Label = "self-test count in the loop paragraph"; Key = "engine"; Pattern = 'state machine with (\d+) self-tests' }
+        )
+        foreach ($claim in $claims) {
+          $match = [regex]::Match($readme, $claim.Pattern)
+          if (-not $match.Success) {
+            # A wording change is not a failure of the repository, but it is a lost
+            # assertion. Say so rather than passing silently.
+            Add-CheckError("README.md no longer states the $($claim.Label) in the expected form; update this check with the new wording instead of dropping it")
+            continue
+          }
+          $claimed = [int]$match.Groups[1].Value
+          if ($claimed -ne $derived[$claim.Key]) {
+            Add-CheckError("README.md $($claim.Label) says $claimed; the repository has $($derived[$claim.Key])")
+          }
+        }
+      }
     }
 
     foreach ($relativePath in $requiredCoreFiles) {

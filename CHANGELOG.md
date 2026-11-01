@@ -24,6 +24,26 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Make the hook policy check independent of the repository's own runs
+
+- Area: validation scripts
+- Change type: fix, test
+- Summary: `check-hook-policy` in both twins now points the hook at an empty state directory for the whole script, so the plain policy fixtures cannot see the repository's own runs. The gate fixtures keep redirecting to their own state on top of that. The bash twin does it with an exported variable and an `EXIT` trap; the PowerShell twin does the same at both of its exit paths.
+- Reason: the fixtures that assert "a blocked pattern inside file content is allowed" ran the real hook with no state override, so any active run made the hook apply its write-set bound and deny an edit the fixture expected to be allowed. Following the feature prompt — open a run, then validate — therefore failed the umbrella for a reason unrelated to the change under test, and the natural reading of that failure is that the change broke something. Found while dogfooding: this change's own run was open when the umbrella first ran.
+- Affected files: .github/scripts/check-hook-policy.ps1, .github/scripts/check-hook-policy.sh, CHANGELOG.md
+- Related docs: None. No user-facing behavior changed; the check now matches what it always claimed to test.
+- Validation: both twins failed with `Expected an edit payload to be allowed because the pattern is only in file content: piped remote script inside file content` while the run `readme-counts` was active, and both pass after the change with that run still active. The full umbrella passes.
+- Discrepancies or follow-up: nothing guards against a future fixture invoking the hook without the override. The hermetic default is the guard for the invocations that exist today, but a new bare invocation would reintroduce the same dependency silently. The two pairs also differed before this change — bash isolated every gate-fixture call explicitly while PowerShell relied on mutating one variable — which is why the defect looked asymmetric when first read.
+### 2026-11-01 - Derive the README counts instead of trusting them
+
+- Area: validation scripts, manifest, templates
+- Change type: feature, test, docs
+- Summary: `check-starter-manifest` now compares fourteen numbers the README states about this repository against the tree that produces them: the instructions, skills, agents, prompts, evals, checks, modules, and engine self-test counts, in both the badges and the prose. A mismatch fails with the label, the claimed value, and the real one. A rewording that removes the expected shape fails too, naming the claim, so the assertion cannot be quietly lost. The block is gated on `maintainerAssetScan`, because an adopting repository replaces the README and owns its own counts. That gating exposed a second defect: neither `initialize-new-project` nor the clone-as-template runbook ever flipped that flag, so a new project kept `true` and its first `docs/adr/` file failed as an unregistered starter asset. Both now set it to `false` and say why. Manifest version goes to `2.19.0`.
+- Reason: the README's own line is that a guardrail nobody checks is a comment. Its numbers were typed by hand, so the engine-test badge read 62 while the suite ran 156 and the module count was wrong in two places, and nothing noticed. Re-typing them correctly would have restarted the same clock.
+- Affected files: .github/scripts/check-starter-manifest.ps1, .github/scripts/check-starter-manifest.sh, .github/prompts/initialize-new-project.prompt.md, docs/runbooks/starter-adoption.md, README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the derived README counts and the maintainer flag"
+- Validation: both twins pass on the starter tree. A wrong badge value fails in both with identical wording, and a wrong module count in the tree section fails in both. An adopting repository was simulated by setting `maintainerAssetScan` to false and replacing the README with a project README: both twins pass, so the assertion does not fire where it has no meaning. The full umbrella passes.
+- Discrepancies or follow-up: this covers the eight counts, not every sentence. Qualitative claims in the README remain hand-written and unchecked, and a number added to the README in future is not asserted until it is added to the claim list. The alternative — generating the README from the tree — was rejected because the README's argument is its prose, and a generator would make the counts truthful while making the document mechanical.
 ### 2026-11-01 - Give the app verification block an owner
 
 - Area: prompt assets, quickstart, manifest

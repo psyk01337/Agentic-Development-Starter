@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the derived README counts and the maintainer flag
+
+- Area: clone-as-template runbook, initialization prompt, root README
+- Change type: docs, runbook
+- Summary: the clone-as-template step and the initialization prompt now both require `"maintainerAssetScan": false`, with the reason stated at each site: the flag gates the reverse asset scan and the new README count assertion, both of which describe the starter rather than the project built from it. The root README's check table records that `check-starter-manifest` now catches README counts that disagree with the tree.
+- Reason: the flag existed and was documented only for the existing-repository path, so every project created by cloning kept it `true`. Its first own ADR was then reported as an unregistered starter asset, and the fix looked like editing the manifest rather than flipping the flag.
+- Affected files: docs/runbooks/starter-adoption.md, .github/prompts/initialize-new-project.prompt.md, README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Derive the README counts instead of trusting them"
+- Review status: reviewed
+- Discrepancies or follow-up: the adopting-repository path in section 1 of the same runbook already set the flag correctly, so the two paths disagreed with each other and nothing compared them. No check compares them now either; this was found by reading both, not by a validator.
 ### 2026-11-01 - Bring the front-door docs back in line with the engine
 
 - Area: root README, quickstart, app scaffold, troubleshooting

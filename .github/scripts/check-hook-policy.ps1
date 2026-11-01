@@ -14,6 +14,16 @@ function Add-CheckError([string]$Message) {
   $script:errors.Add($Message)
 }
 
+# The fixtures below run the real hook, and the hook reads the repository's own run
+# state unless told otherwise. An active run therefore changes what it allows, which
+# made this check fail for anyone who opened a run before validating — the order the
+# feature prompt prescribes. Point it at an empty directory for the whole script; the
+# gate fixture still redirects to its own state on top of this.
+$hermeticState = Join-Path ([System.IO.Path]::GetTempPath()) ("hook-policy-state-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $hermeticState -Force | Out-Null
+$previousStateDir = $env:AGENTIC_STATE_DIR
+$env:AGENTIC_STATE_DIR = $hermeticState
+
 $rulesPath = Join-Path $RepoRoot ".github\hooks\policy-rules.tsv"
 $policyScript = Join-Path $RepoRoot ".github\hooks\scripts\pre-tool-policy.ps1"
 
@@ -423,8 +433,12 @@ if ($errors.Count -gt 0) {
   foreach ($message in $errors) {
     Write-Error $message
   }
+  if ($previousStateDir) { $env:AGENTIC_STATE_DIR = $previousStateDir } else { Remove-Item Env:\AGENTIC_STATE_DIR -ErrorAction SilentlyContinue }
+  Remove-Item -Path $hermeticState -Recurse -Force -ErrorAction SilentlyContinue
   exit 1
 }
 
+if ($previousStateDir) { $env:AGENTIC_STATE_DIR = $previousStateDir } else { Remove-Item Env:\AGENTIC_STATE_DIR -ErrorAction SilentlyContinue }
+Remove-Item -Path $hermeticState -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host "Hook policy checks passed."
 exit 0
