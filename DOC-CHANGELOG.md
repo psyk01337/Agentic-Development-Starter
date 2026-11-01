@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Record the one-run-per-checkout rule
+
+- Area: ADR set, engine runbook, manifest
+- Change type: adr, runbook
+- Summary: adds `docs/adr/0010-one-active-run-per-checkout.md`, which records the decision, the three options considered, and an amendment carrying the worktree-probe evidence. The `start` and `allow-write` section of `docs/runbooks/agentic-engine.md` states the refusal, quotes its message, explains `--force-parallel` as an accepted risk rather than a safety switch, and notes that `done` and `blocked` release the checkout. The ADR is registered in `.github/starter-modules.json`.
+- Reason: the engine now refuses a second live run, and a refusal with no written reason reads as an arbitrary limitation. The ADR exists so the next person to want parallel runs sees the probe result before rebuilding the worktree idea that was already tested and rejected.
+- Affected files: docs/adr/0010-one-active-run-per-checkout.md, docs/runbooks/agentic-engine.md, .github/starter-modules.json, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Refuse a second live run in one checkout"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook describes the constraint but does not describe how to run parallel delivery in separate clones, because that path has not been exercised here and should not be documented from theory.
 ### 2026-11-01 - Document the inline-code restriction
 
 - Area: engine runbook

@@ -83,6 +83,18 @@ python .github/scripts/agentic_engine.py start \
 
 That fallback matters. Before it existed the gate looped over every active run and denied anything missing from any one of them, so a second live run made each run deny the other's files and nothing could be written at all. With one run — the ordinary case — union and ownership give identical answers. With several, the union is the only well-defined bound when a call cannot be attributed to a run.
 
+The union keeps the session writable, but it does not make two runs in one checkout safe: they share a working tree, a git index, and a branch, so each can commit the other's half-finished work and neither history records that the other existed. `start` therefore refuses while another run is active in the same state directory:
+
+```
+[ERROR] run feature-123 is already active in this checkout. Concurrent runs share one working tree
+and one git index and can overwrite each other, so finish or block it first, or pass --force-parallel
+if this checkout has been isolated.
+```
+
+`--force-parallel` admits the second run. It is not a safety switch: it records that the caller accepts the shared-tree risk, and it is the right flag only when the work really is isolated. See `docs/adr/0010-one-active-run-per-checkout.md` for why a worktree per run was rejected: the session's working directory belongs to the host, so the engine cannot move a run into its own tree.
+
+Reaching `done` or `blocked` releases the checkout, so serial work needs no flag. A state file that cannot be read is skipped on its own and does not stop a new run starting — nor does it hide a live run stored beside it.
+
 `allow-write` exists because a write set is a prediction made before the work starts, and real work discovers files. Extending the set is explicit, validated against the same rules as `start`, and recorded in the run history with a reason:
 
 ```bash

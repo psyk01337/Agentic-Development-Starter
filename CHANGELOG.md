@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Refuse a second live run in one checkout
+
+- Area: agentic engine, engine runbook, ADR 0010, manifest
+- Change type: feature, test, docs
+- Summary: `start` and `init` now refuse to open a run while another run is active in the same state directory. `--force-parallel` admits it explicitly. The check skips same-run-id re-initialisation, which is already covered by the rule that a live run cannot be replaced, and it skips unreadable state files individually so one half-written file neither stops all work nor hides the live run stored beside it. Five engine tests take the suite from 151 to 156. Manifest version goes to `2.18.0`.
+- Reason: two live runs share one working tree, one git index, and one branch. The union rule added earlier keeps the session writable, but it only stops runs denying each other; it does not stop them committing each other's half-finished work. A worktree per run was probed and rejected: a write inside `.agentic/worktrees/probe` was denied because paths resolve against the main checkout, and the deeper obstacle is that a session's working directory belongs to the host, so the engine cannot move a run into its own tree. Refusing the second run is the honest constraint.
+- Affected files: .github/scripts/agentic_engine.py, docs/adr/0010-one-active-run-per-checkout.md, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Record the one-run-per-checkout rule"
+- Validation: engine selftest 156/156; both `check-agentic-engine` validators pass; both `check-hook-policy` validators pass. The guard was also exercised through the real CLI: `start alpha` succeeds, `start beta` exits 1 naming `alpha` and `--force-parallel`, `start beta --force-parallel` succeeds, and with both runs live an edit to `alpha`'s file and to `beta`'s file are permitted while an undeclared path is still denied naming `alpha`.
+- Discrepancies or follow-up: this constrains scheduling rather than isolating state, and parallel delivery still needs separate clones driven by separate sessions. `--force-parallel` deliberately does not make a shared tree safe; it records that the caller accepted the risk. The gate is still the union of active runs, so a forced second run degrades to the older behaviour rather than a new one.
 ### 2026-11-01 - Refuse inline code in verification commands
 
 - Area: agentic engine, engine runbook, hook validators

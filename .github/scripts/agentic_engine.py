@@ -616,6 +616,7 @@ def cmd_start(args: argparse.Namespace) -> int:
         task=None,
         force=args.force,
         owner=getattr(args, "owner", None),
+        force_parallel=getattr(args, "force_parallel", False),
         _prepared_task=task,
     )
     return _init_with_task(init_args, repo_root, policy, task)
@@ -661,6 +662,20 @@ def _init_with_task(args: argparse.Namespace, repo_root: Path, policy: dict, tas
                     f"refusing to replace a run at stage {previous.get('stage')}; "
                     "use a new run-id to preserve the audit trail"
                 )
+        # Two live runs share one working tree and one git index, so they can
+        # overwrite each other's changes with no denial and no history entry. A
+        # worktree would separate them, but the session's working directory
+        # belongs to the host, so the checkout cannot isolate itself. Refusing is
+        # the honest answer; --force-parallel is the escape for a checkout that
+        # has genuinely been isolated.
+        others = other_active_runs(state_dir, args.run_id)
+        if others and not getattr(args, "force_parallel", False):
+            blocking = ", ".join(sorted(run["runId"] for run in others))
+            raise EngineError(
+                f"run {blocking} is already active in this checkout. Concurrent runs share one "
+                "working tree and one git index and can overwrite each other, so finish or block "
+                "it first, or pass --force-parallel if this checkout has been isolated."
+            )
         state = {
             "runId": args.run_id,
             "status": "RUNNING",
@@ -1605,6 +1620,28 @@ def load_tool_kinds(repo_root: Path) -> dict:
     return kinds
 
 
+def other_active_runs(state_dir: Path, run_id: str) -> list:
+    """Active runs other than ``run_id``, skipping any file that cannot be read.
+
+    ``active_runs`` raises on a corrupt file, which is right when a gate must
+    fail closed. Starting a run is the opposite case: one half-written file
+    should not stop all work, and it should not hide the valid runs beside it.
+    """
+    others = []
+    if not state_dir.is_dir():
+        return others
+    for path in sorted(state_dir.glob("*.json")):
+        if path.name.startswith(".tmp-") or path.stem == run_id:
+            continue
+        try:
+            state = validate_state(read_state_file(path), path.stem)
+        except (EngineError, OSError, ValueError):
+            continue
+        if state["stage"] in ACTIVE_STAGES:
+            others.append(state)
+    return others
+
+
 def active_runs(state_dir: Path) -> list:
     """Runs whose stage still bounds an agent."""
     if not state_dir.is_dir():
@@ -2287,6 +2324,67 @@ class EngineSelfTest(unittest.TestCase):
         )
         self.assertEqual(code, 1)
 
+    def test_a_second_active_run_in_one_checkout_is_refused(self) -> None:
+        # Two live runs share one working tree and one index, so neither can
+        # trust that it wrote what it read. Refuse rather than pretend to
+        # isolate them.
+        self.init()
+        errors = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(errors):
+            code = main([
+                "start", "--run-id", "r2", "--title", "second",
+                "--criterion", "y", "--write", "src/b.py",
+                "--repo-root", str(self.root), "--state-dir", str(self.state_dir),
+            ])
+        self.assertEqual(code, 1)
+        self.assertIn("r1", errors.getvalue())
+        self.assertIn("--force-parallel", errors.getvalue())
+        self.assertFalse(state_path(self.state_dir, "r2").exists())
+
+    def test_force_parallel_admits_the_second_run_and_says_so(self) -> None:
+        self.init()
+        code, _ = self.start_cli(
+            "start", "--run-id", "r2", "--title", "second",
+            "--criterion", "y", "--write", "src/b.py", "--force-parallel",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual({run["runId"] for run in active_runs(self.state_dir)}, {"r1", "r2"})
+
+    def test_a_finished_run_does_not_block_a_new_one(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.quiet_cli(
+            "record", "--run-id", "r1", "--stage", "review", "--decision", "pass",
+            "--reviewer", "reviewer", "--evidence", "cmd:review",
+        )
+        self.assertEqual(load_state(self.state_dir, "r1")["stage"], "done")
+        code, _ = self.start_cli(
+            "start", "--run-id", "r2", "--title", "next",
+            "--criterion", "y", "--write", "src/b.py",
+        )
+        self.assertEqual(code, 0)
+
+    def test_a_corrupt_state_entry_does_not_hide_a_live_run(self) -> None:
+        # One unreadable file must not stop all work starting, and it must not
+        # hide the live run sitting next to it.
+        self.init()
+        state_path(self.state_dir, "broken").write_text("{not json", encoding="utf-8")
+        code, _ = self.start_cli(
+            "start", "--run-id", "r2", "--title", "next",
+            "--criterion", "y", "--write", "src/b.py",
+        )
+        self.assertEqual(code, 1)
+
+    def test_a_corrupt_state_entry_alone_does_not_block_a_new_run(self) -> None:
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        state_path(self.state_dir, "broken").write_text("{not json", encoding="utf-8")
+        code, _ = self.start_cli(
+            "start", "--run-id", "r2", "--title", "next",
+            "--criterion", "y", "--write", "src/b.py",
+        )
+        self.assertEqual(code, 0)
+
     def test_allow_write_extends_the_set_and_records_the_reason(self) -> None:
         # A write set is a prediction; work discovers files. Extending must be
         # explicit and auditable rather than forcing a broad set up front.
@@ -2769,7 +2867,8 @@ class EngineSelfTest(unittest.TestCase):
         # files and nothing could be written.
         self.init()
         self.start_cli(
-            "start", "--run-id", "r2", "--title", "second", "--criterion", "y", "--write", "src/b.py"
+            "start", "--run-id", "r2", "--title", "second",
+            "--criterion", "y", "--write", "src/b.py", "--force-parallel",
         )
         self.assertTrue(self.check("edit", {"filePath": "src/a.py"})[0])
         self.assertTrue(self.check("edit", {"filePath": "src/b.py"})[0])
@@ -2780,11 +2879,11 @@ class EngineSelfTest(unittest.TestCase):
     def test_an_owned_run_scopes_the_gate_to_its_caller(self) -> None:
         self.start_cli(
             "start", "--run-id", "own1", "--title", "one", "--criterion", "x",
-            "--write", "src/a.py", "--owner", "s1",
+            "--write", "src/a.py", "--owner", "s1", "--force-parallel",
         )
         self.start_cli(
             "start", "--run-id", "own2", "--title", "two", "--criterion", "y",
-            "--write", "src/b.py", "--owner", "s2",
+            "--write", "src/b.py", "--owner", "s2", "--force-parallel",
         )
         self.assertTrue(self.check_as("s1", "edit", {"filePath": "src/a.py"})[0])
         allowed, reason = self.check_as("s1", "edit", {"filePath": "src/b.py"})
@@ -2794,11 +2893,11 @@ class EngineSelfTest(unittest.TestCase):
     def test_an_unowned_caller_falls_back_to_the_union(self) -> None:
         self.start_cli(
             "start", "--run-id", "own1", "--title", "one", "--criterion", "x",
-            "--write", "src/a.py", "--owner", "s1",
+            "--write", "src/a.py", "--owner", "s1", "--force-parallel",
         )
         self.start_cli(
             "start", "--run-id", "own2", "--title", "two", "--criterion", "y",
-            "--write", "src/b.py", "--owner", "s2",
+            "--write", "src/b.py", "--owner", "s2", "--force-parallel",
         )
         self.assertTrue(self.check("edit", {"filePath": "src/b.py"})[0])
 
@@ -2806,7 +2905,7 @@ class EngineSelfTest(unittest.TestCase):
         self.init()
         self.implement()  # r1 reaches verify, which does not permit edits
         self.start_cli(
-            "start", "--run-id", "r2", "--title", "second", "--criterion", "y", "--write", "src/a.py"
+            "start", "--run-id", "r2", "--title", "second", "--criterion", "y", "--write", "src/a.py", "--force-parallel"
         )
         allowed, reason = self.check("edit", {"filePath": "src/a.py"})
         self.assertTrue(allowed, reason)
@@ -4408,6 +4507,10 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--task", required=True)
     init_parser.add_argument("--force", action="store_true")
     init_parser.add_argument("--owner", default=None, help="caller identity this run belongs to")
+    init_parser.add_argument(
+        "--force-parallel", action="store_true",
+        help="allow a second active run in this checkout; only safe if it is isolated",
+    )
     init_parser.set_defaults(func=cmd_init)
 
     start_parser = subparsers.add_parser(
@@ -4431,6 +4534,10 @@ def build_parser() -> argparse.ArgumentParser:
     start_parser.add_argument("--changed-files-from", default=None, choices=["declared", "git"])
     start_parser.add_argument("--force", action="store_true")
     start_parser.add_argument("--owner", default=None, help="caller identity this run belongs to")
+    start_parser.add_argument(
+        "--force-parallel", action="store_true",
+        help="allow a second active run in this checkout; only safe if it is isolated",
+    )
     start_parser.set_defaults(func=cmd_start)
 
     allow_write_parser = subparsers.add_parser(
