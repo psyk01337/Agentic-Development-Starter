@@ -154,7 +154,7 @@ A guardrail nobody checks is a comment. Twelve contracts run on push and pull re
 | `check-hook-policy` | Dangerous commands that would slip through |
 | `check-supervisor-orchestration` | Delegation depth violations, using mutated fixtures |
 | `check-mcp-posture` | Servers enabled without review |
-| `check-markdown-quality` | Trailing whitespace, broken relative links |
+| `check-markdown-quality` | Trailing whitespace, broken relative links, a runbook the index never names |
 | `check-evals` | Golden tasks without a checklist |
 | `check-agentic-engine` | Policy drift, engine regressions |
 | `check-agentic-driver` | An autonomous executor that would ship enabled, or a gateway that stopped denying |

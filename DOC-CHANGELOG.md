@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the runbook-index rule
+
+- Area: runbook index, root README, check table
+- Change type: docs
+- Summary: `module-manifest-versioning.md` is now listed in `docs/runbooks/INDEX.md` under Advanced Workflows with a one-line description, and the root README check table records that `check-markdown-quality` now reports a runbook the index never names.
+- Reason: the runbook existed and was fully written, but the only way to reach it was to list the directory. Its absence from the index was invisible because nothing compared the two, and the entry is the fix rather than the symptom of one.
+- Affected files: docs/runbooks/INDEX.md, README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Notice a runbook the index never names"
+- Review status: reviewed
+- Discrepancies or follow-up: the index describes each runbook in one hand-written line, and those descriptions are not checked against the files they describe. That is the next thing in this file that could drift without a reader noticing.
 ### 2026-11-01 - Document the intake-index rule
 
 - Area: intake index, root README, check table

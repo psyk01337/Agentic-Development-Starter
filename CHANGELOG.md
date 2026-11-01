@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Notice a runbook the index never names
+
+- Area: validation scripts, runbook index, root README
+- Change type: fix, test, docs
+- Summary: `check-markdown-quality` now compares `docs/runbooks/` with `docs/runbooks/INDEX.md`. A runbook the index never names fails, and the message lists it. Matching uses lookarounds so a shorter name is not satisfied by a longer one. The reverse direction needed no rule because a link to a missing file was already reported by the same check. `module-manifest-versioning.md` was the orphan this found and it is now indexed under Advanced Workflows. Manifest version goes to `2.20.5`.
+- Reason: `INDEX.md` is the only way to discover a runbook, and nothing compared it with the directory. One of twenty runbooks had been invisible to anyone browsing the index, which is the same drift that left the README counts at 62 engine tests: a hand-maintained index with no reader. This also falsifies the claim I made after the last change, that everything the boilerplate can verify about itself was verified — it was not, and this was the counter-example.
+- Affected files: .github/scripts/check-markdown-quality.ps1, .github/scripts/check-markdown-quality.sh, docs/runbooks/INDEX.md, README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the runbook-index rule"
+- Validation: a four-case matrix against both twins with identical verdicts: everything listed passes; an unlisted runbook fails; an orphan mentioned only as a suffix of a longer name fails; an orphan named in prose passes. Then the real defect was reproduced: removing the new index entry from the actual `INDEX.md` makes both twins fail naming `module-manifest-versioning.md`, and restoring it makes both pass. Umbrella passes.
+- Discrepancies or follow-up: a prose mention satisfies the rule, so it proves discoverability rather than a working link; a broken link is caught separately by the relative-link scan, but a prose reference to a nonexistent file is not caught by either. No other directory in the repository has an index compared with its contents — `docs/adr/` has no index, and the module manifest is compared by `check-starter-manifest`.
 ### 2026-11-01 - Notice an intake the repository never acknowledged
 
 - Area: validation scripts, intake index, root README

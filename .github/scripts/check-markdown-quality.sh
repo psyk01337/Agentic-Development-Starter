@@ -39,6 +39,27 @@ while IFS= read -r -d '' markdown_file; do
   done < <(grep -oE '\]\(([^)]+)\)' "${markdown_file}" | sed -E 's/^\]\(([^)]+)\)$/\1/')
 done < <(find "${REPO_ROOT}" \( -path "${REPO_ROOT}/.git" -o -path "${REPO_ROOT}/.forlocal" \) -prune -o -name '*.md' -type f -print0)
 
+# docs/runbooks/INDEX.md is the only way to discover a runbook, and nothing compared it with
+# the directory: module-manifest-versioning.md shipped unlisted, so a reader browsing the index
+# would never reach it. The reverse direction needs no rule here, because a link to a missing
+# file is already reported above.
+runbooks_dir="${REPO_ROOT}/docs/runbooks"
+runbooks_index="${runbooks_dir}/INDEX.md"
+if [[ -d "${runbooks_dir}" && -f "${runbooks_index}" ]]; then
+  unlisted=()
+  while IFS= read -r runbook; do
+    name="$(basename "${runbook}")"
+    escaped="$(printf '%s' "${name}" | sed -E 's/[][\\.^$*+?(){}|]/\\&/g')"
+    if ! grep -qE "(^|[^[:alnum:]._-])${escaped}([^[:alnum:]._-]|$)" "${runbooks_index}"; then
+      unlisted+=("${name}")
+    fi
+  done < <(find "${runbooks_dir}" -maxdepth 1 -type f -name '*.md' ! -name 'INDEX.md' | sort)
+  if [[ ${#unlisted[@]} -gt 0 ]]; then
+    joined="$(printf '%s, ' "${unlisted[@]}")"
+    report_error "docs/runbooks/INDEX.md never names: ${joined%, }; a runbook nobody indexes is a runbook nobody reads"
+  fi
+fi
+
 if [[ "${FAILED}" -ne 0 ]]; then
   exit 1
 fi
