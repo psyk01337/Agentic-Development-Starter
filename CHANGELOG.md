@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Notice a check the umbrella never runs
+
+- Area: validation scripts, root README
+- Change type: fix, test
+- Summary: `check-starter-manifest` now compares each umbrella's hard-coded list with the check scripts on disk. A `check-*` script that `check-starter-workflow.ps1` or `.sh` never names fails, and the message lists it. Each twin is compared with its own umbrella, because a PowerShell wrapper cannot run a bash script. An absent umbrella is skipped, since the asset scan and required-core list already own that failure. Manifest version goes to `2.20.6`.
+- Reason: the umbrella holds a hand-written list of twelve checks and nothing validated it. A thirteenth check could be added, registered in the manifest, described in the README, and never executed — and every gate would still report green. The repository's own line is that a guardrail nobody checks is a comment; this was the single place where that could become true without anyone noticing, because the wiring itself had no reader.
+- Affected files: .github/scripts/check-starter-manifest.ps1, .github/scripts/check-starter-manifest.sh, README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: None. No runbook describes the umbrella's list as validated, so no documentation statement became false.
+- Validation: a three-case fixture matrix against both twins with identical verdicts: every check wired passes; one unwired check fails naming it; an umbrella listing only itself fails on both. Verified independently that both real umbrellas currently name exactly the twelve checks on disk, so the rule passes on this repository without a false positive. Umbrella passes.
+- Discrepancies or follow-up: this guarantees a check is named, not that it is reachable — the umbrella could name a script that exits 0 unconditionally, and no static check can tell a real check from a placating one. The reverse direction, an umbrella naming a script that does not exist, is already handled by the umbrella's own `Missing check script` branch. Nothing compares the two umbrellas' lists with each other, so a check wired into one twin but not the other is caught only because this rule runs per twin.
 ### 2026-11-01 - Notice a runbook the index never names
 
 - Area: validation scripts, runbook index, root README

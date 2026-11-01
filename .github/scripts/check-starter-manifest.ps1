@@ -319,6 +319,29 @@ if (-not (Test-Path $manifestPath)) {
       }
     }
 
+    # The umbrella holds a hand-written list of the checks it runs, and nothing compared that
+    # list with the scripts on disk. A thirteenth check could be added, registered, documented,
+    # and never executed -- the repository's own line is that a guardrail nobody checks is a
+    # comment, and this was the one place that could come true without anyone noticing.
+    #
+    # Each twin is checked against its own umbrella, because a PowerShell wrapper cannot run a
+    # bash script. An absent umbrella is skipped rather than reported here; the asset scan and
+    # the required-core list already own that failure.
+    foreach ($twin in @(".ps1", ".sh")) {
+      $umbrellaPath = Join-Path $RepoRoot ".github/scripts/check-starter-workflow$twin"
+      if (-not (Test-Path -Path $umbrellaPath -PathType Leaf)) { continue }
+      $umbrellaText = Get-Content -Path $umbrellaPath -Raw
+      $unwired = @(
+        Get-ChildItem -Path (Join-Path $RepoRoot ".github/scripts") -File -Filter "check-*$twin" |
+          Where-Object { $_.Name -ne "check-starter-workflow$twin" -and -not $umbrellaText.Contains($_.Name) } |
+          ForEach-Object { $_.Name } |
+          Sort-Object
+      )
+      if ($unwired.Count -gt 0) {
+        Add-CheckError("$($unwired -join ', ') exist but check-starter-workflow$twin never runs them; a check nobody runs is a comment")
+      }
+    }
+
     foreach ($relativePath in $requiredCoreFiles) {
       if (-not $seenFiles.ContainsKey($relativePath)) {
         Add-CheckError("Required core file is not listed in starter-modules.json: $relativePath")

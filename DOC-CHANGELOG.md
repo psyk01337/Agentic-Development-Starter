@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Record the umbrella wiring rule in the check table
+
+- Area: root README check table
+- Change type: docs
+- Summary: the `check-starter-manifest` row now names one more catch — a check script the umbrella never runs.
+- Reason: the table is the only place a reader learns what a check covers, and it has been kept current as each rule was added. Leaving this one out would make the table the next thing that drifts, which is the pattern this run of changes has been closing.
+- Affected files: README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Notice a check the umbrella never runs"
+- Review status: reviewed
+- Discrepancies or follow-up: the table's descriptions are prose and are not checked against the scripts that implement them. That is the same unverifiable-claim limit as the runbook index descriptions, and no mechanical guard is proposed for either.
 ### 2026-11-01 - Document the runbook-index rule
 
 - Area: runbook index, root README, check table
