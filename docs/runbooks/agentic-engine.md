@@ -109,6 +109,8 @@ Run state lives under `.agentic/`, which is gitignored. A completed run therefor
 
 `archive` writes the run to `docs/runs/<run-id>.md` — task, acceptance criteria, write set, and the full stage history — so the record can be committed alongside the change. `--out <path>` overrides the destination.
 
+The payload reports `overwritten`. Re-archiving the same run replaces the previous record rather than appending to it, so a `true` here means the earlier evidence at that path is gone. It is reported instead of refused because regenerating after a state change is legitimate; silently losing the prior record is not.
+
 ```bash
 python .github/scripts/agentic_engine.py archive --run-id feature-123
 ```

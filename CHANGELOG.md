@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Report when archive replaces an existing record
+
+- Area: agentic engine, engine runbook
+- Change type: fix, test, docs
+- Summary: `archive` reports `overwritten`, true when a record already existed at the destination. Re-archiving still regenerates, but the caller now learns the previous evidence was replaced. One test takes the suite from 137 to 138. Manifest version goes to `2.14.0`.
+- Reason: `archive` writes to a fixed path, so archiving twice silently destroyed the first record. The regenerated file is usually similar and occasionally not, and nothing distinguished "new archive" from "replaced archive" in the payload or the output. Silent data loss in the evidence trail is worse than elsewhere because the trail is the point.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the archive overwrite flag"
+- Validation: the engine suite passes 138/138, and the change was delivered through the gate rather than around it - see the run history below. Both umbrella suites are unaffected by this change and were run before it.
+- Discrepancies or follow-up: this is the first run in the repository to enter the `repair` stage. The engine observed a genuinely failing suite (`exitCode: 1, message: "exit 1: FAILED (errors=1)"`), recorded `NOT_VERIFIED`, scheduled repair, and only advanced after the fix. Two gaps surfaced while doing it. `changedFilesFrom` defaults to `declared`, so the engine trusts the file list a caller reports and never compares it to git; a run can therefore complete while files outside its write set have changed, unnoticed. And the write set is a permission rather than an obligation, so declaring five files and touching two is accepted silently.
 ### 2026-11-01 - Repoint the hook fixtures and stop linting local-only docs
 
 - Area: hook validators, markdown quality

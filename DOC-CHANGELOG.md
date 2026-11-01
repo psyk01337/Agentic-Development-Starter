@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the archive overwrite flag
+
+- Area: engine runbook
+- Change type: docs, runbook
+- Summary: the `archive` section of `docs/runbooks/agentic-engine.md` records that the payload reports `overwritten`, and that a `true` means the evidence previously at that path is gone. It says why the state is reported rather than refused.
+- Reason: regenerating an archive after a state change is legitimate, so a refusal would be wrong, but a caller that does not know it replaced a record cannot decide whether that was acceptable.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Report when archive replaces an existing record"
+- Review status: reviewed
+- Discrepancies or follow-up: nothing prevents a caller from ignoring `overwritten`, so this is information rather than a safeguard. Making it a safeguard would mean either refusing a second archive or versioning the filename.
 ### 2026-11-01 - Remove the last traces of the throwaway build
 
 - Area: app/README.md, docs/runbooks, docs/runs, .gitignore, both changelogs

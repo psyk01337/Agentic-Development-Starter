@@ -1265,8 +1265,17 @@ def cmd_archive(args: argparse.Namespace) -> int:
     lines.append("")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # Re-archiving the same run replaces its record. Report that rather than
+    # discarding the previous evidence silently.
+    overwritten = out_path.exists()
     out_path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
-    emit({"runId": state["runId"], "archivedTo": out_path.relative_to(repo_root).as_posix()})
+    emit(
+        {
+            "runId": state["runId"],
+            "archivedTo": out_path.relative_to(repo_root).as_posix(),
+            "overwritten": overwritten,
+        }
+    )
     return 0
 
 
@@ -2709,6 +2718,23 @@ class EngineSelfTest(unittest.TestCase):
         )
         allowed, reason = self.check("edit", {"filePath": "src/a.py"})
         self.assertTrue(allowed, reason)
+
+    def test_archive_reports_whether_it_overwrote_an_existing_record(self) -> None:
+        # Silent overwrite loses the previous evidence, and nothing told the
+        # caller it had happened.
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:review"]},
+        )
+        code, first = self.quiet_cli("archive", "--run-id", "r1")
+        self.assertEqual(code, 0)
+        self.assertIs(first["overwritten"], False)
+        code, second = self.quiet_cli("archive", "--run-id", "r1")
+        self.assertEqual(code, 0)
+        self.assertIs(second["overwritten"], True)
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
 
