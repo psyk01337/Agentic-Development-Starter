@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the second directory rule for write sets
+
+- Area: engine runbook
+- Change type: docs, runbook
+- Summary: the `allow-write` section now states both directory rules and why there are two: one asks the filesystem, the other compares the set with itself, and only the second survives a directory that does not exist yet.
+- Reason: the failure mode was invisible from the documentation. A reader who hit "is a directory" on a path they had added successfully minutes earlier had no way to understand that the path had changed meaning while the set stayed the same.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Close the window where a write-set entry can become a directory"
+- Review status: reviewed
+- Discrepancies or follow-up: `TROUBLESHOOTING.md` has no entry for a stuck write set, which is now the residual case rather than the common one.
 ### 2026-11-01 - Record the family-guard fixture and the empty-script rule
 
 - Area: root README check table

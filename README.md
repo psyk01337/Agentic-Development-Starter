@@ -9,7 +9,7 @@
 ![Agents](https://img.shields.io/badge/agents-12-blue)
 ![Prompts](https://img.shields.io/badge/prompts-23-blue)
 ![Checks](https://img.shields.io/badge/checks-13%2F13-brightgreen)
-![Engine tests](https://img.shields.io/badge/engine%20tests-156-brightgreen)
+![Engine tests](https://img.shields.io/badge/engine%20tests-157-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
 > The starter is a workflow layer, not an agent runtime. It does not run anything for you — it makes what runs accountable.
@@ -96,7 +96,7 @@ flowchart TD
     H --> J["Human decides"]
 ```
 
-The loop is enforced by [`agentic_engine.py`](.github/scripts/agentic_engine.py), a deterministic state machine with 156 self-tests. It refuses `VERIFIED` while any check fails, and refuses a `VERIFIED` whose checks never executed — a command is run, not asserted. It rejects a write outside the declared set, refuses a review whose evidence only restates the implementer's, permits one live run per checkout because two runs share one working tree and one index, and stops on an identical failure signature rather than retrying forever.
+The loop is enforced by [`agentic_engine.py`](.github/scripts/agentic_engine.py), a deterministic state machine with 157 self-tests. It refuses `VERIFIED` while any check fails, and refuses a `VERIFIED` whose checks never executed — a command is run, not asserted. It rejects a write outside the declared set, refuses a review whose evidence only restates the implementer's, permits one live run per checkout because two runs share one working tree and one index, and stops on an identical failure signature rather than retrying forever.
 
 Try it without touching a thing:
 
