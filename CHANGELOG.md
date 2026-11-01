@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Refuse inline code in verification commands
+
+- Area: agentic engine, engine runbook, hook validators
+- Change type: fix, test, docs
+- Summary: a verify check may no longer evaluate inline code. `-c`, `-e`, `--eval`, `-Command` and `-EncodedCommand` are refused wherever they appear in the argv, so `python -c pass` no longer satisfies the observed-check rule. Two tests take the suite from 149 to 151, and the fixture commands in both tests and both hook validators now invoke the engine's own `metrics` subcommand. Manifest version goes to `2.17.0`.
+- Reason: the previous change made an executed check mandatory, and `python -c pass` satisfied it. A gate that accepts a tautology is worse than one that accepts nothing, because it reports a pass. The rule chosen is narrow on purpose: it does not try to judge whether a command is meaningful, only that it invokes something the repository ships, because code written at verification time is written after the result is known.
+- Affected files: .github/scripts/agentic_engine.py, .github/scripts/check-hook-policy.sh, .github/scripts/check-hook-policy.ps1, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the inline-code restriction"
+- Validation: engine selftest 151/151. Four inline forms are asserted refused, and a command invoking a repository file is asserted accepted through the CLI. Both hook-policy validators pass with fixtures that now run a real subcommand.
+- Discrepancies or follow-up: this is narrower than the task-declared design I originally recommended. That design requires every run to name its verification command up front, which is the better model, but it invalidates roughly fifteen fixtures and makes `start` mandatory for any verified change; the inline rule closes the concrete hole today without either cost. `grep -e` and other tools that legitimately take `-e` are refused, which is fail-closed and worth revisiting if it bites. A command can still be meaningless while invoking a file, so this raises the floor rather than proving the check is good.
 ### 2026-11-01 - Refuse a turn end when files changed with no run open
 
 - Area: agentic engine, orchestration policy, hooks runbook

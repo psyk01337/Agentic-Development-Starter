@@ -166,7 +166,10 @@ observation that failed.
 
 The command text comes from an agent, so it is allowlisted: `argv[0]` must appear
 in `verificationCommands` in `.github/roles/orchestration-policy.json`, by name or
-basename. Anything else is refused rather than run. A command is either a JSON
+basename. Anything else is refused rather than run. A command may not evaluate inline
+code either - `python -c`, `node -e`, `pwsh -Command` and `--eval` are refused - because
+the expression is written at the moment of verification, which is after the result is
+already known. A verification must invoke something the repository ships. A command is either a JSON
 list, used as exact argv, or a string split on whitespace, which cannot express a
 path containing spaces.
 

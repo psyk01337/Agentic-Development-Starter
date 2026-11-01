@@ -241,7 +241,7 @@ if (Test-Path $policyScript) {
         # interpreter path containing a space.
         $verifyPayload = @{
           result = "VERIFIED"
-          checks = @(@{ name = "fixture"; command = @($pythonExe, "-c", "pass") })
+          checks = @(@{ name = "fixture"; command = @($pythonExe, $engine, "metrics", "--state-dir", $doneState) })
           evidence = @("cmd:fixture")
         } | ConvertTo-Json -Depth 5 -Compress
         [IO.File]::WriteAllText((Join-Path $gateDir "verify.json"), $verifyPayload)

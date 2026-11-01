@@ -916,6 +916,12 @@ def execute_check_commands(checks: list, repo_root: Path, policy: dict) -> list:
             results.append(check)
             continue
         argv = check_command_argv(check)
+        inline = [token for token in argv[1:] if token.lower() in INLINE_CODE_FLAGS]
+        if inline:
+            raise EngineError(
+                f"check command runs inline code ({inline[0]}); a verification must invoke "
+                "something the repository ships, so the check is chosen before the result is known"
+            )
         names = {argv[0], os.path.basename(argv[0])}
         if not names & set(allowed):
             raise EngineError(
@@ -1630,6 +1636,13 @@ SHELL_PATH_FLAG = re.compile(
 )
 SHELL_NON_PATHS = frozenset({"&1", "&2", "/dev/null", "nul", "$null", "-"})
 
+# A verification command must invoke something the repository ships. Inline code
+# is refused because it is written at the moment of verification, which is after
+# the result is already known - `python -c pass` proves only that a check exists.
+# Fail-closed by design: a project that genuinely needs an inline expression can
+# put it in a script and run the script.
+INLINE_CODE_FLAGS = frozenset({"-c", "-e", "--eval", "-command", "-encodedcommand"})
+
 
 def _looks_like_path(value: str) -> bool:
     """Whether a token is plausibly a file path rather than a bare word.
@@ -2338,7 +2351,7 @@ class EngineSelfTest(unittest.TestCase):
             self.skipTest("the whitespace-split string form cannot express a path with spaces")
         code, payload = self.quiet_cli(
             "record", "--run-id", "r1", "--stage", "verify",
-            "--verdict", "VERIFIED", "--check", f"fixture-executed=cmd:{sys.executable} -c pass",
+            "--verdict", "VERIFIED", "--check", ("fixture-executed=cmd:" + " ".join(self.ok_command())),
             "--evidence", "cmd:pytest",
         )
         self.assertEqual(code, 0)
@@ -2534,6 +2547,13 @@ class EngineSelfTest(unittest.TestCase):
         archive = next(item for item in payload["checks"] if item["name"] == "run-archives")
         self.assertTrue(archive["ok"])
 
+    def ok_command(self) -> list:
+        """A check command that invokes a file in the repository, as the rule requires."""
+        return [sys.executable, os.path.abspath(__file__), "metrics", "--state-dir", str(self.state_dir)]
+
+    def failing_command(self) -> list:
+        return [sys.executable, os.path.abspath(__file__), "definitely-not-a-command"]
+
     def allow_check_executable(self, name: str) -> None:
         policy_path = self.root / ".github" / "roles" / "orchestration-policy.json"
         policy = json.loads(policy_path.read_text(encoding="utf-8"))
@@ -2550,7 +2570,7 @@ class EngineSelfTest(unittest.TestCase):
             "verify",
             {
                 "result": "VERIFIED",
-                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "pass"]}],
+                "checks": [{"name": "interpreter", "command": self.ok_command()}],
                 "evidence": ["cmd:session"],
             },
         )
@@ -2565,7 +2585,7 @@ class EngineSelfTest(unittest.TestCase):
             "verify",
             {
                 "result": "VERIFIED",
-                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "raise SystemExit(1)"]}],
+                "checks": [{"name": "interpreter", "command": self.failing_command()}],
                 "evidence": ["cmd:session"],
             },
         )
@@ -2584,7 +2604,7 @@ class EngineSelfTest(unittest.TestCase):
                     {
                         "name": "interpreter",
                         "ok": True,
-                        "command": [sys.executable, "-c", "raise SystemExit(1)"],
+                        "command": self.failing_command(),
                     }
                 ],
                 "evidence": ["cmd:session"],
@@ -2602,7 +2622,7 @@ class EngineSelfTest(unittest.TestCase):
             "verify",
             {
                 "result": "VERIFIED",
-                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "pass"]}],
+                "checks": [{"name": "interpreter", "command": self.ok_command()}],
                 "evidence": ["cmd:session"],
             },
         )
@@ -2616,7 +2636,7 @@ class EngineSelfTest(unittest.TestCase):
             "verify",
             {
                 "result": "VERIFIED",
-                "checks": [{"name": "interpreter", "command": [sys.executable, "-c", "pass"]}],
+                "checks": [{"name": "interpreter", "command": self.ok_command()}],
                 "evidence": ["cmd:session"],
             },
         )
@@ -2642,7 +2662,7 @@ class EngineSelfTest(unittest.TestCase):
         code, payload = self.quiet_cli(
             "record", "--run-id", "r1", "--stage", "verify",
             "--verdict", "VERIFIED",
-            "--check", f"interpreter=cmd:{sys.executable} -c pass",
+            "--check", ("interpreter=cmd:" + " ".join(self.ok_command())),
             "--evidence", "cmd:session",
         )
         self.assertEqual(code, 0)
@@ -2929,6 +2949,43 @@ class EngineSelfTest(unittest.TestCase):
         (repo / "tracked.txt").write_text("two\n", encoding="utf-8")
         self.assertEqual(unrun_changes(repo), ["tracked.txt"])
 
+    def test_verify_refuses_inline_code_as_a_check_command(self) -> None:
+        # `python -c pass` proves a check exists, not that anything was verified,
+        # and the code is written after the result is already known.
+        self.init()
+        self.implement()
+        self.allow_check_executable(os.path.basename(sys.executable))
+        for command in (
+            [sys.executable, "-c", "pass"],
+            [sys.executable, "--eval", "1"],
+            ["pwsh", "-Command", "exit 0"],
+            ["node", "-e", "0"],
+        ):
+            code, _ = self.record(
+                "verify",
+                {
+                    "result": "VERIFIED",
+                    "checks": [{"name": "sneaky", "command": command}],
+                    "evidence": ["cmd:session"],
+                },
+            )
+            self.assertEqual(code, 1, f"expected refusal for {command}")
+
+    def test_verify_accepts_a_check_that_runs_a_repository_file(self) -> None:
+        self.init()
+        self.implement()
+        self.allow_check_executable(os.path.basename(sys.executable))
+        code, payload = self.record(
+            "verify",
+            {
+                "result": "VERIFIED",
+                "checks": [{"name": "engine metrics", "command": self.ok_command()}],
+                "evidence": ["cmd:session"],
+            },
+        )
+        self.assertEqual(code, 0, payload)
+        self.assertEqual(payload["stage"], "review")
+
     def run_cli(self, argv: list) -> tuple[int, dict]:
 
         buffer = io.StringIO()
@@ -2962,7 +3019,7 @@ class EngineSelfTest(unittest.TestCase):
     def verify(self, result: str, checks: list) -> tuple[int, dict]:
         # Every VERIFIED needs something the engine actually observed, so the
         # helper supplies one executable check the fixture policy allows.
-        observed = list(checks) + [{"name": "fixture-executed", "command": [sys.executable, "-c", "pass"]}]
+        observed = list(checks) + [{"name": "fixture-executed", "command": self.ok_command()}]
         return self.record(
             "verify", {"result": result, "checks": observed, "evidence": ["cmd:pytest"]}
         )

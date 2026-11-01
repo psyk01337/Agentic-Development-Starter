@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the inline-code restriction
+
+- Area: engine runbook
+- Change type: docs, runbook
+- Summary: the verify section of `docs/runbooks/agentic-engine.md` records that a check command may not evaluate inline code, names the refused flags, and gives the reason: the expression is written after the result is known, so a verification must invoke something the repository ships.
+- Reason: the rule refuses commands people reach for naturally, and a refusal without a stated principle reads as an arbitrary restriction. The reason is the useful part, because it generalises to cases the flag list does not cover.
+- Affected files: docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Refuse inline code in verification commands"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook does not list tool-specific exceptions such as `grep -e`, which the rule refuses. Documenting the escape - wrap it in a script - would help.
 ### 2026-11-01 - Document the run requirement for changed files
 
 - Area: hooks runbook
