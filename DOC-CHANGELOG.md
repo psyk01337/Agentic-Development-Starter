@@ -24,18 +24,30 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Remove the last traces of the throwaway build
+
+- Area: app/README.md, docs/runbooks, docs/runs, .gitignore, both changelogs
+- Change type: docs, chore
+- Summary: the application used to exercise the workflow during starter development is out of the published tree and out of the prose. `app/README.md` is a scaffold again rather than a guide to a specific app, the runbook examples use generic paths instead of that build's files, and its one archived run is deleted. Six DOC-CHANGELOG entries that had lost their headings in an earlier edit are rebuilt from their own contents.
+- Reason: this repository is a starter, so documentation about one particular application is noise at best and misleading at worst - a reader cannot tell whether a path is a convention or a leftover. The missing headings are a separate defect of my own making: entry bodies had accumulated under the previous heading, so the file reported 136 entries with only 130 headings and no validator noticed, because a changelog with two entries merged into one is still valid Markdown.
+- Affected files: app/README.md, docs/runs (one archive removed), docs/runbooks/agentic-engine.md, docs/runbooks/hooks.md, .gitignore, DOC-CHANGELOG.md
+- Related code: none - nothing executable changed, which is why CHANGELOG.md has no matching entry
+- Review status: reviewed
+- Discrepancies or follow-up: `app/game/` still appears throughout the game-dev overlays as a path convention, deliberately: that is where a user's own game project goes, and the ignore rule that had also covered it was removed because it would have hidden a user's project from git. Removing that rule is the only code-adjacent effect of this change. The changelog is now internally consistent but still unvalidated: nothing checks that entry bodies stay under their headings, so this defect could recur silently.
 ### 2026-11-01 - Reset the PRD and route the intake to local-only storage
 
 - Area: docs/prd.md, docs/inputs, app/README.md
 - Change type: docs
-- Summary: `docs/prd.md` returns to a project template instead of describing the Ember Run sample, the game intake moves to `.forlocal/ember-run-prd.md` where it is ignored rather than published, and `docs/inputs/README.md` records what an intake is for and why it is kept verbatim after being routed. `app/README.md` gains a "Local Sample" section explaining that `app/game/` is ignored rather than missing.
-- Reason: the sample application is no longer published, and the repository's one required product document still described it. A fresh clone would have shipped a PRD for software it does not contain. The intake was moved rather than deleted because it is the record of what was actually asked for, and the PRD is an interpretation of it.
-- Affected files: docs/prd.md, docs/inputs/README.md, .forlocal/ember-run-prd.md (untracked), app/README.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Summary: `docs/prd.md` returns to a project template rather than carrying the requirements of a throwaway build, the intake that produced it moves into `.forlocal/` where it is ignored rather than published, and `docs/inputs/README.md` records what an intake is for and why it is kept verbatim after being routed. `app/README.md` loses its sample-specific sections and now says its verification block must be replaced with the project's real command.
+- Reason: this repository is a starter, and its one required product document described work that is not part of it. A fresh clone would have shipped a PRD for software it does not contain. The intake was moved rather than deleted because it is the record of what was actually asked for, and the PRD is an interpretation of it.
+- Affected files: docs/prd.md, docs/inputs/README.md, app/README.md, CHANGELOG.md, DOC-CHANGELOG.md
 - Related code: CHANGELOG.md entry "2026-11-01 - Repoint the hook fixtures and stop linting local-only docs"
 - Review status: reviewed
-- Discrepancies or follow-up: the template is unvalidated as a template; no check confirms a filled-in PRD kept the required sections, so a project can delete the traceability table and nothing notices. `docs/runs/ember-s7.md` still names files under `app/game/`, which is accurate history for a run that really happened.
+- Discrepancies or follow-up: the template is unvalidated as a template; no check confirms a filled-in PRD kept the required sections, so a project can delete the traceability table and nothing notices.
 
 
+
+### 2026-10-31 - Document run ownership and gate scoping
 
 - Area: engine runbook
 - Change type: docs, runbook
@@ -48,6 +60,8 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 
 
+### 2026-10-31 - Document the metrics command
+
 - Area: engine runbook
 - Change type: docs, runbook
 - Summary: adds `metrics` to the command list in `docs/runbooks/agentic-engine.md` and a section explaining each figure, why the executed-versus-reported split is the one to watch, and that the totals only describe runs still on disk.
@@ -58,6 +72,8 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 - Discrepancies or follow-up: the runbook lists the figures but gives no target values, so a reader has nothing to compare against. Choosing thresholds before there is data would invent them.
 
 
+
+### 2026-10-31 - Document shell writes under the write set
 
 - Area: hooks runbook, engine runbook
 - Change type: docs, runbook
@@ -70,6 +86,8 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 
 
+### 2026-10-31 - Document the observed-check requirement
+
 - Area: engine runbook
 - Change type: docs, runbook
 - Summary: the stage contract in `docs/runbooks/agentic-engine.md` now states that `VERIFIED` is refused unless at least one check was executed, and the surrounding prose explains that reported checks are still recorded but cannot carry a passing verdict alone. Also repairs the stage table, which a previous edit had split in two by inserting prose between the `verify` and `repair` rows.
@@ -81,6 +99,8 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 
 
+### 2026-10-31 - Document executed verify checks
+
 - Area: engine runbook, build-feature prompt
 - Change type: docs, runbook
 - Summary: the stage contract in `docs/runbooks/agentic-engine.md` records that a verify check carrying a `command` is executed and its exit code decides `ok`, and draws the distinction the whole change rests on: a check with a command is a measurement, a check without one is a claim. It states the allowlist rule, both command forms, and that removing the escape hatch is deliberately not part of this change. `build-feature.prompt.md` switches the verify example to the `cmd:` form.
@@ -91,6 +111,8 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 - Discrepancies or follow-up: no worked example of a real `cmd:` check is included, and the runbook does not yet say what happens to a check that times out beyond naming the timeout. Both would help an agent comply on the first attempt.
 
 
+
+### 2026-10-31 - Document the doctor command
 
 - Area: engine runbook
 - Change type: docs, runbook
@@ -120,17 +142,6 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 - Related code: CHANGELOG.md entry "2026-10-31 - Stop the shell hook twin from denying every hand invocation while a run exists"
 - Review status: reviewed
 - Discrepancies or follow-up: the runbook still does not describe what `check-tool` does with a payload that is valid JSON but carries no `toolName` beyond the classification note. That path denies, and a hand-written payload missing the field would hit it.
-
-### 2026-10-31 - Record S7 and correct the remaining FR gaps
-
-- Area: project PRD traceability
-- Change type: docs
-- Summary: `docs/prd.md` gains an S7 row for the input slice, updates the suite count to 78 and the shipped size to 30 KB, and replaces the "FR-9 has no automated coverage" note with what is now true — the decisions are covered, the DOM binding is not. The stale duplicate paragraph that scheduled FR-9 as future S2b is removed, and S2's row no longer says input binding is open. Adds a note that FR-8 is only half delivered: the mute preference persists but no sound exists to mute.
-- Reason: the traceability table is the one place that states what is finished, so it is the place most damaging to leave optimistic. Three claims in it had drifted from the code: FR-9 was listed as uncovered after the input decisions became testable, the suite count was stale, and FR-8 was implied complete by an S5 row that names only the persistence half.
-- Affected files: docs/prd.md, CHANGELOG.md, DOC-CHANGELOG.md
-- Related code: CHANGELOG.md entry "2026-10-31 - Route input through one tested decision, and stop auto-repeat restarting a run"
-- Review status: reviewed
-- Discrepancies or follow-up: FR-8 stays open with no slice assigned, because audio has no testable surface without a DOM and adding it is a decision, not a chore.
 
 ### 2026-10-31 - Document the flags-based record path and run archives
 

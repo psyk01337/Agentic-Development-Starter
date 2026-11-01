@@ -4,10 +4,6 @@ Everything the product actually does lives here. The rest of the repository is t
 
 Keep the split clean. Do not put workflow assets in this folder, and do not put application code outside it.
 
-## Local Sample
-
-`app/game/` is a sample application used to exercise the workflow while building the starter itself. It is listed in `.gitignore` and is not part of the published repository, so a clone will not contain it and nothing in the starter depends on it.
-
 ## Layout
 
 Pick one shape and stay with it. `../docs/runbooks/starter-adoption.md` documents both patterns.
@@ -37,16 +33,10 @@ The single most useful thing in this file is the command that proves the applica
 Replace this block with the project's real commands:
 
 ```bash
-cd app/game && node --test
+cd app && <the command that runs this project's tests>
 ```
 
-That is the Ember Run suite: `node --test` with no arguments auto-discovers
-`*.test.mjs` under the directory. Passing the directory instead
-(`node --test tests/`) fails on Windows, so use the bare form.
-
-`npm test` in `app/game` runs the same thing. That is the command that proves
-the current slice works, and it is the one to run before reporting anything as
-done.
+Until that is replaced, this file describes a scaffold rather than a project. An agent should say so rather than invent a command, and the `verify` stage should record `NOT_VERIFIED` rather than a pass nobody observed.
 
 Rules that matter for those commands:
 
@@ -55,6 +45,8 @@ Rules that matter for those commands:
 - Report the command and its result. A check that did not run is `NOT_VERIFIED`, never a pass.
 
 If there is more than one toolchain, add a single entry point such as `scripts/test-all.sh` and point this file at it. Two commands nobody remembers is worse than one command everybody runs.
+
+Windows note worth keeping: `node --test` with no arguments auto-discovers test files, while passing a directory (`node --test tests/`) fails there. Use the bare form when the project uses Node.
 
 ## What The Starter Does And Does Not Do Here
 

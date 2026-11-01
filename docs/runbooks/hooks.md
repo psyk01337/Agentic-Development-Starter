@@ -223,7 +223,7 @@ Tool names the harness sends, recorded by the `postToolUse` hook:
 
 `.github/roles/tool-access.json` `toolDefinitions.examples` documents capability roles for a different surface and shares no names with live traffic. It is still read, but it is a supplement, not the source.
 
-Paths arrive **absolute** (`D:\repo\app\game\src\rng.js`, or `file:///d:/...`) while a write set is **repo-relative** (`app/game/src/rng.js`). Both are the same file, so the gate normalises the reported path against the repository root before comparing. A path outside the repository stays outside and is refused.
+Paths arrive **absolute** (`D:\repo\app\src\rng.js`, or `file:///d:/...`) while a write set is **repo-relative** (`app/src/rng.js`). Both are the same file, so the gate normalises the reported path against the repository root before comparing. A path outside the repository stays outside and is refused.
 
 Two rules follow:
 

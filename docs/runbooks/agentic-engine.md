@@ -69,12 +69,12 @@ python .github/scripts/agentic_engine.py selftest
 
 ```bash
 python .github/scripts/agentic_engine.py start \
-  --run-id ember-s3 \
+  --run-id feature-123 \
   --title "Obstacles, collision, scoring" \
   --criterion "A fixed seed produces the same obstacle sequence" \
   --criterion "A collision ends the run exactly once" \
-  --write app/game/src/world.js \
-  --write app/game/tests/world.test.mjs
+  --write src/world.py \
+  --write tests/test_world.py
 ```
 
 `--criterion` and `--write` repeat. `--task-id` defaults to the run id, `--task-class` defaults to `FEATURE`, and `--changed-files-from git` opts into a repository-derived write set.
@@ -86,7 +86,7 @@ That fallback matters. Before it existed the gate looped over every active run a
 `allow-write` exists because a write set is a prediction made before the work starts, and real work discovers files. Extending the set is explicit, validated against the same rules as `start`, and recorded in the run history with a reason:
 
 ```bash
-python .github/scripts/agentic_engine.py allow-write --run-id ember-s3 --path app/game/src/extra.js --reason "extracted a helper"
+python .github/scripts/agentic_engine.py allow-write --run-id feature-123 --path src/extra.py --reason "extracted a helper"
 ```
 
 Without it the only options are a uselessly broad write set or stalling on a refusal, and both push people to disable the gate. Adding a path that is already present is a no-op, and a finished or blocked run refuses the change.
@@ -110,7 +110,7 @@ Run state lives under `.agentic/`, which is gitignored. A completed run therefor
 `archive` writes the run to `docs/runs/<run-id>.md` — task, acceptance criteria, write set, and the full stage history — so the record can be committed alongside the change. `--out <path>` overrides the destination.
 
 ```bash
-python .github/scripts/agentic_engine.py archive --run-id ember-s3
+python .github/scripts/agentic_engine.py archive --run-id feature-123
 ```
 
 Archive a run before deleting its state. Deleting `.agentic/` first destroys the history the archive would have captured.
