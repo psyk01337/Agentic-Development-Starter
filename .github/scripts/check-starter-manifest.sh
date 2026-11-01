@@ -253,6 +253,25 @@ if scan_setting:
                     f"{derived[key]}"
                 )
 
+# app/README.md states that until its verification block is replaced it describes a
+# scaffold rather than a project. Nothing read that sentence, so an app folder full of
+# code could keep pointing at a placeholder command while every gate reported green.
+#
+# The rule fires on a state transition rather than on a declaration, because a declared
+# "initialized: true" can be wrong and a folder's contents cannot. The starter itself is
+# unaffected: its app folder holds only that README, so the rule never reaches it.
+app_dir = repo_root / "app"
+app_readme = app_dir / "README.md"
+app_placeholder = "<the command that runs this project's tests>"
+if app_dir.is_dir() and app_readme.is_file():
+    app_code = [p for p in app_dir.rglob("*") if p.is_file() and p != app_readme]
+    if app_code and app_placeholder in app_readme.read_text(encoding="utf-8"):
+        errors.append(
+            f"app/README.md still carries the placeholder verification command while app/ "
+            f"holds {len(app_code)} file(s) of code; replace it with the command the tests "
+            "actually run, so verify has something real to execute"
+        )
+
 missing_core = sorted(required_core_files - seen_files)
 for relative_path in missing_core:
     errors.append(f"Required core file is not listed in starter-modules.json: {relative_path}")

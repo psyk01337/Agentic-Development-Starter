@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document when the scaffold must stop calling itself one
+
+- Area: app scaffold, root README, check table
+- Change type: docs
+- Summary: `app/README.md` now states that `check-starter-manifest` enforces the transition from scaffold to project, names the exact condition, and says plainly that deleting the block also passes so the rule's limit is not mistaken for a guarantee. The root README check table records the new catch.
+- Reason: the file has always told an agent to say it is a scaffold rather than invent a command. Once a gate enforces that, the file has to say so, or the next reader assumes the sentence is still an instruction rather than a checked condition.
+- Affected files: app/README.md, README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Notice when the app scaffold still claims to be a scaffold"
+- Review status: reviewed
+- Discrepancies or follow-up: `docs/prd.md` still carries template placeholders with no check over them. That is recorded against the code change rather than here, because it needs a routing decision before it needs prose.
 ### 2026-11-01 - Record the version-punctuation fix and what it does not cover
 
 - Area: documentation changelog

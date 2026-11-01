@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Notice when the app scaffold still claims to be a scaffold
+
+- Area: validation scripts, app scaffold, root README
+- Change type: fix, test, docs
+- Summary: `check-starter-manifest` now fails when `app/` holds any file besides `README.md` while that README still carries the placeholder verification command. Both twins implement it identically and the rule needs no flag, because the starter's own `app/` contains only the README and therefore never reaches it. `app/README.md` records the rule and its limit, and the root README's check table names it. Manifest version goes to `2.20.2`.
+- Reason: `app/README.md` declares its own state — "until that is replaced, this file describes a scaffold rather than a project" — and no validator read it. Every check skipped `app/` entirely, so a project could accumulate code while its verification contract still said "fill this in", and the umbrella stayed green. The scaffold described its incompleteness in prose and nothing observed it, which is the same blindness that let the version-punctuation defect reach a first run.
+- Affected files: .github/scripts/check-starter-manifest.ps1, .github/scripts/check-starter-manifest.sh, app/README.md, README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document when the scaffold must stop calling itself one"
+- Validation: a four-case fixture matrix run against both twins with identical verdicts. Scaffold with no code passes; code present with the placeholder intact fails; code present with the command filled in passes; code present with the README replaced entirely passes. The repository itself still passes both twins and the umbrella, which is the case that proves the rule cannot fire on the starter.
+- Discrepancies or follow-up: deleting the verification block outright also passes, so the rule stops a scaffold from silently remaining one but cannot tell a real command from an absent one — judging the command is the `verify` stage's job, not a static check's. The related gap is untouched: `docs/prd.md` still ships template placeholders and nothing checks them. A rule there would have to decide what counts as routed intake, because routing may legitimately defer a document, and that is a design question rather than a missing assertion.
 ### 2026-11-01 - Stop the version check punishing punctuation
 
 - Area: validation scripts

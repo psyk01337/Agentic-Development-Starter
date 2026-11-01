@@ -232,6 +232,27 @@ if (-not (Test-Path $manifestPath)) {
       }
     }
 
+    # app/README.md states that until its verification block is replaced it describes a
+    # scaffold rather than a project. Nothing read that sentence, so an app folder full of
+    # code could keep pointing at a placeholder command while every gate reported green.
+    #
+    # The rule fires on a state transition rather than on a declaration, because a declared
+    # "initialized: true" can be wrong and a folder's contents cannot. The starter itself is
+    # unaffected: its app folder holds only that README, so the rule never reaches it.
+    $appDir = Join-Path $RepoRoot "app"
+    $appReadmePath = Join-Path $appDir "README.md"
+    $appPlaceholder = "<the command that runs this project's tests>"
+    if ((Test-Path -Path $appDir -PathType Container) -and (Test-Path -Path $appReadmePath -PathType Leaf)) {
+      $appReadmeFull = (Resolve-Path $appReadmePath).Path
+      $appCode = @(Get-ChildItem -Path $appDir -Recurse -File | Where-Object { $_.FullName -ne $appReadmeFull })
+      if ($appCode.Count -gt 0) {
+        $appText = Get-Content -Path $appReadmePath -Raw
+        if ($appText.Contains($appPlaceholder)) {
+          Add-CheckError("app/README.md still carries the placeholder verification command while app/ holds $($appCode.Count) file(s) of code; replace it with the command the tests actually run, so verify has something real to execute")
+        }
+      }
+    }
+
     foreach ($relativePath in $requiredCoreFiles) {
       if (-not $seenFiles.ContainsKey($relativePath)) {
         Add-CheckError("Required core file is not listed in starter-modules.json: $relativePath")

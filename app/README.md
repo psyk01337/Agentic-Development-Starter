@@ -38,6 +38,8 @@ cd app && <the command that runs this project's tests>
 
 Until that is replaced, this file describes a scaffold rather than a project. An agent should say so rather than invent a command, and the `verify` stage should record `NOT_VERIFIED` rather than a pass nobody observed.
 
+`check-starter-manifest` now enforces the transition: once `app/` holds any file besides this README, the placeholder command below has to be gone. The starter itself is unaffected, because its `app/` contains only this file. Deleting the block entirely also passes, which is the honest limit of the rule — it stops a scaffold from silently staying a scaffold, and cannot tell a bad command from a good one.
+
 **Who fills it in:** the first `build-feature` slice that runs the application's tests. `initialize-new-project` deliberately leaves the block alone — it knows the stack but not the runner the first slice settles on. That slice replaces the block with the command it actually executed and adds this file to the run's write set. A command written before anything runs is a promise, and `verify` only accepts a check it observed.
 
 **The runner has to be allowlisted.** `verify` launches a check only when its executable appears in `verificationCommands` in `.github/roles/orchestration-policy.json`. The shipped list spans the common test runners across ecosystems on purpose, because this repository has no default stack, and a project should narrow it to the runners it actually uses. If your stack's runner is missing, add it there — the refusal names the file and says so.
