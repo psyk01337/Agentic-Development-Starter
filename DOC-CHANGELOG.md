@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the PRD provenance rule
+
+- Area: PRD template, root README, check table
+- Change type: docs
+- Summary: `docs/prd.md` now states that `check-starter-manifest` reads its `Source` row, what happens while that row holds a placeholder, and what is required once it names a document. The root README check table records the new catch.
+- Reason: the file is the first place someone edits after routing an intake, and the rule is invisible from the file itself. A reader who fills the body but leaves an angle bracket anywhere now gets a failure they could have predicted from this paragraph.
+- Affected files: docs/prd.md, README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Notice when the PRD names its source but stays a template"
+- Review status: reviewed
+- Discrepancies or follow-up: `docs/inputs.md`, the intake index the routing prompt maintains, is still unchecked and is not described as checked anywhere.
 ### 2026-11-01 - Document when the scaffold must stop calling itself one
 
 - Area: app scaffold, root README, check table

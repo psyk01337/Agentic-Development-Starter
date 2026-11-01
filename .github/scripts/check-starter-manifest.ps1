@@ -253,6 +253,42 @@ if (-not (Test-Path $manifestPath)) {
       }
     }
 
+    # docs/prd.md ships as a template whose provenance row reads `docs/inputs/<intake>.md`.
+    # Nothing read that row either, so a project could route an intake, leave the PRD as a
+    # template, and still pass every gate with a template as its stated source of truth.
+    #
+    # The trigger is derived from the row rather than from a flag: a template keeps a
+    # placeholder in its Source field and a routed PRD names a document, so the difference is
+    # observable. That also survives deferral, because a document the router declined never
+    # reaches the row.
+    $prdPath = Join-Path $RepoRoot "docs/prd.md"
+    if (Test-Path -Path $prdPath -PathType Leaf) {
+      $prdText = Get-Content -Path $prdPath -Raw
+      $sourceRow = [regex]::Match($prdText, "(?m)^\|\s*Source\s*\|\s*(.+?)\s*\|\s*$")
+      if ($sourceRow.Success) {
+        $sourceValue = $sourceRow.Groups[1].Value.Trim().Trim('`').Trim()
+        if (-not $sourceValue.Contains("<")) {
+          if ($sourceValue.Contains("/") -or $sourceValue.ToLowerInvariant().EndsWith(".md")) {
+            $candidates = @(
+              (Join-Path $RepoRoot $sourceValue),
+              (Join-Path (Join-Path (Join-Path $RepoRoot "docs") "inputs") $sourceValue)
+            )
+            $found = $false
+            foreach ($candidate in $candidates) {
+              if (Test-Path -Path $candidate -PathType Leaf) { $found = $true; break }
+            }
+            if (-not $found) {
+              Add-CheckError("docs/prd.md names its source as '$sourceValue', but that file exists neither at that path nor under docs/inputs/")
+            }
+          }
+          $remaining = [regex]::Matches($prdText, "<[^<>\n]+>")
+          if ($remaining.Count -gt 0) {
+            Add-CheckError("docs/prd.md names a concrete source but still contains template placeholders such as '$($remaining[0].Value)'; fill them in, or put the Source row back to the template value if nothing has been routed yet")
+          }
+        }
+      }
+    }
+
     foreach ($relativePath in $requiredCoreFiles) {
       if (-not $seenFiles.ContainsKey($relativePath)) {
         Add-CheckError("Required core file is not listed in starter-modules.json: $relativePath")

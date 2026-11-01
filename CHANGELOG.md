@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Notice when the PRD names its source but stays a template
+
+- Area: validation scripts, PRD template, root README
+- Change type: fix, test, docs
+- Summary: `check-starter-manifest` now reads the `Source` row of `docs/prd.md`. While that row holds a placeholder the file is a template and nothing is asserted. Once it names a concrete document, the named path must exist at that location or under `docs/inputs/`, and no `<placeholder>` may remain anywhere in the file. A prose source that is not a path skips the existence check but still requires the placeholders to be gone. Manifest version goes to `2.20.3`.
+- Reason: the PRD is the repository's stated source of truth and it shipped as a template that nothing validated. A project could route an intake, leave the PRD with `<Project>` in its title, and pass all twelve contracts while its product requirements were still the template. The trigger is the provenance row rather than a flag, because a flag can claim a state and a row can be read — and unlike "has an intake arrived", the row survives a deferred intake, which the router is explicitly allowed to do.
+- Affected files: .github/scripts/check-starter-manifest.ps1, .github/scripts/check-starter-manifest.sh, docs/prd.md, README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the PRD provenance rule"
+- Validation: a six-case fixture matrix against both twins with identical verdicts: untouched template passes; source named with placeholders filled passes; source named with the file missing fails; source named with the title still templated fails; no provenance row passes; prose source passes. The repository itself still passes both twins and the umbrella, because its PRD still carries the template value.
+- Discrepancies or follow-up: deleting the provenance row escapes the rule, the same way deleting the verification block escapes the app rule — with no marker there is nothing to read, and inventing a required marker would fail every repository that legitimately writes its PRD differently. Placeholder detection is a broad `<...>` scan, so a PRD containing literal angle brackets in prose would fail; that is judged an acceptable false positive against leaving a template in place. Nothing yet checks `docs/inputs.md`, the intake index the routing prompt also maintains.
 ### 2026-11-01 - Notice when the app scaffold still claims to be a scaffold
 
 - Area: validation scripts, app scaffold, root README

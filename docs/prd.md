@@ -4,6 +4,11 @@ Repo truth for this repository. An intake document lands in `docs/inputs/` first
 content is routed here once; edit this file when requirements change, and re-ingest a new
 intake version instead of amending history.
 
+`check-starter-manifest` reads the `Source` row below. While it holds a placeholder this file
+is treated as a template and nothing is asserted. Once it names a document, that path must
+exist and no placeholder may remain anywhere in this file — so routing an intake and leaving
+the PRD templated fails the build rather than passing quietly.
+
 | Field | Value |
 | --- | --- |
 | Source | `docs/inputs/<intake>.md` |

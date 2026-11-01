@@ -272,6 +272,39 @@ if app_dir.is_dir() and app_readme.is_file():
             "actually run, so verify has something real to execute"
         )
 
+# docs/prd.md ships as a template whose provenance row reads `docs/inputs/<intake>.md`.
+# Nothing read that row either, so a project could route an intake, leave the PRD as a
+# template, and still pass every gate with a template as its stated source of truth.
+#
+# The trigger is derived from the row rather than from a flag: a template keeps a
+# placeholder in its Source field and a routed PRD names a document, so the difference is
+# observable. That also survives deferral, because a document the router declined never
+# reaches the row.
+prd_path = repo_root / "docs/prd.md"
+if prd_path.is_file():
+    prd_text = prd_path.read_text(encoding="utf-8")
+    source_row = re.search(r"(?m)^\|\s*Source\s*\|\s*(.+?)\s*\|\s*$", prd_text)
+    if source_row:
+        source_value = source_row.group(1).strip().strip("`").strip()
+        if "<" not in source_value:
+            if "/" in source_value or source_value.lower().endswith(".md"):
+                candidates = [
+                    repo_root / source_value,
+                    repo_root / "docs" / "inputs" / source_value,
+                ]
+                if not any(candidate.is_file() for candidate in candidates):
+                    errors.append(
+                        f"docs/prd.md names its source as {source_value!r}, but that file "
+                        "exists neither at that path nor under docs/inputs/"
+                    )
+            remaining = re.findall(r"<[^<>\n]+>", prd_text)
+            if remaining:
+                errors.append(
+                    "docs/prd.md names a concrete source but still contains template "
+                    f"placeholders such as {remaining[0]!r}; fill them in, or put the "
+                    "Source row back to the template value if nothing has been routed yet"
+                )
+
 missing_core = sorted(required_core_files - seen_files)
 for relative_path in missing_core:
     errors.append(f"Required core file is not listed in starter-modules.json: {relative_path}")
