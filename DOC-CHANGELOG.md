@@ -24,7 +24,18 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
-### 2026-10-31 - Document the observed-check requirement
+### 2026-10-31 - Document shell writes under the write set
+
+- Area: hooks runbook, engine runbook
+- Change type: docs, runbook
+- Summary: `docs/runbooks/hooks.md` adds `shell write outside set -> deny` to the engine gate decision table. `docs/runbooks/agentic-engine.md` records that shell commands are held to the write set for the two shapes that name a target explicitly, that anything else is allowed, and that a bare-word redirect target is a known gap.
+- Reason: the engine gate table is what someone reads to decide whether the gate is safe to leave on, and it previously implied the write set covered writes generally. It covered two tools.
+- Affected files: docs/runbooks/hooks.md, docs/runbooks/agentic-engine.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-10-31 - Hold shell writes to the declared write set"
+- Review status: reviewed
+- Discrepancies or follow-up: neither runbook lists the cmdlets that are recognised, so a reader has to open the engine to know whether their tooling is covered. That list will drift.
+
+
 
 - Area: engine runbook
 - Change type: docs, runbook

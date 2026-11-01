@@ -1499,6 +1499,52 @@ def active_runs(state_dir: Path) -> list:
     return runs
 
 
+SHELL_KINDS = frozenset({"execute"})
+
+SHELL_COMMAND_KEYS = ("command", "commandLine", "full_command_text", "cmd", "script")
+
+# Only two shapes count as a shell file write, because both name their target
+# explicitly: an output redirection, and an explicit -Path or -FilePath on a
+# cmdlet that writes. Guessing at shell semantics is how a gate starts denying
+# legitimate work, and this gate has already bricked the editor three times.
+SHELL_REDIRECT = re.compile(r"(?<![0-9&])>>?\s*(?:\"([^\"]+)\"|'([^']+)'|([^\s\"'|&;<>]+))")
+SHELL_PATH_FLAG = re.compile(
+    r"(?:Set-Content|Add-Content|Out-File|Clear-Content|Remove-Item|New-Item)\b"
+    r"[^|;]*?(?:-Path|-FilePath)\s+(?:\"([^\"]+)\"|'([^']+)'|([^\s\"'|;)]+))",
+    re.IGNORECASE,
+)
+SHELL_NON_PATHS = frozenset({"&1", "&2", "/dev/null", "nul", "$null", "-"})
+
+
+def _looks_like_path(value: str) -> bool:
+    """Whether a token is plausibly a file path rather than a bare word.
+
+    A bare word after a redirect is usually prose inside a quoted string, and
+    treating it as a path is how a false denial happens. Missing a bare-word
+    redirect is a gap; inventing one is a bug.
+    """
+    if not value:
+        return False
+    if "/" in value or "\\" in value:
+        return True
+    return bool(re.search(r"\.[A-Za-z0-9]{1,8}$", value))
+
+
+def shell_write_paths(text) -> list:
+    """File paths a shell command names as write targets, best effort."""
+    if not isinstance(text, str) or not text.strip():
+        return []
+    found = []
+    for pattern in (SHELL_REDIRECT, SHELL_PATH_FLAG):
+        for match in pattern.finditer(text):
+            candidate = next((group for group in match.groups() if group), "")
+            if candidate.lower() in SHELL_NON_PATHS:
+                continue
+            if _looks_like_path(candidate):
+                found.append(candidate)
+    return found
+
+
 def write_paths(tool_args: dict) -> list:
     found = []
     for key in WRITE_PATH_KEYS:
@@ -1570,6 +1616,24 @@ def check_tool_call(repo_root: Path, state_dir: Path, payload: dict) -> tuple:
                     f"write outside the declared write set for run {state['runId']}: "
                     + ", ".join(outside)
                 )
+        if kind in SHELL_KINDS:
+            text = ""
+            for key in SHELL_COMMAND_KEYS:
+                value = tool_args.get(key)
+                if isinstance(value, str):
+                    text = value
+                    break
+            shell_paths = shell_write_paths(text)
+            if shell_paths:
+                allowed = {_repo_relative(item, repo_root) for item in state["task"]["writeSet"]}
+                outside = sorted({
+                    p for p in (_repo_relative(path, repo_root) for path in shell_paths) if p not in allowed
+                })
+                if outside:
+                    return False, (
+                        f"shell write outside the declared write set for run {state['runId']}: "
+                        + ", ".join(outside)
+                    )
     return True, ""
 
 
@@ -2400,6 +2464,44 @@ class EngineSelfTest(unittest.TestCase):
         )
         self.assertEqual(code, 0)
         self.assertEqual(payload["stage"], "review")
+
+    def test_shell_redirect_outside_the_write_set_is_denied(self) -> None:
+        # The write set used to bind `edit` and `create` only, so a shell
+        # redirection could change any file the process could reach.
+        self.init()
+        allowed, reason = self.check("powershell", {"command": "echo hi > src/outside.py"})
+        self.assertFalse(allowed)
+        self.assertIn("src/outside.py", reason)
+
+    def test_shell_redirect_inside_the_write_set_is_allowed(self) -> None:
+        self.init()
+        allowed, reason = self.check("powershell", {"command": "echo hi > src/a.py"})
+        self.assertTrue(allowed, reason)
+
+    def test_shell_discard_redirects_are_not_writes(self) -> None:
+        self.init()
+        for command in ("node --test > /dev/null", "node --test 2>&1", "Get-Item x > $null"):
+            allowed, reason = self.check("powershell", {"command": command})
+            self.assertTrue(allowed, f"{command}: {reason}")
+
+    def test_shell_path_flag_outside_the_write_set_is_denied(self) -> None:
+        self.init()
+        allowed, reason = self.check("powershell", {"command": "Set-Content -Path src/outside.py -Value x"})
+        self.assertFalse(allowed)
+        self.assertIn("src/outside.py", reason)
+
+    def test_shell_path_flag_inside_the_write_set_is_allowed(self) -> None:
+        self.init()
+        allowed, reason = self.check("powershell", {"command": "Set-Content -Path src/a.py -Value x"})
+        self.assertTrue(allowed, reason)
+
+    def test_shell_commands_without_a_recognisable_write_are_allowed(self) -> None:
+        # A bare word after a redirect is usually prose in a quoted string, and a
+        # false denial here is the failure that has bricked the editor before.
+        self.init()
+        for command in ("git status", "node --test", "echo 'a > b'", "git diff --stat"):
+            allowed, reason = self.check("powershell", {"command": command})
+            self.assertTrue(allowed, f"{command}: {reason}")
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
 

@@ -150,6 +150,7 @@ The former `rolePolicyGuidance` and `logging` keys were removed from `agent-poli
   tool not classified         -> allow, with a note; the write set is the real bound
   stage forbids the tool kind -> deny
   write outside the write set -> deny
+  shell write outside set     -> deny, when the target can be named
   stage unfinished            -> block the turn end, with the required result
   no working interpreter      -> allow, with a warning on stderr
   engine fails for any reason -> allow, with a warning on stderr

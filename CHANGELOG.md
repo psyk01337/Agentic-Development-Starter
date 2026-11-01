@@ -24,7 +24,18 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
-### 2026-10-31 - Require an observed check before VERIFIED
+### 2026-10-31 - Hold shell writes to the declared write set
+
+- Area: agentic engine, hooks runbook, engine runbook
+- Change type: fix, test, docs
+- Summary: `check_tool_call` now inspects the command text of an `execute` call and denies it when a write target it can name falls outside the run's write set. Two shapes are recognised: an output redirection, and an explicit `-Path` or `-FilePath` on `Set-Content`, `Add-Content`, `Out-File`, `Clear-Content`, `Remove-Item` or `New-Item`. Discard targets (`/dev/null`, `$null`, `2>&1`) are ignored, and a token is only treated as a path when it contains a separator or a file extension. Six tests take the suite from 123 to 129. Manifest version goes to `2.10.0`.
+- Reason: the write set is the boundary the whole workflow rests on, and it bound `edit` and `create` only. Any shell command could write anywhere, so the declared scope was advisory for the one tool an agent uses most. A factory whose scope is optional is not enforcing scope.
+- Affected files: .github/scripts/agentic_engine.py, docs/runbooks/hooks.md, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-10-31 - Document shell writes under the write set"
+- Validation: engine selftest 129/129. Proven through the real hook with a live run: `echo hi > README.md` and `Set-Content -Path README.md` are both denied with `shell write outside the declared write set`, a redirect into the write set is allowed, and `git status --short` is allowed.
+- Discrepancies or follow-up: detection is deliberately narrow and fail-open. `cp`/`mv` destinations, `tee`, Python or Node one-liners that open files, and bare-word redirect targets such as `> out` are not detected, so this raises the cost of an accidental escape without preventing a deliberate one. Widening it means parsing shell semantics, which is exactly what produced three brickings. The honest description is "the obvious writes are bounded", not "shell writes are bounded".
+
+
 
 - Area: agentic engine, engine runbook
 - Change type: fix, test, docs

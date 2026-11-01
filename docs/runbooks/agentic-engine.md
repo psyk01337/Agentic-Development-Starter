@@ -180,7 +180,12 @@ entries the boundary cannot express: absolute paths, `~` paths, any `..`
 segment, a trailing separator, `.` itself, and any entry that resolves to an
 existing directory or outside the repository root. A write set entry the engine
 cannot compare against a changed file is a hole in the boundary rather than a
-typo, so it is refused instead of accepted. `class` must be a policy task class,
+typo, so it is refused instead of accepted. Shell commands are held to the same
+set, but only for the two shapes that name a target explicitly: an output
+redirection, and an explicit `-Path` or `-FilePath` on a writing cmdlet. Anything
+else is allowed, because guessing at shell semantics is how a gate starts denying
+legitimate work. A bare-word redirect target is a known gap rather than a denied
+command. `class` must be a policy task class,
 and `evidenceSurfaces` must use policy surface keys.
 
 Write-set comparison normalizes separators and a leading `./`. Case is folded
