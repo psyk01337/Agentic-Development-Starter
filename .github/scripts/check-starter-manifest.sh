@@ -305,6 +305,38 @@ if prd_path.is_file():
                     "Source row back to the template value if nothing has been routed yet"
                 )
 
+# docs/inputs.md is the intake index: the router is meant to record every document it
+# routes. Nothing compared it with the directory, so a document could sit in
+# docs/inputs/ unread while every gate passed -- which is precisely what "I handed this
+# repository a PRD and got nothing back" looks like from the inside.
+#
+# The rule points one way on purpose: every intake must be acknowledged in the index. The
+# reverse, an index row naming a file that is gone, is deliberately not asserted, because
+# the shipped rows are fictional examples and exempting them by name would open a hole a
+# real document could be renamed into.
+inputs_dir = repo_root / "docs" / "inputs"
+inputs_index = repo_root / "docs" / "inputs.md"
+if inputs_dir.is_dir() and inputs_index.is_file():
+    index_text = inputs_index.read_text(encoding="utf-8")
+    # A plain substring test is not enough: the index mentions `docs/design-brief.md`, so
+    # an intake called `brief.md` appeared logged when it was not. The lookarounds keep a
+    # name from matching inside a longer one.
+    unlogged = [
+        entry.name
+        for entry in sorted(inputs_dir.iterdir(), key=lambda item: item.name)
+        if entry.is_file()
+        and entry.name != "README.md"
+        and not re.search(
+            r"(?<![\w.-])" + re.escape(entry.name) + r"(?![\w.-])", index_text
+        )
+    ]
+    if unlogged:
+        errors.append(
+            "docs/inputs/ holds intake document(s) that docs/inputs.md never mentions: "
+            + ", ".join(unlogged)
+            + "; route them with route-project-inputs so the decision is recorded"
+        )
+
 missing_core = sorted(required_core_files - seen_files)
 for relative_path in missing_core:
     errors.append(f"Required core file is not listed in starter-modules.json: {relative_path}")

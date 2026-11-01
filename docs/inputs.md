@@ -4,6 +4,8 @@ Place PRDs, design briefs, architecture notes, API contracts, and other planning
 
 This file is the tracked provenance index, routing log, and format guide. The `docs/inputs/` directory is an intake area, not repo truth. The router uses `ingest-project-docs` to turn each source into `docs/prd.md`, `docs/architecture.md`, `docs/api.md`, and `docs/design-brief.md` as applicable.
 
+`check-starter-manifest` compares this index with `docs/inputs/`: any document sitting there that this file never names fails the build, so an intake cannot be dropped in and silently ignored. Name it here — `route-project-inputs` does that when it records the decision. The reverse is deliberately unchecked, because the example rows below are intentionally fictional.
+
 ## Workflow Destinations
 
 | Workflow | Use when | Output |

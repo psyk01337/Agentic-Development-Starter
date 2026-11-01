@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Notice an intake the repository never acknowledged
+
+- Area: validation scripts, intake index, root README
+- Change type: fix, test, docs
+- Summary: `check-starter-manifest` now compares `docs/inputs/` with `docs/inputs.md`. A document in the intake folder that the index never names fails the build, and the message lists it and points at `route-project-inputs`. The match uses lookarounds rather than a substring test, so `brief.md` is not considered logged by the presence of `docs/design-brief.md`. The starter is unaffected because its intake folder holds only its README. Manifest version goes to `2.20.4`.
+- Reason: the intake index is how a routed document becomes visible, and nothing read either it or the directory. A document could sit in `docs/inputs/` unread while all twelve contracts passed — which is what "I handed this repository a PRD and got nothing back" looks like from the inside. This closes the third and last template artifact that described its own state without any validator observing it.
+- Affected files: .github/scripts/check-starter-manifest.ps1, .github/scripts/check-starter-manifest.sh, docs/inputs.md, README.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the intake-index rule"
+- Validation: a five-case matrix against both twins with identical verdicts: only README passes; an unlogged intake fails; two intakes with one logged fails; a logged intake passes. The fourth case was written after the first implementation produced a false pass — the index mentions `docs/design-brief.md`, so a substring test treated `brief.md` as logged — and it now fails as it should. The repository passes both twins and the umbrella.
+- Discrepancies or follow-up: the rule proves acknowledgement, not ingestion: a filename mentioned anywhere in the index satisfies it, so a stale row or a prose mention passes. Linking the row to its routed output would need parsing the table, and that is a larger change than this defect justifies. The reverse direction, an index row naming a file that is gone, stays unchecked because the shipped rows are fictional examples and exempting them by name would let a real document hide behind the exemption.
 ### 2026-11-01 - Notice when the PRD names its source but stays a template
 
 - Area: validation scripts, PRD template, root README

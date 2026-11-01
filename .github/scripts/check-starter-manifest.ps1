@@ -289,6 +289,36 @@ if (-not (Test-Path $manifestPath)) {
       }
     }
 
+    # docs/inputs.md is the intake index: the router is meant to record every document it
+    # routes. Nothing compared it with the directory, so a document could sit in
+    # docs/inputs/ unread while every gate passed -- which is precisely what "I handed this
+    # repository a PRD and got nothing back" looks like from the inside.
+    #
+    # The rule points one way on purpose: every intake must be acknowledged in the index. The
+    # reverse, an index row naming a file that is gone, is deliberately not asserted, because
+    # the shipped rows are fictional examples and exempting them by name would open a hole a
+    # real document could be renamed into.
+    $inputsDir = Join-Path $RepoRoot "docs/inputs"
+    $inputsIndex = Join-Path $RepoRoot "docs/inputs.md"
+    if ((Test-Path -Path $inputsDir -PathType Container) -and (Test-Path -Path $inputsIndex -PathType Leaf)) {
+      $indexText = Get-Content -Path $inputsIndex -Raw
+      # A plain substring test is not enough: the index mentions `docs/design-brief.md`, so an
+      # intake called `brief.md` appeared logged when it was not. The lookarounds keep a name
+      # from matching inside a longer one.
+      $unlogged = @(
+        Get-ChildItem -Path $inputsDir -File |
+          Where-Object {
+            $_.Name -ne "README.md" -and
+            -not [regex]::IsMatch($indexText, "(?<![\w.-])" + [regex]::Escape($_.Name) + "(?![\w.-])")
+          } |
+          ForEach-Object { $_.Name } |
+          Sort-Object
+      )
+      if ($unlogged.Count -gt 0) {
+        Add-CheckError("docs/inputs/ holds intake document(s) that docs/inputs.md never mentions: $($unlogged -join ', '); route them with route-project-inputs so the decision is recorded")
+      }
+    }
+
     foreach ($relativePath in $requiredCoreFiles) {
       if (-not $seenFiles.ContainsKey($relativePath)) {
         Add-CheckError("Required core file is not listed in starter-modules.json: $relativePath")

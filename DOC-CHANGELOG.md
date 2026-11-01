@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the intake-index rule
+
+- Area: intake index, root README, check table
+- Change type: docs
+- Summary: `docs/inputs.md` now states that `check-starter-manifest` compares it with `docs/inputs/`, that an unnamed document fails the build, that naming the file is what records the decision, and that the reverse direction is deliberately unchecked because the example rows are fictional. The root README check table records the new catch.
+- Reason: the index is the first file someone touches after dropping a document, and a rule that punishes silence is worth stating where the silence would happen.
+- Affected files: docs/inputs.md, README.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Notice an intake the repository never acknowledged"
+- Review status: reviewed
+- Discrepancies or follow-up: the index still carries fictional example rows in every repository created from the starter, because nothing tells a project to remove them and the reverse check deliberately ignores them. That is a cosmetic wart in each downstream project rather than a defect here.
 ### 2026-11-01 - Document the PRD provenance rule
 
 - Area: PRD template, root README, check table
