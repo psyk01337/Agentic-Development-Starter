@@ -251,7 +251,7 @@ else
       --result "${gate_dir}/verify.json" \
       --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1 \
     || ! "${gate_python}" "${engine}" record --run-id donefx --stage review \
-      --decision pass --reviewer reviewer --evidence "cmd:fixture" \
+      --decision pass --reviewer reviewer --evidence "cmd:reviewer-fixture" \
       --repo-root "${REPO_ROOT}" --state-dir "${done_state}" >/dev/null 2>&1; then
     report_error "Could not drive the finished-run fixture to done"
   fi

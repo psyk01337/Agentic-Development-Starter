@@ -156,7 +156,7 @@ escalated. `next`, `status`, and `report` all return `3` for a blocked run.
 | `implement` | `status: done`, `implementedBy`, `filesChanged`, `evidence` |
 | `verify` | `result: VERIFIED \| NOT_VERIFIED \| INCONCLUSIVE`, at least one named `check`, `evidence`; `VERIFIED` is refused while any check reports `ok: false`, and refused unless at least one check was executed. A check carrying a `command` is executed and its exit code decides `ok` |
 | `repair` | `status: done`, `implementedBy`, `filesChanged`, `evidence` |
-| `review` | `decision: pass \| needs-revision`, `reviewedBy`, `findings`, `evidence`; `needs-revision` must name at least one finding |
+| `review` | `decision: pass \| needs-revision`, `reviewedBy`, `findings`, `evidence`; `needs-revision` must name at least one finding; at least one evidence pointer must be one no implementer or verifier already supplied |
 
 A check with a `command` is a measurement; a check without one is a claim. The
 engine runs the command in the repository root with no shell, sets `ok` from the
@@ -179,6 +179,18 @@ which is the honest outcome rather than a passed gate.
 `reviewedBy` must not match any `implementedBy` recorded during the run, so one
 agent cannot implement and approve its own change. Identity is self-declared;
 the engine enforces separation, not authentication.
+
+A review also has to add evidence the workers did not produce. Pointers from
+`implement`, `repair`, and `verify` are gathered from the run history, and a
+review whose evidence is entirely a subset of them is refused. Restating the
+implementer's pointers authorises work on the strength of the thing the review
+exists to check. The comparison is textual and case-insensitive, and the accepted
+pointers are recorded as `independentEvidence` so a reader can see what the
+reviewer actually contributed.
+
+This is a label, not a proof. It makes a self-authorising review impossible to
+record silently; it cannot detect a reviewer that invents a pointer without
+looking.
 
 Every stage requires at least one evidence pointer. A pointer is either a local
 file inside the repository, or a reference using one of these schemes:

@@ -47,6 +47,8 @@ python .github/scripts/agentic_engine.py record --run-id <slice-id> --stage revi
 python .github/scripts/agentic_engine.py archive --run-id <slice-id>
 ```
 
+A review must add evidence the workers did not produce: if every pointer passed to `--stage review` was already recorded by `implement`, `repair`, or `verify`, the review is refused. Review means running the thing and describing what you saw, not restating the builder's summary.
+
 `verify` is refused unless every `--check` reports `ok`. Report `NOT_VERIFIED` with `--check "<name>=fail:<message>"` instead of claiming success. `archive` writes the run history to `docs/runs/<slice-id>.md` before the state is discarded; commit it with the change so the gates leave a trace.
 
 The run releases the write bound when it reaches `done`.

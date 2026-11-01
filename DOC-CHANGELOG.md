@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the review independence rule
+
+- Area: engine runbook, build-feature prompt
+- Change type: docs, runbook
+- Summary: the stage contract in `docs/runbooks/agentic-engine.md` records that a review must carry at least one evidence pointer no worker supplied, how the comparison works, and that it is a label rather than a proof. `build-feature.prompt.md` asks for what the reviewer observed rather than what the builder reported, so an agent following the prompt does not discover the rule by failing.
+- Reason: a refusal that exists only in code is a trap for the next agent. The prompt is the document that gets followed, and it previously asked for a bare pointer without saying where the pointer had to come from.
+- Affected files: docs/runbooks/agentic-engine.md, .github/prompts/build-feature.prompt.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Refuse a review that only restates the implementer's evidence"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook gives no example of an acceptable review pointer, so the rule is still easier to read than to follow.
 ### 2026-11-01 - Document the archive overwrite flag
 
 - Area: engine runbook

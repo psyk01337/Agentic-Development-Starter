@@ -950,6 +950,26 @@ def execute_check_commands(checks: list, repo_root: Path, policy: dict) -> list:
     return results
 
 
+# Stages whose evidence describes the work. Evidence a reviewer supplies has to
+# describe the check instead. When the two are the same pointers, the review gate
+# authorises work on the strength of the thing it exists to verify: the builder
+# saying its own tests passed. The comparison is textual and case-insensitive
+# because a pointer is an identifier a human wrote, not a structured fact.
+WORKER_STAGES = ("implement", "repair", "verify")
+
+
+def independent_evidence(evidence: list, history: list) -> list:
+    """Pointers a reviewer contributed that no worker had already claimed."""
+    claimed = set()
+    for entry in history:
+        if entry.get("action") != "recorded" or entry.get("stage") not in WORKER_STAGES:
+            continue
+        for pointer in entry.get("evidence") or []:
+            if isinstance(pointer, str):
+                claimed.add(pointer.strip().lower())
+    return [pointer for pointer in evidence if pointer.strip().lower() not in claimed]
+
+
 def _result_from_flags(args: argparse.Namespace) -> dict:
     """Build a stage result from flags instead of a hand-written JSON file.
 
@@ -1430,6 +1450,13 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
             raise EngineError("review result must include a findings list")
         if decision == "needs-revision" and not findings:
             raise EngineError("a needs-revision review must name at least one finding")
+        fresh = independent_evidence(evidence, state.get("history", []))
+        if not fresh:
+            raise EngineError(
+                "review evidence repeats what the implementer or verifier already supplied ("
+                + ", ".join(pointer for pointer in evidence)
+                + "); a review must record at least one pointer the reviewer produced itself"
+            )
         append_history(
             state,
             stage="review",
@@ -1437,6 +1464,7 @@ def _record_locked(args, repo_root, policy, limits, state_dir, state) -> int:
             decision=decision,
             reviewedBy=reviewed_by.strip(),
             evidence=evidence,
+            independentEvidence=fresh,
         )
         # lastStage is what a reader of `report` uses to see which stage ran last.
         # Leaving it at "verify" on a completed run says review never happened,
@@ -2736,6 +2764,84 @@ class EngineSelfTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIs(second["overwritten"], True)
 
+    def test_review_refuses_evidence_the_implementer_already_supplied(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        code, _ = self.record(
+            "review",
+            {
+                "decision": "pass",
+                "reviewedBy": "reviewer",
+                "findings": [],
+                "evidence": ["diff:HEAD", "cmd:pytest"],
+            },
+        )
+        self.assertEqual(code, 1)
+
+    def test_review_accepts_evidence_the_reviewer_produced(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        code, payload = self.record(
+            "review",
+            {
+                "decision": "pass",
+                "reviewedBy": "reviewer",
+                "findings": [],
+                "evidence": ["cmd:reviewer-replay"],
+            },
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["stage"], "done")
+
+    def test_review_passes_when_only_one_pointer_is_new(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        code, _ = self.record(
+            "review",
+            {
+                "decision": "pass",
+                "reviewedBy": "reviewer",
+                "findings": [],
+                "evidence": ["cmd:pytest", "cmd:reviewer-replay"],
+            },
+        )
+        self.assertEqual(code, 0)
+
+    def test_review_records_which_evidence_was_independent(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        self.record(
+            "review",
+            {
+                "decision": "pass",
+                "reviewedBy": "reviewer",
+                "findings": [],
+                "evidence": ["cmd:pytest", "cmd:reviewer-replay"],
+            },
+        )
+        state = load_state(self.state_dir, "r1")
+        entry = [item for item in state["history"] if item.get("stage") == "review"][-1]
+        self.assertEqual(entry["independentEvidence"], ["cmd:reviewer-replay"])
+
+    def test_review_independence_ignores_case(self) -> None:
+        self.init()
+        self.implement()
+        self.verify("VERIFIED", [{"name": "pytest", "ok": True}])
+        code, _ = self.record(
+            "review",
+            {
+                "decision": "pass",
+                "reviewedBy": "reviewer",
+                "findings": [],
+                "evidence": ["CMD:PYTEST"],
+            },
+        )
+        self.assertEqual(code, 1)
+
     def run_cli(self, argv: list) -> tuple[int, dict]:
 
         buffer = io.StringIO()
@@ -3807,7 +3913,7 @@ class EngineSelfTest(unittest.TestCase):
             "decision": "pass",
             "reviewedBy": "reviewer",
             "findings": [],
-            "evidence": ["diff:HEAD"],
+            "evidence": ["cmd:reviewer-replay"],
         }
         self.review_file = self.root / "review.json"
         self.review_file.write_text(json.dumps(review), encoding="utf-8")

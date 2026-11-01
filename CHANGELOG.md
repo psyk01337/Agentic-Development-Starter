@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Refuse a review that only restates the implementer's evidence
+
+- Area: agentic engine, build-feature prompt, engine runbook
+- Change type: fix, test, docs
+- Summary: `record --stage review` gathers the evidence pointers recorded by `implement`, `repair` and `verify` from the run history and refuses a review whose own pointers are entirely a subset of them. Accepted pointers are stored on the history entry as `independentEvidence`. Five self-tests take the suite from 138 to 143, and two fixtures that reused `diff:HEAD` for review are corrected. Manifest version goes to `2.15.0`.
+- Reason: the review gate was structurally self-authorising. `--reviewer` names who reviewed, but the evidence it receives is whatever the caller supplies, so the stage that exists to check the work could be satisfied by the worker's own pointers. The engine enforced separation of identity and not separation of evidence, which is the half that matters when one process is playing both parts.
+- Affected files: .github/scripts/agentic_engine.py, .github/scripts/agentic_driver.py, .github/prompts/build-feature.prompt.md, docs/runbooks/agentic-engine.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the review independence rule"
+- Validation: engine selftest 143/143. Proven through the CLI against a scratch run: a review reusing `diff:HEAD` is refused with `review evidence repeats what the implementer or verifier already supplied`, and the same run accepts a fresh pointer and reaches `done`.
+- Discrepancies or follow-up: the comparison is textual, so a reviewer that invents a pointer satisfies it without observing anything - it makes self-authorisation impossible to record silently, not impossible. History truncation past 200 entries could let an early pointer be reused. `needs-revision` reviews are gated too, which is deliberate but stricter than before.
 ### 2026-11-01 - Report when archive replaces an existing record
 
 - Area: agentic engine, engine runbook

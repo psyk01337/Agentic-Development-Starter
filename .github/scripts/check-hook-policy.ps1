@@ -246,7 +246,7 @@ if (Test-Path $policyScript) {
         } | ConvertTo-Json -Depth 5 -Compress
         [IO.File]::WriteAllText((Join-Path $gateDir "verify.json"), $verifyPayload)
         $null = & $pythonExe $engine record --run-id donefx --stage verify --result (Join-Path $gateDir "verify.json") --repo-root $RepoRoot --state-dir $doneState 2>&1
-        $null = & $pythonExe $engine record --run-id donefx --stage review --decision pass --reviewer reviewer --evidence "cmd:fixture" --repo-root $RepoRoot --state-dir $doneState 2>&1
+        $null = & $pythonExe $engine record --run-id donefx --stage review --decision pass --reviewer reviewer --evidence "cmd:reviewer-fixture" --repo-root $RepoRoot --state-dir $doneState 2>&1
         $env:AGENTIC_STATE_DIR = $doneState
         $doneExit = & $gateCall '{"toolName":"create_file","toolArgs":{"filePath":"src/outside.py"}}'
         $env:AGENTIC_STATE_DIR = $gateState

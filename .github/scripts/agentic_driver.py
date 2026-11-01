@@ -445,7 +445,7 @@ class RunLoopTest(unittest.TestCase):
             {
                 "implement": {"status": "done", "implementedBy": "dev", "filesChanged": ["src/a.py"], "evidence": ["diff:HEAD"]},
                 "verify": {"result": "VERIFIED", "checks": [{"name": "pytest", "ok": True}], "evidence": ["test:pytest"]},
-                "review": {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["diff:HEAD"]},
+                "review": {"decision": "pass", "reviewedBy": "reviewer", "findings": [], "evidence": ["cmd:reviewer-replay"]},
             }
         )
         with tempfile.TemporaryDirectory() as tmp:
