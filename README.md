@@ -9,7 +9,7 @@
 ![Agents](https://img.shields.io/badge/agents-12-blue)
 ![Prompts](https://img.shields.io/badge/prompts-23-blue)
 ![Checks](https://img.shields.io/badge/checks-12%2F12-brightgreen)
-![Engine tests](https://img.shields.io/badge/engine%20tests-62-brightgreen)
+![Engine tests](https://img.shields.io/badge/engine%20tests-156-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
 > The starter is a workflow layer, not an agent runtime. It does not run anything for you — it makes what runs accountable.
@@ -73,7 +73,7 @@ pwsh -NoProfile -File .github/scripts/check-starter-workflow.ps1
 | **Evals** | 13 | Golden tasks with checklists, so "did the agent behave" is gradable rather than felt |
 | **Guardrails** | 12 checks | Manifest, skills, agents, prompts, hooks, MCP posture, markdown, evals, engine, driver — in Bash **and** PowerShell |
 
-Every asset is registered in [`.github/starter-modules.json`](.github/starter-modules.json) — 39 modules across core, optional, and overlay. Nothing ships enabled that you did not choose, and a validator fails if an asset exists without being registered.
+Every asset is registered in [`.github/starter-modules.json`](.github/starter-modules.json) — 40 modules across core, optional, and overlay. Nothing ships enabled that you did not choose, and a validator fails if an asset exists without being registered.
 
 ---
 
@@ -96,7 +96,7 @@ flowchart TD
     H --> J["Human decides"]
 ```
 
-The loop is enforced by [`agentic_engine.py`](.github/scripts/agentic_engine.py), a deterministic state machine with 62 self-tests. It refuses `VERIFIED` while any check fails, rejects a write outside the declared set, refuses a reviewer who implemented the work, and stops on an identical failure signature rather than retrying forever.
+The loop is enforced by [`agentic_engine.py`](.github/scripts/agentic_engine.py), a deterministic state machine with 156 self-tests. It refuses `VERIFIED` while any check fails, and refuses a `VERIFIED` whose checks never executed — a command is run, not asserted. It rejects a write outside the declared set, refuses a review whose evidence only restates the implementer's, permits one live run per checkout because two runs share one working tree and one index, and stops on an identical failure signature rather than retrying forever.
 
 Try it without touching a thing:
 
@@ -170,10 +170,13 @@ bash .github/scripts/check-starter-skills.sh
 bash .github/scripts/check-agent-contracts.sh
 bash .github/scripts/check-prompt-contracts.sh
 bash .github/scripts/check-hook-policy.sh
+bash .github/scripts/check-supervisor-orchestration.sh
+bash .github/scripts/check-mcp-posture.sh
 bash .github/scripts/check-markdown-quality.sh
 bash .github/scripts/check-evals.sh
 bash .github/scripts/check-agentic-engine.sh
 bash .github/scripts/check-agentic-driver.sh
+bash .github/scripts/check-approval-gated-orchestration.sh
 python .github/scripts/agentic_engine.py selftest
 ```
 
@@ -195,7 +198,7 @@ AGENTS.md                  cross-agent entry point
   agents/                  specialist definitions
   hooks/                   command guardrails
   scripts/                 validation, in Bash and PowerShell
-  starter-modules.json     what ships enabled (39 modules)
+  starter-modules.json     what ships enabled (40 modules)
 docs/
   adr/                     durable decisions with tradeoffs
   runbooks/                operational guidance
@@ -297,7 +300,7 @@ Also include a `## Handoff Memory Contract` section. An agent that skips the all
 - Platform adapters beyond VS Code agent mode.
 - Deeper schema validation for prompt and agent metadata.
 - Expand policy fixtures as real false positives and bypasses surface.
-- Autonomous execution, if and only if it can be shown to respect the gates — see [ADR 0008](docs/adr/0008-autonomous-execution-via-sdk.md), currently `Proposed`.
+- Autonomous execution stays out of the default path. [ADR 0008](docs/adr/0008-autonomous-execution-via-sdk.md) evaluated it and rejected it; `check-agentic-driver` exists so an executor cannot ship enabled, and a gateway that stops denying fails the build.
 
 Contributions that come with a failing test and a validator get reviewed first.
 

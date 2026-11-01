@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Bring the front-door docs back in line with the engine
+
+- Area: root README, quickstart, app scaffold, troubleshooting
+- Change type: docs
+- Summary: corrects claims that no longer match the code. The engine-test badge and the body both said 62 self-tests where the suite now runs 156. The module count said 39 where the manifest holds 40, in two places. The roadmap described ADR 0008 as `Proposed` when it is `Rejected`, so the entry now states the decision and names `check-agentic-driver` as the reason an executor cannot ship enabled. The guarantees paragraph now lists what the engine actually enforces — an executed check for `VERIFIED`, evidence-bearing review, one live run per checkout — instead of the outdated "refuses a reviewer who implemented the work". The individual-check list gained the two validators it omitted. QUICKSTART's daily loop reframed the engine as a retry helper and now says the run is the loop, adds the review-independence rule, and ends with `archive`. `app/README.md` names who fills its verification block and records the write-set and turn-end gates in its coverage table. `TROUBLESHOOTING.md` gains the one-run-per-checkout refusal and the executed-check rule, neither of which was documented anywhere a user would look.
+- Reason: four commits this session changed what the system refuses — observed checks, review independence, uncommitted-change stops, one run per checkout — and the front-door docs still described the system as it was several versions ago. A README that overstates or understates the gates is worse than no README, because it teaches the wrong model of what is enforced.
+- Affected files: README.md, QUICKSTART.md, TROUBLESHOOTING.md, app/README.md, DOC-CHANGELOG.md
+- Related code: None — documentation only. No engine, script, policy, or manifest behavior changed, and the manifest version is unchanged.
+- Review status: reviewed
+- Discrepancies or follow-up: every number in the README is now checked against the tree except the counts of instructions, skills, agents, prompts, and evals, which were verified by direct count at this change and will drift again on the next addition. They are not generated, so a future change can silently falsify them. ADR 0008 still says "62 engine self-tests" in its own text; it is left alone because an ADR is a point-in-time record and rewriting its numbers would falsify the record rather than correct it. `docs/adr/0008` is also the only stale figure remaining anywhere in the documentation set.
 ### 2026-11-01 - Document who fills the app verification block
 
 - Area: prompt assets, quickstart guide

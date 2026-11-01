@@ -240,6 +240,20 @@ python .github/scripts/agentic_engine.py report --run-id <run-id>
 
 Start a new run with a new `--run-id`. `--force` will not replace a blocked run.
 
+### "run <id> is already active in this checkout"
+
+The engine allows one live run per checkout. Two runs share one working tree, one git index, and one branch, so each can commit the other's half-finished work and neither history records that the other existed.
+
+Finish or block the live run, then start the next one. `--force-parallel` admits a second run and is correct only when the checkout has genuinely been isolated — a separate clone. It records that the caller accepted the shared-tree risk; it does not create isolation. See `docs/adr/0010-one-active-run-per-checkout.md`.
+
+A run in a terminal stage does not block a new one, and a state file that cannot be read is skipped on its own, so it neither stops all work nor hides the live run stored beside it.
+
+### "VERIFIED needs a check that actually ran"
+
+`verify` refuses `VERIFIED` unless at least one `--check` executed a command, and that command's executable must appear in `verificationCommands` in `.github/roles/orchestration-policy.json`. Inline code is refused: `-c`, `-e`, `--eval`, `-Command`, and `-EncodedCommand` are rejected wherever they appear, so `python -c pass` cannot satisfy the rule.
+
+Report `NOT_VERIFIED` with `--check "<name>=fail:<message>"` when nothing can be executed yet — an application with no test command is the ordinary case. `grep -e` is refused along with the rest, which is the known cost of a rule that does not try to judge intent.
+
 ### Evidence is rejected
 
 Evidence must be one of:

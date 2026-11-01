@@ -38,6 +38,8 @@ cd app && <the command that runs this project's tests>
 
 Until that is replaced, this file describes a scaffold rather than a project. An agent should say so rather than invent a command, and the `verify` stage should record `NOT_VERIFIED` rather than a pass nobody observed.
 
+**Who fills it in:** the first `build-feature` slice that runs the application's tests. `initialize-new-project` deliberately leaves the block alone — it knows the stack but not the runner the first slice settles on. That slice replaces the block with the command it actually executed and adds this file to the run's write set. A command written before anything runs is a promise, and `verify` only accepts a check it observed.
+
 Rules that matter for those commands:
 
 - Add or update the tests for the changed behavior and the most important failure path, not just the happy path.
@@ -54,6 +56,8 @@ Windows note worth keeping: `node --test` with no arguments auto-discovers test 
 | --- | --- |
 | `core`, `security`, and `memory` rules | yes, on every request |
 | Trailing whitespace and broken relative links in this file | yes, `check-markdown-quality` scans every `*.md` |
+| A run's write set | yes — once a run is live, only paths passed to `start --write` (or added with `allow-write`) may change here |
+| A turn ending with changed files and no run open | yes — refused once when `requireRunForChanges` is on |
 | Which application files are registered as starter assets | no, `app/` is outside the module manifest |
 | Your application's tests, lint, and build | no, only the application can define these |
 

@@ -144,12 +144,12 @@ Use Team Mode for application development: core instructions, agents, skills, pr
 ## The Daily Loop
 
 1. Use `run-engineering-team.prompt.md` for multi-stage work, or `build-feature.prompt.md` for one feature.
-2. For work that may need more than one fix attempt, run it through `.github/scripts/agentic_engine.py`. It loops implement → verify → repair until verified, stops on a repeated identical failure, and escalates when the attempt budget is exhausted.
-3. If the engine reports a blocked run, stop and escalate the blocker packet. Do not retry manually or raise the attempt limit to force a pass; see `TROUBLESHOOTING.md`.
-4. Review the diff with `code-reviewer`.
+2. The run is the loop, not a retry helper. `build-feature` opens one with `start` before it writes code; while it is active the write set is enforced, only one run may be live per checkout, and `verify` needs a check that actually executed — `python -c pass` does not count.
+3. Implement → verify → repair repeats until verified, stops on a repeated identical failure, and escalates when the attempt budget is exhausted. A blocked run is a stop, not a crash: read the blocker packet with `report` rather than retrying by hand or raising the limit to force a pass; see `TROUBLESHOOTING.md`.
+4. Review the diff with `code-reviewer`. A review must add evidence the implementer did not produce; restating their summary is refused.
 5. Verify with `qa`.
 6. Update `CHANGELOG.md` and `DOC-CHANGELOG.md`.
-7. Commit a small, reviewable change.
+7. `archive` the run so `docs/runs/<run-id>.md` exists, then commit it with the change as one small, reviewable commit.
 
 ## Keep the Framework Frozen
 
