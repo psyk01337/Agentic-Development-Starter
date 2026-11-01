@@ -24,6 +24,16 @@ Use this log for changes to documentation assets such as Markdown, text files, A
 
 ## Entries
 
+### 2026-11-01 - Document the run requirement for changed files
+
+- Area: hooks runbook
+- Change type: docs, runbook
+- Summary: the engine gate decision table in `docs/runbooks/hooks.md` gains `changed files, no run -> block the turn end once`, and a paragraph explains the opt-in flag, why untracked files are excluded, and why the retry is always allowed.
+- Reason: this is the only gate that can refuse a turn end without a run being open, so it is the one a reader is most likely to hit by surprise. It needs to be findable from the page that describes what the gate does.
+- Affected files: docs/runbooks/hooks.md, CHANGELOG.md, DOC-CHANGELOG.md
+- Related code: CHANGELOG.md entry "2026-11-01 - Refuse a turn end when files changed with no run open"
+- Review status: reviewed
+- Discrepancies or follow-up: the runbook does not say how to explain the change to a user who was not using the workflow and is now being refused, which is the likeliest support question.
 ### 2026-11-01 - Document the review independence rule
 
 - Area: engine runbook, build-feature prompt

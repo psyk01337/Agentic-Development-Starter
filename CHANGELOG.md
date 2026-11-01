@@ -24,6 +24,16 @@ Use this log for changes to source code, scripts, infrastructure-as-code, build 
 
 ## Entries
 
+### 2026-11-01 - Refuse a turn end when files changed with no run open
+
+- Area: agentic engine, orchestration policy, hooks runbook
+- Change type: feature, test, docs
+- Summary: adds `requireRunForChanges` to `orchestration-policy.json`. With it on, `check-stop` refuses a turn end once when tracked files are uncommitted and no run is active, naming the files. Untracked files are excluded. The flag ships off and this repository enables it. Six tests take the suite from 143 to 149. Manifest version goes to `2.16.0`.
+- Reason: every gate built so far is inert unless someone opens a run, and nothing made that a decision rather than an oversight. A workflow that only applies when the agent remembers to invoke it is a convention with instrumentation attached. This is the smallest change that turns "the prompt asks" into "the turn cannot end without an answer", while staying opt-in so a repository that does not use the workflow is unaffected.
+- Affected files: .github/scripts/agentic_engine.py, .github/roles/orchestration-policy.json, docs/runbooks/hooks.md, .github/starter-modules.json, CHANGELOG.md, DOC-CHANGELOG.md
+- Related docs: DOC-CHANGELOG.md entry "2026-11-01 - Document the run requirement for changed files"
+- Validation: engine selftest 149/149. Proven against this repository: `check-stop` returns `{"decision": "block", ...}` with uncommitted changes and no run, and returns nothing when `stop_hook_active` is true, so the retry is always allowed. A test drives a real temporary git repository to confirm an untracked scratch file does not trigger it and a modified tracked file does.
+- Discrepancies or follow-up: the refusal names files but cannot tell a genuine out-of-workflow change from someone editing a README, so it is a nudge rather than a policy. It fires once per turn by design; an agent that ignores the reason and stops anyway is not stopped again. `git status` runs once per turn end, which is cheap but is the only subprocess on that path. The flag is on for this repository, which means a turn ending mid-edit will be refused once - deliberate, but visible.
 ### 2026-11-01 - Refuse a review that only restates the implementer's evidence
 
 - Area: agentic engine, build-feature prompt, engine runbook

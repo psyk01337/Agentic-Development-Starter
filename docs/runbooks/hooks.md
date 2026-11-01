@@ -152,10 +152,22 @@ The former `rolePolicyGuidance` and `logging` keys were removed from `agent-poli
   write outside the write set -> deny
   shell write outside set     -> deny, when the target can be named
   stage unfinished            -> block the turn end, with the required result
+  changed files, no run       -> block the turn end once, if requireRunForChanges
   no working interpreter      -> allow, with a warning on stderr
   engine fails for any reason -> allow, with a warning on stderr
 ```
 
+`requireRunForChanges` in `.github/roles/orchestration-policy.json` closes the largest
+gap in the loop: everything above is inert unless someone opens a run, and nothing
+used to make that a decision rather than an oversight. With the flag on, a turn
+end with uncommitted tracked files and no active run is refused once, with the
+changed files named. Untracked files are ignored, because most are scratch and
+refusing over one teaches people to commit junk.
+
+It blocks once, not forever: the harness sets `stop_hook_active` on the retry and
+the engine always allows that, so a refusal cannot trap an agent in a loop. The
+flag ships off and this repository turns it on; a project that does not use the
+workflow turns it off and loses nothing else.
 Only the host payload on stdin reaches the engine. A hand invocation — `bash .github/hooks/scripts/pre-tool-policy.sh "git status --short"` — is checked by the rule layer alone, because it is a command being inspected by a person rather than a tool call from the harness. The shell twin once piped argv to the engine as well, so every hand invocation failed JSON parsing and was denied whenever a run existed, which made `check-hook-policy` unable to pass in the state a user is actually in: mid-run.
 
 An unclassified tool allows because denying an unknown name is not a policy. That behaviour once denied every tool call in a live session, since the harness's real tool names shared nothing with the registry's examples. The write set is enforced from the tool arguments and again from git at `record` time, so an out-of-scope change is caught whatever the tool was called.

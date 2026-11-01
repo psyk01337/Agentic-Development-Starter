@@ -1797,7 +1797,36 @@ def cmd_check_tool(args: argparse.Namespace) -> int:
     return 2
 
 
-def stop_reason(runs: list, stop_hook_active: bool) -> str | None:
+def unrun_changes(repo_root: Path) -> list:
+    """Tracked files with uncommitted changes, for the no-run check.
+
+    Untracked files are deliberately excluded: most are scratch, and refusing a
+    stop over one teaches people to commit junk to get past it.
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            cwd=str(repo_root), capture_output=True, text=True, timeout=30, shell=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if completed.returncode != 0:
+        # Not a repository, or git is missing. Fail open: this is a workflow
+        # nudge, not a safety control.
+        return []
+    changed = []
+    for line in completed.stdout.splitlines():
+        if len(line) > 3 and line.strip():
+            changed.append(line[3:].strip())
+    return changed
+
+
+def stop_reason(
+    runs: list,
+    stop_hook_active: bool,
+    changed_files: list | None = None,
+    require_run: bool = False,
+) -> str | None:
     """Reason the agent must keep working, or None to allow the stop.
 
     The hook cannot make progress on its own, so once the agent is already
@@ -1809,6 +1838,17 @@ def stop_reason(runs: list, stop_hook_active: bool) -> str | None:
         return None
     pending = [run for run in runs if run["stage"] in ACTIVE_STAGES]
     if not pending:
+        if require_run and changed_files:
+            shown = ", ".join(changed_files[:5])
+            if len(changed_files) > 5:
+                shown += f" and {len(changed_files) - 5} more"
+            return (
+                "Files changed while no run is open: "
+                f"{shown}. Open a run with `start` so the change is bounded and "
+                "recorded, or revert it. A repository that does not use the "
+                "workflow turns this off with requireRunForChanges in "
+                ".github/roles/orchestration-policy.json."
+            )
         return None
     run = pending[0]
     instructions = STAGE_INSTRUCTIONS.get(run["stage"], {})
@@ -1838,7 +1878,11 @@ def cmd_check_stop(args: argparse.Namespace) -> int:
         return 0
     try:
         runs = active_runs(state_dir)
-        reason = stop_reason(runs, bool(payload.get("stop_hook_active")))
+        policy = load_policy(repo_root)
+        require_run = bool(policy.get("requireRunForChanges", False))
+        # Only pay for the git call when it can change the answer.
+        changed = unrun_changes(repo_root) if require_run and not runs else []
+        reason = stop_reason(runs, bool(payload.get("stop_hook_active")), changed, require_run)
     except EngineError as exc:
         # A broken state file must not hold a turn open indefinitely.
         print(f"[WARN] stop check skipped: {exc}", file=sys.stderr)
@@ -2841,6 +2885,49 @@ class EngineSelfTest(unittest.TestCase):
             },
         )
         self.assertEqual(code, 1)
+
+    def test_stop_is_blocked_when_files_changed_without_a_run(self) -> None:
+        reason = stop_reason([], False, ["README.md"], True)
+        self.assertIsNotNone(reason)
+        self.assertIn("README.md", reason)
+        self.assertIn("no run is open", reason)
+
+    def test_stop_is_allowed_when_unchanged_or_not_required(self) -> None:
+        self.assertIsNone(stop_reason([], False, [], True))
+        self.assertIsNone(stop_reason([], False, ["README.md"], False))
+
+    def test_second_stop_after_a_block_is_always_allowed(self) -> None:
+        # The harness sets stop_hook_active on the retry; refusing again would
+        # trap the agent rather than make it work.
+        self.assertIsNone(stop_reason([], True, ["README.md"], True))
+
+    def test_an_active_run_reports_the_stage_not_the_missing_run(self) -> None:
+        self.init()
+        state = load_state(self.state_dir, "r1")
+        reason = stop_reason([state], False, ["README.md"], True)
+        self.assertIn("stage 'implement'", reason)
+        self.assertNotIn("no run is open", reason)
+
+    def test_unrun_changes_is_empty_outside_a_repository(self) -> None:
+        self.assertEqual(unrun_changes(self.root), [])
+
+    def test_unrun_changes_ignores_untracked_files(self) -> None:
+        repo = self.root / "gitrepo"
+        repo.mkdir()
+        for command in (
+            ["git", "init", "-q"],
+            ["git", "config", "user.email", "fixture@example.test"],
+            ["git", "config", "user.name", "fixture"],
+        ):
+            subprocess.run(command, cwd=str(repo), capture_output=True)
+        (repo / "tracked.txt").write_text("one\n", encoding="utf-8")
+        subprocess.run(["git", "add", "tracked.txt"], cwd=str(repo), capture_output=True)
+        subprocess.run(["git", "commit", "-qm", "init"], cwd=str(repo), capture_output=True)
+        # An untracked scratch file must not hold a turn open.
+        (repo / "scratch.txt").write_text("x\n", encoding="utf-8")
+        self.assertEqual(unrun_changes(repo), [])
+        (repo / "tracked.txt").write_text("two\n", encoding="utf-8")
+        self.assertEqual(unrun_changes(repo), ["tracked.txt"])
 
     def run_cli(self, argv: list) -> tuple[int, dict]:
 

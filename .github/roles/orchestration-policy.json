@@ -67,6 +67,7 @@
       "description": "Work that grows beyond the requested slice or the declared write set."
     }
   ],
+  "requireRunForChanges": true,
   "verificationCommands": [
     "node",
     "python",
